@@ -156,6 +156,7 @@ body:not(.collapsed) #hint{left:calc(50% + 154px)}
     <tr><td>Secluded additions: 10×16 glass greenhouse (Victorian style: black frame, glass walls, peaked glass roof, south gable door, cedar beds both sides, gravel aisle) at x 47–57, n 172–188, centred in the NW tree clearing, on a stone curb with a level floor · gravel apron + path to the door · stone-slab paths (owner sketch): greenhouse → walkout patio, and fire-pit east path → around the garden's east side → front walk · water line from the main · driveway extension ≈500 sf (west bay x 59–65.1, n 84–125 + north apron along the garage to n 125) with a 2–4' block retaining wall on the downhill edges · crabapples moved to (58.5,78) and (80,160)</td><td>Owner sketches, fitted to the lot grid. Greenhouse centred in the NW tree clearing per owner; its west ~6' crosses the septic reserve line (x 52.8), where the site plan allows no structures — confirm with Lapeer County Health before building, or shift 6' east. Golf range removed per owner. Slab follows the garage-pad grade; wall heights are estimates.</td><td><span class="tag a">PER SKETCH</span></td></tr>
     <tr><td>Oak Opening (new): open-grown bur oak ×2, white oak, shagbark hickory, swamp white oak by the pond · dry-mesic prairie with mown paths · irrigated lawn only in the clearing by the house · Jensen council ring (158,178) · rain garden at the sump outlet (78,180) · pond landing slab · 4 raised beds · reserve meadow</td><td>Modelled on Michigan oak openings (MNFI), which Lapeer County held before settlement. Council ring after Jens Jensen. Prairie seeded, not sodded; spring burn or mow once a year.</td><td><span class="tag i">CONCEPT</span></td></tr>
     <tr><td>Homestead (new): 8-tree back orchard (apples Liberty, Enterprise, GoldRush, Freedom; pears Harrow Sweet + Seckel; plum Stanley; tart cherry Montmorency) · pawpaw pair · serviceberry drive hedge · 12-bed fenced kitchen garden + 3 compost bays · 12×24 hoop house · 3 berry rows · asparagus/rhubarb bed · grape pergola + harvest table on the walkout patio · reserve pollinator meadow</td><td>Apple list follows MSU Extension's disease-resistant picks for home growers. Semi-dwarf rootstocks, planted high on clay. Hoop house needs HOA/township sign-off; a chicken coop is left out until Almont Twp rules for R-1-A are confirmed.</td><td><span class="tag i">CONCEPT</span></td></tr>
+    <tr><td>West berry patch (all plans, added Oct 2026): x 20–48, n 42–94 on the front half of the septic reserve · 3 N–S rows with 4' mulch strips and 5' mown aisles · row 1 haskap ×8 (two compatible varieties) · row 2 fall red raspberry ×22 · row 3 aronia 'Viking' ×4 + summer raspberry 'Nova' ×10 · Z7 drip, trenched only off the reserve, surface-laid on it · no fill, no posts, no grade change</td><td>Owner request. Placed on the highest, gentlest part of the reserve (≈882→880, 4–5%) to keep raspberries out of the wet toe. Shallow, fibrous-rooted shrubs, treated as removable if the reserve is ever needed. No currants/gooseberries (white pine blister rust host; black currant sale banned in MI). Blueberries left off the reserve (need acid, amended soil).</td><td><span class="tag a">COUNTY OK PENDING</span></td></tr>
     <tr><td>Plan A trees T1–T15, beds, raised beds, sprinkler heads, main line</td><td>Coordinates from the yard-plan brief. Growth curves are typical nursery rates, not guarantees.</td><td><span class="tag c">PER PLAN</span></td></tr>
     <tr><td>Valve box, A/C pad, sump lead route, septic trench split (2 × 7 runs)</td><td>Placeholder locations.</td><td><span class="tag a">ASSUMED</span></td></tr>
     <tr><td>Neighbouring houses, roads beyond the frontage, pond outline, background trees</td><td>Scaled roughly off the aerial screenshot.</td><td><span class="tag a">APPROX</span></td></tr>
@@ -368,6 +369,37 @@ const BEDS = {
   meadow: [[7, 13.1], [19, 13.1], [19, 187.9], [7, 187.9]], reserve: [[19, 13.1], [52.8, 13.1], [52.8, 187.9], [19, 187.9]],
   garden: [[155, 112], [186, 112], [186, 144], [155, 144]],
 };
+/* ---------- west berry patch (shared by every plan): on the high, gentle front half of the septic reserve (~882→880, 4–5%).
+   Three N–S rows, 4' mulch strips, 5' mown aisles. Removable, no fill, no posts. Lapeer County Health Dept sign-off PENDING. */
+const BERRY = {
+  box: [20, 48, 42, 94],                                   // x0, x1, n0, n1 incl. 3' mown margin
+  rows: [
+    { x: 25, n0: 46, n1: 90, crop: 'haskap' },             // 8 haskap @ 5.5', two compatible varieties alternating
+    { x: 34, n0: 46, n1: 90, crop: 'fallRasp' },           // fall (primocane) red raspberry, 22 plants @ 2'
+    { x: 43, n0: 46, n1: 66, crop: 'aronia' },             // 4 aronia 'Viking' @ 6'
+    { x: 43, n0: 70, n1: 90, crop: 'summerRasp' },         // summer red raspberry 'Nova', 10 plants @ 2'
+  ],
+};
+const inBerry = (x, n, m) => { m = m || 0; return x > BERRY.box[0] - m && x < BERRY.box[1] + m && n > BERRY.box[2] - m && n < BERRY.box[3] + m; };
+function paintBerries(h) {
+  const { g, rect, noise } = h, lawn = noise(['#426a2c', '#58823b', '#476f30', '#638c42'], 0.5, 3), mulch = noise(['#3f2c1f', '#70523a', '#4d3727'], 0.6, 4);
+  g.fillStyle = '#4c7434'; rect(...BERRY.box); g.fillStyle = lawn; rect(...BERRY.box);
+  for (const R of BERRY.rows) { g.fillStyle = '#5a412f'; rect(R.x - 2, R.x + 2, R.n0 - 1, R.n1 + 1); g.fillStyle = mulch; rect(R.x - 2, R.x + 2, R.n0 - 1, R.n1 + 1); }
+}
+function plantBerries(inst, r) {
+  for (const R of BERRY.rows) {
+    if (R.crop === 'haskap' || R.crop === 'aronia') {
+      const sp = R.crop === 'haskap' ? 5.5 : 6, fruit = R.crop === 'haskap' ? [0.64, 0.45, 0.32] : [0.75, 0.25, 0.12];
+      for (let n = R.n0 + 1.5; n <= R.n1 - 1; n += sp) { const x = R.x + (r() - 0.5) * 0.4, ht = R.crop === 'haskap' ? 4.6 + r() * 0.6 : 5 + r() * 0.8, w = R.crop === 'haskap' ? 4.2 : 4.8;
+        inst.blob.push([x, n, w, ht, R.crop === 'haskap' ? [0.3, 0.3, 0.33 + r() * 0.04] : [0.3, 0.5, 0.24 + r() * 0.04], 0.5]);
+        for (let i = 0; i < 6; i++) { const a = r() * 6.283; inst.blob.push([x + Math.cos(a) * w * 0.42, n + Math.sin(a) * w * 0.42, 0.22, 0.2, fruit, (ht * (0.35 + r() * 0.4)) / 0.2]); } }
+    } else {
+      const fruit = R.crop === 'fallRasp' ? [0.98, 0.72, 0.42] : [0.99, 0.68, 0.45];
+      for (let n = R.n0 + 0.8; n < R.n1; n += 1.4) { const x = R.x + (r() - 0.5) * 0.9, ht = 4.2 + r() * 0.9; inst.blob.push([x, n, 2.4, ht, [0.29, 0.45, 0.25 + r() * 0.05], 0.5]);
+        if (r() < 0.55) for (let i = 0; i < 3; i++) inst.blob.push([x + (r() - 0.5) * 1.8, n + (r() - 0.5) * 1.2, 0.18, 0.16, fruit, (ht * (0.4 + r() * 0.4)) / 0.16]); }
+    }
+  }
+}
 const BEDS_B = {
   meadow: [[7, 23], [52.5, 23], [52.8, 34], [50.5, 46], [44, 60], [34, 77], [27.5, 95], [25, 120], [25, 160], [24, 187.9], [7, 187.9]],   // west side, on the reserve (owner sketch)
   meadowSE: [[207, 23], [235, 23], [235, 76.1], [230.3, 92], [208, 92], [205.5, 80], [204.5, 55], [205.5, 35]],                               // east side, over the east end of the septic field (owner sketch)
@@ -434,6 +466,7 @@ function paintGround(land) {
     for (const t of TREES_A) { const nd = t.type === 'pine' || t.type === 'spruce'; g.fillStyle = nd ? '#a97845' : '#5a412f'; g.beginPath(); g.arc(px(t.x), py(t.n), (nd ? 4.5 : 3.2) * S, 0, 7); g.fill(); }
   }
   if (PLANS[land] && PLANS[land].paint) PLANS[land].paint({ g, px, py, path, rect, noise, S, r, W, H });
+  if (land) paintBerries({ g, rect, noise });
   g.restore();
   // concrete: drive (with approach flare), garage pad, front walk, patio
   const concPath = () => { g.beginPath(); [[65.1, 0], [59, -21], [91, -21], [85.1, 0], [85.1, 84.5], [131, 84.5], [131, 87.5], [129.8, 87.5], [129.8, 93.9], [126.8, 93.9], [126.8, 87.5], [85.1, 87.5], [85.1, 89.9], [94.7, 89.9], [94.7, 116.65], [65.1, 116.65]].forEach(([x, y], i) => i ? g.lineTo(px(x), py(y)) : g.moveTo(px(x), py(y))); g.closePath(); g.rect(px(122.54), py(150.73), 22 * S, 16 * S); if (land === 'B') for (const [x0, n0, x1, n1] of BEDS_B.ext) g.rect(px(x0), py(n1), (x1 - x0) * S, (n1 - n0) * S); };
@@ -946,13 +979,16 @@ function buildLandscape(scene, key) {
   const inst = { blob: [], cone: [], rock: [], blade: [] };
   const scatter = (poly, n, minD, fn, avoid, mg) => { mg = mg || Math.max(0.8, Math.min(3, minD * 0.45));
     const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), out = [];
-    for (let tries = 0; tries < n * 60 && out.length < n; tries++) { const x = lerp(x0 + mg, x1 - mg, r()), y = lerp(y0 + mg, y1 - mg, r()); if (!inPoly(x, y, poly) || !inPoly(x - mg, y, poly) || !inPoly(x + mg, y, poly) || !inPoly(x, y - mg, poly) || !inPoly(x, y + mg, poly) || (avoid && avoid(x, y)) || out.some(p => Math.hypot(p[0] - x, p[1] - y) < minD) || TR.some(t => Math.hypot(t.x - x, t.n - y) < 3)) continue; out.push([x, y]); fn(x, y); }
+    for (let tries = 0; tries < n * 60 && out.length < n; tries++) { const x = lerp(x0 + mg, x1 - mg, r()), y = lerp(y0 + mg, y1 - mg, r()); if (!inPoly(x, y, poly) || !inPoly(x - mg, y, poly) || !inPoly(x + mg, y, poly) || !inPoly(x, y - mg, poly) || !inPoly(x, y + mg, poly) || (avoid && avoid(x, y)) || inBerry(x, y, 0.5) || out.some(p => Math.hypot(p[0] - x, p[1] - y) < minD) || TR.some(t => Math.hypot(t.x - x, t.n - y) < 3)) continue; out.push([x, y]); fn(x, y); }
   };
   const shrub = (h, w, hsl) => (x, y) => inst.blob.push([x, y, w, h, hsl, 0.5]);
   const grass = (h, w, hsl) => (x, y) => { inst.blob.push([x, y, w * 1.5, h * 0.8, hsl, 0.5]); inst.blob.push([x, y, w * 2.1, h * 0.35, [hsl[0], hsl[1] * 0.8, hsl[2] + 0.12], 2.4]); };
   const flower = (h, hsl) => (x, y) => { inst.blob.push([x, y, 0.9, h * 0.7, [0.3, 0.4, 0.28], 0.5]); for (let i = 0; i < 4; i++) inst.blob.push([x + (r() - 0.5) * 1.1, y + (r() - 0.5) * 1.1, 0.24, 0.2, hsl, h / 0.2]); };
   const boulder = (w, h) => (x, y) => inst.rock.push([x, y, w, h]);
   P.plant({ scatter, shrub, grass, flower, boulder, inst, r });
+  plantBerries(inst, r);
+  { const LB = grp('landLabels' + key, scene); LB.add(label('BERRY PATCH · ON RESERVE · COUNTY OK PENDING', 34, 68, groundH(34, 68) + 9, '#c0392b', 2.4));
+    for (const [t, x, n] of [['HASKAP ×8', 25, 44], ['FALL RASPBERRY', 34, 44], ['ARONIA ×4', 43, 50], ['SUMMER RASPBERRY', 43, 88]]) LB.add(label(t, x, n, groundH(x, n) + 6.5, '#7b2d3a', 1.8)); }
   /* vegetable garden: 8 cedar raised beds stepped down the slope, welded-wire fence, gate on the west */
   const gb = new Batch(), soil = new Batch(), fb = new Batch();
   for (const x of P.garden.xs) for (const y of P.garden.ys) {
@@ -1415,11 +1451,14 @@ function buildIrrigation(scene, key) {
   for (const p of [[[150, 156], [157, 151], [165, 160], [184, 170], [181, 186], [162, 180]], [[150, 110], [190, 110], [205, 104]], [[190, 110], [200, 122], [196, 140]], [[90, 125], [64, 125], [59, 135], [62, 172], [70, 178], [58, 210], [38, 206], [18, 200]], [[64, 125], [58.5, 114], [58.5, 90], [58.5, 45]],
   [[156, 128], [156, 121], [184, 121]], [[156, 128], [156, 135], [184, 135]], [[150, 97], [147, 97], [147, 156]], [[58.5, 114], [56, 16]], [[59, 135], [57, 170]]]) drape(lines.drip, p, 0.22, 0.32, 1.2);
   }
+  // Z7 berry drip (every plan): trenched only off the reserve (valve box → x 53.5), then surface-laid under mulch on the reserve
+  { const vb7 = key === 'B' ? [84, 127.7] : PI ? [90, 125] : [89.6, 122.7]; drape(lines.drip, [vb7, [53.5, vb7[1]], [53.5, 92], [25, 92]], 0.22, 0.32, 1.2); for (const x of [25, 34, 43]) drape(lines.drip, [[x, 92], [x, 46]], 0.22, 0.32, 1.2); }
   for (const k of Object.keys(lines)) G.add(new THREE.Mesh(lines[k].geometry(), flat(ZCOL[k], 1)));
   for (const k of Object.keys(fans)) { const m = new THREE.Mesh(fans[k].geometry(), flat(ZCOL[k], 0.2)); m.renderOrder = 4; G.add(m); }
   const VB = key === 'B' ? [84, 127.7] : [89.6, 122.7], vb = new Batch(), g = groundH(VB[0], VB[1]); vb.box(VB[0] - 1, VB[0] + 1, g - 0.3, g + 0.25, VB[1] - 0.7, VB[1] + 0.7); G.add(new THREE.Mesh(vb.geometry(), MAT.lid));
   const hx = PI ? PI.bib[0] : key === 'B' ? 150 : 156, hn = PI ? PI.bib[1] : key === 'B' ? 120 : 128, hb = new Batch(), g2 = groundH(hx, hn); hb.box(hx - 0.15, hx + 0.15, g2 - 0.3, g2 + 2.6, hn - 0.15, hn + 0.15); G.add(new THREE.Mesh(hb.geometry(), MAT.steel));
   const L = (t, x, n, c, up) => G.add(label(t, x, n, groundH(x, n) + (up || 4), c, 2.6));
+  L('Z7 BERRY DRIP · SURFACE-LAID ON RESERVE', 34, 97, '#14a08c', 5);
   if (PI) PI.labels.forEach(a => L(...a));
   else if (key === 'B') { L('Z1 WEST LAWN · 5 MP ROTATORS', 76, 160, '#2a78c2'); L('Z2 CENTER LAWN · 4', 112, 172, '#7b4fb5'); L('Z4 PATH BED DRIP', 125, 160, '#14a08c', 3); L('Z3 EAST SIDE · 4', 170, 95, '#d2691e'); L('VALVE BOX (ASSUMED)', 84, 127.7, '#174a7c', 3); L('GARDEN HOSE BIB', 150, 120, '#174a7c', 4.5); L('Z5 TREE DRIP · 32 TREES', 96, 190, '#14a08c', 6); L('Z6 GARDEN DRIP', 163, 128, '#14a08c', 6); }
   else { L('Z1 WEST LAWN · 6 MP ROTATORS', 76, 160, '#2a78c2'); L('Z2 CENTER LAWN · 6', 127, 172, '#7b4fb5'); L('Z3 EAST SIDE · 4', 170, 99, '#d2691e'); L('VALVE BOX (ASSUMED)', 89.6, 122.7, '#174a7c', 3); L('QUICK COUPLER', 156, 128, '#174a7c', 4.5); L('Z6 GARDEN DRIP', 171, 140, '#14a08c', 6); }
@@ -1507,7 +1546,7 @@ function startApp() {
     ['Foyer', { w: [129.2, 102.6, 4, EL.F1] }], ['Dining', { w: [124.5, 112, 200, EL.F1] }], ['Office', { w: [133, 108, 110, EL.F1] }], ['Great room', { w: [130.6, 123.2, 72, EL.F1] }], ['Kitchen', { w: [123.5, 131, 245, EL.F1] }], ['Nook', { w: [116.5, 137.5, 80, EL.F1] }], ['Mud room', { w: [100.5, 120.5, 0, EL.F1] }],
     ['Upstairs hall', { w: [127, 116, 270, EL.F2] }], ['Primary bed', { w: [113, 123, 40, EL.F2] }], ['Primary bath', { w: [103, 128.5, 330, EL.F2] }], ['Bedroom 4', { w: [135, 109, 100, EL.F2] }],
     ['Greenhouse', { w: [52, 162, 0], plan: 'B' }], ['In the greenhouse', { w: [52, 176, 0], plan: 'B' }], ['Drive extension', { w: [62, 108, 40], plan: 'B' }], ['Council ring', { w: [150, 170, 45], plan: 'C' }], ['Rain garden', { w: [93, 172, 300], plan: 'C' }], ['Orchard', { w: [168, 140.5, 5], plan: 'D' }], ['Pergola', { w: [140.5, 147.5, 290], plan: 'D' }],
-    ['Basement', { w: [124, 116, 25, EL.B] }], ['Walkout patio', { w: [129, 163, 172] }], ['Deck', { w: [131, 139.2, 5, EL.F1 - 0.15] }], ['Back yard', { w: [78.5, 168, 118] }], ['Pond edge', { w: [112, 207, 176] }], ['Garden', { garden: true, land: true }], ['Moss grove', { w: [97, 203, 55], plan: 'B' }], ['Fire pit', { w: [135.5, 171, 38], plan: 'B' }],
+    ['Basement', { w: [124, 116, 25, EL.B] }], ['Walkout patio', { w: [129, 163, 172] }], ['Deck', { w: [131, 139.2, 5, EL.F1 - 0.15] }], ['Back yard', { w: [78.5, 168, 118] }], ['Pond edge', { w: [112, 207, 176] }], ['Garden', { garden: true, land: true }], ['Moss grove', { w: [97, 203, 55], plan: 'B' }], ['Berry patch', { w: [29.5, 43, 0], land: true }], ['Fire pit', { w: [135.5, 171, 38], plan: 'B' }],
   ];
   function goTo(v) {
     if (S.tour) endTour(true);
@@ -1723,6 +1762,7 @@ function startApp() {
     if (S.mode === 'fly' && S.feet > groundH(clamp(x, EXT.x0, EXT.x1), clamp(n, EXT.y0, EXT.y1)) + 25) return 'Airborne';
     if (S.mode === 'orbit') return 'Orbit view';
     if (pondSdf(x, n) < 4) return 'Existing pond'; if (n < -20 && n > -46) return 'Pine Lake Blvd'; if (!inPoly(x, n, LOT)) return n < 0 ? 'Right-of-way' : 'Off the lot';
+    if (S.land && inBerry(x, n)) { const R = BERRY.rows.find(q => Math.abs(x - q.x) < 2.5 && n > q.n0 - 1 && n < q.n1 + 1); return R ? 'Berry patch · ' + { haskap: 'haskap row', fallRasp: 'fall raspberries', aronia: 'aronia', summerRasp: 'summer raspberries' }[R.crop] : 'Berry patch (mown aisle)'; }
     { const PW = S.land && PLANS[S.land].where, w = PW && PW(x, n, S.feet); if (w) return w; } if (x > 122.5 && x < 142.6 && n > 134.7 && n < 156 && S.feet > 881) return 'Deck (20×8 = 160 sf)'; if (x > 122.5 && x < 144.6 && n > 134.7 && n < 150.8) return 'Walkout patio'; if (x > 123 && x < 135 && n > 92 && n < 100) return 'Front porch';
     if (S.land === 'B') { const HH = BEDS_B.gh; if (BEDS_B.ext.some(([a, b, c, d]) => x >= a && x <= c && n >= b && n <= d)) return 'Driveway extension'; if (x > HH.x0 - 1 && x < HH.x1 + 1 && n > HH.n0 - 1 && n < HH.n1 + 1) return 'Glass greenhouse'; } if (x > 65 && x < 94.7 && n < 116.7) return 'Driveway'; if (S.land === 'B') { if (Math.hypot(x - BEDS_B.fire.x, n - BEDS_B.fire.n) < BEDS_B.fire.r) return 'Fire-pit terrace'; if (distPoly(x, n, BEDS_B.fpL) < 2.6 || distPoly(x, n, BEDS_B.fpR) < 2.6 || BEDS_B.walks.some(P => distPoly(x, n, P) < 2.6)) return 'Stone path'; if (inPoly(x, n, BEDS_B.moss)) return 'Moss grove'; } if (n > 189.5) return 'Pond buffer (undisturbed)'; if (S.land && x > PLANS[S.land].garden.box[0] && x < PLANS[S.land].garden.box[1] && n > PLANS[S.land].garden.box[2] && n < PLANS[S.land].garden.box[3]) return 'Vegetable garden'; if (S.land === 'B') { if (inPoly(x, n, BEDS_B.moss)) return 'Moss grove'; if (inPoly(x, n, BEDS_B.corridor)) return 'Pine corridor'; if (inPoly(x, n, BEDS_B.meadow)) return 'Pollinator meadow (on reserve)'; if (inPoly(x, n, BEDS_B.meadowSE)) return 'Pollinator meadow (septic edge)'; if (inPoly(x, n, BEDS_B.wedge)) return 'Orchard bed'; if (inPoly(x, n, BEDS_B.screen)) return 'NW screen planting'; } if (x > 87 && n < 85.4) return 'Front yard · over septic field'; if (x < 52.8 && x > 7 && n > 13) return 'Septic reserve strip'; if (n > 134) return 'Back yard'; return x < 95 ? 'West side yard' : x > 144 ? 'East side yard' : 'Front yard';
   }
@@ -1737,7 +1777,7 @@ function startApp() {
     g.fillStyle = 'rgba(120,120,120,.5)'; g.fillRect(0, Y(-21), mm.width, 24 * mmS);
     const poly = (P, fill, stroke) => { g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.closePath(); if (fill) { g.fillStyle = fill; g.fill(); } if (stroke) { g.strokeStyle = stroke; g.stroke(); } };
     poly(LOT, 'rgba(110,160,80,.28)', null);
-    if (S.land) { const PB = PLANS[S.land].beds, mk = PLANS[S.land].mini || (S.land === 'B' ? ['corridor', 'screen', 'drive', 'entryW', 'entryE', 'eastF', 'patio', 'porch'] : ['grove', 'screen', 'eastA', 'eastB', 'drive', 'west', 'porch']); if (PLANS[S.land].miniDraw) PLANS[S.land].miniDraw({ g, X, Y, mmS, poly }); for (const k of mk) poly(PB[k], 'rgba(120,80,40,.5)'); if (PB.moss) poly(PB.moss, 'rgba(40,90,40,.6)'); poly(PB.meadow, 'rgba(160,110,190,.45)'); if (PB.meadowSE) poly(PB.meadowSE, 'rgba(160,110,190,.45)'); poly(PB.garden, 'rgba(150,130,90,.6)'); g.fillStyle = 'rgba(30,110,50,.75)'; for (const t of PLANS[S.land].trees) { g.beginPath(); g.arc(X(t.x), Y(t.n), Math.max(2, (t.s || 4) / 2 * mmS), 0, 7); g.fill(); } }
+    if (S.land) { const PB = PLANS[S.land].beds, mk = PLANS[S.land].mini || (S.land === 'B' ? ['corridor', 'screen', 'drive', 'entryW', 'entryE', 'eastF', 'patio', 'porch'] : ['grove', 'screen', 'eastA', 'eastB', 'drive', 'west', 'porch']); if (PLANS[S.land].miniDraw) PLANS[S.land].miniDraw({ g, X, Y, mmS, poly }); for (const k of mk) poly(PB[k], 'rgba(120,80,40,.5)'); if (PB.moss) poly(PB.moss, 'rgba(40,90,40,.6)'); poly(PB.meadow, 'rgba(160,110,190,.45)'); poly(rectPts(BERRY.box[0], BERRY.box[1], BERRY.box[2], BERRY.box[3]), 'rgba(95,150,70,.9)'); for (const R of BERRY.rows) poly(rectPts(R.x - 2, R.x + 2, R.n0 - 1, R.n1 + 1), 'rgba(170,60,60,.75)'); if (PB.meadowSE) poly(PB.meadowSE, 'rgba(160,110,190,.45)'); poly(PB.garden, 'rgba(150,130,90,.6)'); g.fillStyle = 'rgba(30,110,50,.75)'; for (const t of PLANS[S.land].trees) { g.beginPath(); g.arc(X(t.x), Y(t.n), Math.max(2, (t.s || 4) / 2 * mmS), 0, 7); g.fill(); } }
     if (siteLines.visible) { g.setLineDash([4, 3]); poly(rectPts(87, 234.7, 1.9, 85.4), null, '#2e9e57'); poly(rectPts(7, 52.8, 13.1, 187.9), null, '#2e9e57'); g.beginPath(); g.arc(X(104.7), Y(157.1), 50 * mmS, 0, 7); g.strokeStyle = '#2f7fd0'; g.stroke(); g.setLineDash([]); }
     poly([[65.1, -21], [85.1, -21], [85.1, 84.5], [131, 84.5], [131, 87.5], [85.1, 87.5], [85.1, 89.9], [94.7, 89.9], [94.7, 116.65], [65.1, 116.65]], 'rgba(200,198,190,.95)'); poly(rectPts(122.54, 144.54, 134.73, 150.73), 'rgba(200,198,190,.95)'); if (S.land === 'B') { for (const [a, b, c, d] of BEDS_B.ext) poly(rectPts(a, c, b, d), 'rgba(200,198,190,.95)'); const HH = BEDS_B.gh; poly(rectPts(HH.x0, HH.x1, HH.n0, HH.n1), 'rgba(235,240,235,.95)'); g.strokeStyle = 'rgba(120,122,126,.95)'; g.lineWidth = 3.5 * mmS; for (const P of [BEDS_B.fpL, BEDS_B.fpR, ...BEDS_B.walks]) { g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.stroke(); } g.lineWidth = Math.max(1, mmS * 0.5); } poly(rectPts(122.64, 142.54, 134.83, 142.73), 'rgba(150,110,70,.95)');
     const H = [[0, 0], [20.83, 0], [20.83, 8], [31.83, 8], [31.83, 10], [37, 10], [37, 8], [49.84, 8], [49.84, 44.83], [27.84, 44.83], [27.84, 52.83], [8.17, 52.83], [8.17, 44.83], [0, 44.83]].map(([u, v]) => [HX + u, HY + v]); poly(H, ink, null);
