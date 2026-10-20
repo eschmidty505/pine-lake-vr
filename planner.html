@@ -1,0 +1,1057 @@
+<title>Pine Lake Yard Planner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed walkable plan-view map; survey-sheet panels (title block, drawer, inspect card) float over it like a drawing set's sheets. */
+:root{
+  --paper:#f2efe4;--paper2:#e9e5d7;--ink:#1b2228;--mute:#5d666d;--line:#1b2228;--grid:rgba(27,34,40,.07);
+  --accent:#c2402a;--blue:#1f5f9e;--on:#1b2228;--onink:#f2efe4;--shadow:0 6px 24px rgba(10,14,18,.28);
+  --ok:#2e7d4f;--warn:#b7791f;--err:#c2402a;
+  --map-bg:#e6e2d4;--map-grid:rgba(27,34,40,.08);--lawn:#5e8a3f;--lawn2:#6f9a48;--road:#7d7c78;--conc:#c9c6bd;--roof:#3b3f45;--water:#7fa3b5;
+  --mulch:#5b4232;--needle:#a6753f;--meadow:#7b9447;--prairie:#a69a5c;--moss:#3f6a35;--gravel:#b9ac90;--buffer:#7d8550;--reserve:#73944a;--septic:#6b9645;
+  --cast:rgba(20,28,16,.28);--ui-ink:#1b2228;
+  --display:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#141a1f;--paper2:#1b232a;--ink:#e7e2d4;--mute:#97a0a6;--line:#56616a;--grid:rgba(231,226,212,.06);--accent:#ff7b5c;--blue:#6db0ee;--on:#e7e2d4;--onink:#141a1f;--shadow:0 6px 24px rgba(0,0,0,.55);
+  --ok:#5cc489;--warn:#e7b04b;--err:#ff7b5c;
+  --map-bg:#20272c;--map-grid:rgba(231,226,212,.06);--lawn:#3f6630;--lawn2:#4b7437;--road:#4b4c4e;--conc:#8f8c86;--roof:#23262a;--water:#3d5a68;
+  --mulch:#3d2d22;--needle:#7c5a33;--meadow:#56703a;--prairie:#7a7247;--moss:#2c4c28;--gravel:#857c68;--buffer:#545c3a;--reserve:#4f6c36;--septic:#4a6c33;
+  --cast:rgba(0,0,0,.38);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141a1f;--paper2:#1b232a;--ink:#e7e2d4;--mute:#97a0a6;--line:#56616a;--grid:rgba(231,226,212,.06);--accent:#ff7b5c;--blue:#6db0ee;--on:#e7e2d4;--onink:#141a1f;--shadow:0 6px 24px rgba(0,0,0,.55);
+  --ok:#5cc489;--warn:#e7b04b;--err:#ff7b5c;
+  --map-bg:#20272c;--map-grid:rgba(231,226,212,.06);--lawn:#3f6630;--lawn2:#4b7437;--road:#4b4c4e;--conc:#8f8c86;--roof:#23262a;--water:#3d5a68;
+  --mulch:#3d2d22;--needle:#7c5a33;--meadow:#56703a;--prairie:#7a7247;--moss:#2c4c28;--gravel:#857c68;--buffer:#545c3a;--reserve:#4f6c36;--septic:#4a6c33;
+  --cast:rgba(0,0,0,.38);color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;overflow:hidden}
+body{background:var(--map-bg);color:var(--ink);font:500 12px/1.4 var(--mono);-webkit-tap-highlight-color:transparent;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#map{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.sheet{background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:12px 12px;border:1.5px solid var(--line);box-shadow:var(--shadow)}
+button,select,input{font:inherit;color:var(--ink)}
+button{background:var(--paper);border:1px solid var(--line);padding:6px 8px;cursor:pointer;text-transform:uppercase;letter-spacing:.05em;font-size:10.5px;min-height:32px}
+button:hover{background:var(--paper2)}
+button[aria-pressed="true"]{background:var(--on);color:var(--onink)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+h2{font:700 11.5px/1 var(--display);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+h2:before{content:"";width:7px;height:7px;background:var(--accent);display:inline-block;flex:none}
+.k{font-size:8.5px;letter-spacing:.12em;color:var(--mute);display:block;text-transform:uppercase}
+
+/* ---- left panel: title block + drawer ---- */
+#panel{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));width:330px;display:flex;flex-direction:column;z-index:6;transition:transform .25s ease}
+.tb{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1.5px solid var(--line)}
+.tb>div{padding:5px 8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
+.tb>div:nth-child(3n){border-right:0}
+.tb .wide{grid-column:1/4;border-right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.tb h1{font:700 23px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
+.tb h1 small{display:block;font:600 12.5px/1.3 var(--display);letter-spacing:.14em;color:var(--accent);margin-top:3px}
+.tb .v{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;font-variant-numeric:tabular-nums}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1.5px solid var(--line)}
+.plans button{border:0;border-right:1px solid var(--line);font:600 12px/1.05 var(--display);letter-spacing:.06em;padding:8px 2px;position:relative}
+.plans button:last-child{border-right:0}
+.plans button .dot{position:absolute;top:4px;right:5px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-right:1px solid var(--line);font-size:9.5px;padding:6px 1px;letter-spacing:.06em}
+.tabs button:last-child{border-right:0}
+#drawer{overflow-y:auto;flex:1;overscroll-behavior:contain;padding:10px;scrollbar-width:thin;min-height:0}
+.grp{margin-bottom:12px}
+.row{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px dashed color-mix(in srgb,var(--line) 35%,transparent);cursor:pointer;width:100%;text-align:left;background:none;border-left:0;border-right:0;border-top:0;text-transform:none;letter-spacing:0;font-size:11.5px;min-height:0}
+.row:hover{background:var(--paper2)}
+.sw{width:14px;height:14px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 40%,transparent)}
+.sw.sq{border-radius:2px}
+.nm{min-width:0}
+.nm b{font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm i{font-style:normal;color:var(--mute);font-size:10.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cnt{font:700 15px/1 var(--display);font-variant-numeric:tabular-nums}
+.cal{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;margin-top:4px}
+.cal span{height:5px;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.cal span.now{outline:1px solid var(--ink);outline-offset:0}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:2px 6px;background:var(--paper)}
+.chip.ok{border-color:var(--ok);color:var(--ok)}.chip.warn{border-color:var(--warn);color:var(--warn)}.chip.err{border-color:var(--err);color:var(--err)}
+.msg{display:grid;grid-template-columns:10px 1fr;gap:7px;align-items:start;padding:4px 0;font-size:11.5px}
+.msg:before{content:"";width:8px;height:8px;margin-top:4px;background:var(--ok)}
+.msg.warn:before{background:var(--warn)}.msg.err:before{background:var(--err)}
+.search{width:100%;border:1px solid var(--line);background:var(--paper);padding:7px 8px;margin-bottom:8px;min-height:34px}
+.filt{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.filt button{font-size:9.5px;padding:4px 7px;min-height:26px}
+.tog{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed color-mix(in srgb,var(--line) 35%,transparent);cursor:pointer;font-size:11.5px}
+.tog input{accent-color:var(--accent);width:16px;height:16px}
+.tog .sw{margin-left:auto}
+.task{padding:6px 0;border-bottom:1px dashed color-mix(in srgb,var(--line) 35%,transparent);font-size:11.5px}
+.foot{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1.5px solid var(--line)}
+.foot button{flex:1;min-width:0}
+.save{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);white-space:nowrap}
+.save.on{color:var(--ok)}
+
+/* ---- inspect card ---- */
+#card{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:340px;max-height:calc(100% - 250px);overflow-y:auto;z-index:7;overscroll-behavior:contain}
+#card header{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;padding:10px 12px 8px;border-bottom:1.5px solid var(--line)}
+#card h3{font:700 21px/1.05 var(--display);text-transform:uppercase;letter-spacing:.02em;text-wrap:balance}
+#card h3 small{display:block;font:600 12.5px/1.2 var(--display);letter-spacing:.1em;color:var(--accent);margin-top:2px;text-transform:none}
+#card .body{padding:10px 12px;display:grid;gap:10px}
+#card .facts{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line)}
+#card .facts>div{padding:5px 7px;border-right:1px solid var(--line);min-width:0}
+#card .facts>div:last-child{border-right:0}
+#card .facts b{font:700 16px/1.1 var(--display);font-variant-numeric:tabular-nums;display:block}
+#card p{font-size:11.5px;line-height:1.5}
+#card .acts{display:flex;gap:6px;flex-wrap:wrap}
+#card .acts button{flex:1}
+.x{min-height:28px;padding:2px 9px;font-size:13px}
+
+/* ---- HUD ---- */
+#zone{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:5;padding:6px 12px;display:flex;gap:10px;align-items:center;cursor:pointer;max-width:min(520px,calc(100% - 32px))}
+#zone b{font:700 14px/1.1 var(--display);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;gap:6px;width:min(620px,calc(100% - 32px))}
+#hotbar{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:6px}
+#hotbar button{flex:none;display:flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:11px;padding:4px 8px}
+#hotbar .lbl{font:700 10.5px/1 var(--display);letter-spacing:.18em;color:var(--mute);align-self:center;padding:0 4px;text-transform:uppercase}
+#time{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;padding:7px 10px}
+#months{display:grid;grid-template-columns:repeat(12,1fr);grid-column:1/3}
+#months button{border:0;border-right:1px solid color-mix(in srgb,var(--line) 40%,transparent);padding:4px 0;min-height:26px;font-size:9.5px;letter-spacing:.04em}
+#months button:last-child{border-right:0}
+#year{width:100%;accent-color:var(--accent)}
+#yearv{font:700 15px/1 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap}
+#mini{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));width:190px;height:178px;z-index:5;cursor:pointer}
+#mini canvas{width:100%;height:100%;display:block}
+#toast{position:fixed;left:50%;top:calc(58px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9;padding:7px 12px;font-size:11.5px;max-width:min(460px,calc(100% - 32px));pointer-events:none;transition:opacity .2s}
+#toast.err{border-color:var(--err)}#toast.warn{border-color:var(--warn)}
+#help{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:min(440px,calc(100% - 32px));padding:16px 18px;display:grid;gap:10px}
+#help h3{font:700 24px/1 var(--display);text-transform:uppercase}
+#help ul{list-style:none;display:grid;gap:5px;font-size:11.5px}
+#help kbd{font:600 10.5px var(--mono);border:1px solid var(--line);padding:0 5px;background:var(--paper2)}
+#joy,#acts,#topbar{display:none}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.shots button{padding:0;border:1px solid var(--line);min-height:0;aspect-ratio:16/10;overflow:hidden;background:var(--paper2)}
+.shots img{width:100%;height:100%;object-fit:cover;display:block}
+.hero{padding:0;border:1px solid var(--line);min-height:0;width:100%;display:block;background:var(--paper2)}
+.hero img{width:100%;display:block;aspect-ratio:3/2;object-fit:cover}
+#shot{position:fixed;inset:0;z-index:12;background:rgba(10,14,18,.86);display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#shot figure{max-width:min(1400px,100%);display:grid;gap:8px}
+#shot img{max-width:100%;max-height:calc(100vh - 140px);display:block;margin:0 auto;border:1.5px solid var(--line)}
+#shot figcaption{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;flex-wrap:wrap}
+#shot figcaption span{font:600 13px/1.3 var(--display);letter-spacing:.06em;text-transform:uppercase;min-width:0}
+#shot .nav{display:flex;gap:6px}
+
+/* ---- phone ---- */
+@media (max-width:820px){
+  #panel{top:0;left:0;bottom:0;width:min(360px,92vw);transform:translateX(-105%);border-left:0;border-top:0;border-bottom:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);z-index:11}
+  body.open #panel{transform:none}
+  #scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:10}
+  #topbar{display:flex;position:fixed;top:0;left:0;right:0;z-index:6;gap:6px;align-items:center;padding:calc(6px + env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));border-width:0 0 1.5px}
+  #topbar b{font:700 15px/1 var(--display);text-transform:uppercase;letter-spacing:.04em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #topbar select{border:1px solid var(--line);background:var(--paper);padding:5px 6px;min-height:32px;font-size:11px}
+  #zone{top:calc(54px + env(safe-area-inset-top,0px));max-width:calc(100% - 24px)}
+  #zone .k{display:none}
+  #toast{top:calc(96px + env(safe-area-inset-top,0px))}
+  #card{left:0;right:0;top:auto;bottom:0;width:auto;max-height:62%;border-left:0;border-right:0;border-bottom:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  #bottom{left:0;right:0;transform:none;width:auto;bottom:0;gap:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+  #bottom>.sheet{border-left:0;border-right:0;box-shadow:none}
+  #hotbar{border-bottom:0!important}
+  #mini{display:none}
+  #joy{display:block;position:fixed;left:max(14px,env(safe-area-inset-left,0px));bottom:calc(132px + env(safe-area-inset-bottom,0px));width:116px;height:116px;border-radius:50%;z-index:5;touch-action:none;border:1.5px solid var(--line);background:color-mix(in srgb,var(--paper) 70%,transparent)}
+  #joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:var(--on);opacity:.85}
+  #acts{display:grid;gap:8px;position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(132px + env(safe-area-inset-bottom,0px));z-index:5}
+  #acts button{width:84px;min-height:42px;font-size:10px;box-shadow:var(--shadow)}
+}
+@media (prefers-reduced-motion:reduce){#panel{transition:none}}
+</style>
+
+<canvas id="map" aria-label="Plan view of the lot. Walk the gardener around with the arrow keys, WASD, or the on-screen joystick."></canvas>
+
+<div id="topbar" class="sheet">
+  <button id="menuBtn" aria-label="Open plants and layers">☰</button>
+  <b>Pine Lake Yard</b>
+  <select id="planSel" aria-label="Yard plan"></select>
+  <span class="save" id="save2"></span>
+</div>
+
+<aside id="panel" class="sheet" aria-label="Planner panel">
+  <div class="tb">
+    <div class="wide"><h1>7305 Pine Lake Blvd<small>YARD PLANNER · PLANT &amp; ZONE MAP</small></h1><button class="x" id="helpBtn" aria-label="How to play">?</button></div>
+    <div><span class="k">Plan</span><span class="v" id="tbPlan">—</span></div>
+    <div><span class="k">Trees</span><span class="v" id="tbTrees">—</span></div>
+    <div><span class="k">Berries + shrubs</span><span class="v" id="tbShrubs">—</span></div>
+    <div><span class="k">Grid</span><span class="v">FT · SW CORNER</span></div>
+    <div><span class="k">Checks</span><span class="v" id="tbChecks">—</span></div>
+    <div><span class="k">Saved</span><span class="v save" id="save1">—</span></div>
+  </div>
+  <div class="plans" id="plans" role="group" aria-label="Yard plan"></div>
+  <div class="tabs" id="tabs" role="tablist">
+    <button data-tab="plants" aria-pressed="true">Plants</button><button data-tab="catalog">Catalog</button><button data-tab="checks">Checks</button><button data-tab="month">Month</button><button data-tab="layers">Layers</button>
+  </div>
+  <div id="drawer"></div>
+  <div class="foot"><button id="undoBtn">Undo</button><button id="copyBtn">Copy plan</button><button id="resetBtn">Reset plan</button></div>
+</aside>
+
+<div id="zone" class="sheet" role="button" tabindex="0" aria-label="Current zone; open zone details"><span class="k">Standing in</span><b id="zoneName">—</b></div>
+
+<section id="card" class="sheet" hidden aria-live="polite"></section>
+
+<div id="bottom">
+  <div id="hotbar" class="sheet" aria-label="Plant hotbar"></div>
+  <div id="time" class="sheet">
+    <span id="yearv">2028</span><input id="year" type="range" min="0" max="25" step="1" value="1" aria-label="Years after planting">
+    <div id="months" role="group" aria-label="Month"></div>
+  </div>
+</div>
+
+<div id="mini" class="sheet" aria-label="Minimap; click to jump"><canvas id="miniCv"></canvas></div>
+<div id="joy" aria-label="Move joystick"><i></i></div>
+<div id="acts"><button id="actInspect">Inspect</button><button id="actPlant" hidden>Plant here</button><button id="actCenter">Center</button></div>
+<div id="toast" class="sheet" hidden></div>
+<div id="shot" hidden role="dialog" aria-label="Blender render"><figure><img id="shotImg" alt=""><figcaption class="sheet"><span id="shotCap"></span><span class="nav"><button id="shotPrev" aria-label="Previous render">◀</button><button id="shotNext" aria-label="Next render">▶</button><button id="shotX">Close</button></span></figcaption></figure></div>
+<div id="help" class="sheet" hidden role="dialog" aria-label="How it works">
+  <h3>Walk the yard</h3>
+  <ul>
+    <li><kbd>WASD</kbd> / arrows or the joystick to walk · <kbd>Shift</kbd> to jog · tap the map to walk there</li>
+    <li><kbd>E</kbd> or Inspect: open the nearest plant, or the zone you're standing in</li>
+    <li>Tap a plant to select it, then drag it to move it. Setback checks run while you drag.</li>
+    <li>Pick a plant in the hotbar or Catalog, then tap the map (or <kbd>Space</kbd> / Plant here) to plant it</li>
+    <li><kbd>Del</kbd> removes the selected plant · <kbd>Ctrl</kbd>+<kbd>Z</kbd> undo · wheel or pinch to zoom · <kbd>C</kbd> re-centers</li>
+    <li>The year slider grows everything; the month row shows bloom, fruit, fall color and winter.</li>
+  </ul>
+  <button id="helpClose">Start walking</button>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, t) => a + (b - a) * t;
+const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function hash(s) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let s = (seed >>> 0) || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
+const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/* ================= site geometry (lot grid, feet; origin SW lot corner, +x east, +y north) ================= */
+const LOT = [[0, 0], [236, 0], [236, 76.1], [184.05, 220], [0, 220]];
+const HOUSE = [[94.7, 89.9], [144.54, 89.9], [144.54, 134.73], [122.54, 134.73], [122.54, 142.73], [102.87, 142.73], [102.87, 134.73], [94.7, 134.73]];
+const DRIVE = [[65.1, 0], [59, -21], [91, -21], [85.1, 0], [85.1, 84.5], [131, 84.5], [131, 87.5], [129.8, 87.5], [129.8, 93.9], [126.8, 93.9], [126.8, 87.5], [85.1, 87.5], [85.1, 89.9], [94.7, 89.9], [94.7, 116.65], [65.1, 116.65]];
+const PATIO = R(122.54, 144.54, 134.73, 150.73), PORCH = R(123.8, 132.8, 93.9, 97.9), DECK = R(122.54, 142.54, 134.83, 142.73);
+const SEPTIC = { x0: 87, x1: 234.7, y0: 1.9, y1: 85.4 }, TRENCH = { x0: 97.1, x1: 221.1, y0: 11.8, y1: 75.8 }, TANK = { x0: 157, x1: 161.5, y0: 76.6, y1: 85.4 };
+const RES = { x0: 7, x1: 52.8, y0: 13.1, y1: 187.9 }, WELL = [104.6, 157.2], LOD = 189.5;
+const BERRY = { x0: 20, x1: 48, y0: 42, y1: 94 };
+const RIG = R(80, 100, 116.65, 152);
+const POND = { cx: -54.5, cy: 313, hx: 259.5, hy: 87, r: 45 };
+function R(x0, x1, y0, y1) { return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
+function ELL(x, y, rx, ry, n) { n = n || 36; const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; p.push([x + Math.cos(a) * rx, y + Math.sin(a) * ry]); } return p; }
+function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
+function distSeg(x, y, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay, t = clamp(((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1), 0, 1); return Math.hypot(x - ax - dx * t, y - ay - dy * t); }
+function distPoly(x, y, P, closed) { let d = 1e9; const n = closed === false ? P.length - 1 : P.length; for (let i = 0; i < n; i++) { const a = P[i], b = P[(i + 1) % P.length]; d = Math.min(d, distSeg(x, y, a[0], a[1], b[0], b[1])); } return d; }
+function distRect(x, y, r) { const dx = Math.max(r.x0 - x, 0, x - r.x1), dy = Math.max(r.y0 - y, 0, y - r.y1); return Math.hypot(dx, dy); }
+const inRect = (x, y, r) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
+function area(P) { let a = 0; for (let i = 0, j = P.length - 1; i < P.length; j = i++) a += (P[j][0] + P[i][0]) * (P[j][1] - P[i][1]); return Math.abs(a / 2); }
+function centroid(P) { let x = 0, y = 0; for (const p of P) { x += p[0]; y += p[1]; } return [x / P.length, y / P.length]; }
+function pondSdf(x, y) { const qx = Math.abs(x - POND.cx) - POND.hx + POND.r, qy = Math.abs(y - POND.cy) - POND.hy + POND.r; return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - POND.r; }
+
+/* terrain (ported from the 3D model; used for contours and spot grades) */
+const NWT = [[0, 884.2], [28, 883], [52, 882], [74, 881], [99.6, 880], [106.4, 879], [112.8, 878], [119.6, 877], [126.5, 876], [132.8, 875], [140.8, 874], [158.7, 873], [179, 872], [187.8, 871], [193.9, 870], [200, 869], [206.8, 868], [213, 867], [218.6, 866], [226, 865.2]];
+const NET = [[0, 886], [24, 885], [32, 884], [45, 883], [58, 882], [70, 881], [82, 880], [90, 879], [99, 878], [108.6, 877], [118, 876], [130.6, 875], [157, 873], [183, 871.5], [207, 870], [213, 869], [220, 867.5], [228, 866], [236, 865.2]];
+function pl(tab, y) { if (y <= tab[0][0]) return tab[0][1]; for (let i = 1; i < tab.length; i++) if (y <= tab[i][0]) { const [y0, h0] = tab[i - 1], [y1, h1] = tab[i]; return h0 + (h1 - h0) * (y - y0) / (y1 - y0); } return tab[tab.length - 1][1]; }
+function natural(x, y) { const t = clamp(x / 236, -0.3, 1.3); if (y >= 0) { const h = lerp(pl(NWT, y), pl(NET, y), t); return lerp(h, 860.5, sstep(6, -25, pondSdf(x, y))); } const Rr = 884.6 + 1.6 * clamp(x / 236, -1.2, 1.6), n0 = lerp(884.2, 886, t); if (y > -21) { const s = (y + 21) / 21; return lerp(Rr - 0.1, n0, s) - 2.2 * Math.pow(Math.sin(Math.PI * s), 1.2); } return Rr; }
+const HX = 94.7, HY = 89.9;
+function houseGrade(u, v) { if (v > 44.83) return 879.5; const tw = clamp((v - 26.75) / 18.08, 0, 1), te = clamp((v - 10) / 34.83, 0, 1), t = lerp(tw, te, clamp(u / 49.84, 0, 1)), drop = lerp(6, 8, clamp(u / 8.17, 0, 1)); return 887.5 - t * drop; }
+const PADS = [
+  { r: [87, 234.7, 1.9, 85.4], T: (x, y) => 886.3 + 0.5 * (y - 1.9) / 83.5 + 0.4 * (x - 87) / 147.7, s: 0.25 },
+  { r: [65.1, 85.1, -21, 89.9], T: (x, y) => 885.1 + (y + 21) / 110.9 * 1.53, s: 0.33 },
+  { r: [65.1, 94.7, 89.9, 116.65], T: (x) => 886.63 + (x - 65.1) / 29.6 * 0.9, s: 0.33 },
+  { r: [85.1, 131, 84.5, 87.5], T: () => 887.3, s: 0.25 },
+  { r: [122.54, 144.54, 134.73, 150.73], T: () => 879.5, s: 0.12 },
+  ...[[19.83, 49.84, 8, 44.83], [0, 19.83, 26.75, 44.83], [8.17, 27.84, 44.83, 52.83], [0, 20.83, 0, 26.75]].map(h => ({ r: [HX + h[0], HX + h[1], HY + h[2], HY + h[3]], T: (x, y) => houseGrade(x - HX, y - HY), s: 0.2 })),
+];
+function smax(a, b, k) { const h = Math.max(k - Math.abs(a - b), 0); return Math.max(a, b) + h * h / (4 * k); }
+function grade(x, y) { let h = natural(x, y); for (const p of PADS) { const cx = clamp(x, p.r[0], p.r[1]), cy = clamp(y, p.r[2], p.r[3]), d = Math.hypot(x - cx, y - cy); if (d > 60) continue; h = smax(h, p.T(cx, cy) - p.s * d, 1.2); } return h; }
+
+/* ================= plant catalog ================= */
+const SP = {};
+function S(k, o) { SP[k] = Object.assign({ k, v: '', l: '', c: 'shrub', nat: 0, ed: 0, ev: 0, h0: 1, hM: 3, s0: 1, sM: 3, tau: 4, bl: [], fr: [], leaf: '#5a8440', bc: null, fc: null, fall: null, buy: '', note: '', roots: '', warn: null, row: 0 }, o); }
+// trees + conifers
+S('pine', { n: 'Eastern white pine', l: 'Pinus strobus', c: 'conifer', nat: 1, ev: 1, h0: 5.5, hM: 70, s0: 3.5, sM: 30, tau: 18, leaf: '#3f6b48', buy: '5–6′ B&B', roots: 'Wide, fairly shallow lateral roots.', note: 'Soft blue-green screen tree, fast once established. A white pine blister rust host lives on currants and gooseberries, which is why those are left out.' });
+S('spruce', { n: 'Norway spruce', l: 'Picea abies', c: 'conifer', ev: 1, h0: 5.5, hM: 52, s0: 3.5, sM: 25, tau: 18, leaf: '#2f5a3f', buy: '5–6′ B&B', note: 'Dense, dark screen. Mixed in so one pest can’t take out the whole screen.' });
+S('wspruce', { n: 'White spruce', l: 'Picea glauca', c: 'conifer', nat: 1, ev: 1, h0: 5.5, hM: 55, s0: 3, sM: 25, tau: 19, leaf: '#4f7a6c', buy: '5–6′ B&B', note: 'Native, blue-green, very cold-hardy.' });
+S('hemlock', { n: 'Eastern hemlock', l: 'Tsuga canadensis', c: 'conifer', nat: 1, ev: 1, h0: 5.5, hM: 60, s0: 3, sM: 28, tau: 20, leaf: '#2e5538', buy: '5–6′ B&B', note: 'Deep shade for the moss grove. Hemlock woolly adelgid is spreading in Michigan: buy clean stock and inspect each year.' });
+S('redbud', { n: 'Eastern redbud', l: 'Cercis canadensis', c: 'tree', nat: 1, h0: 8, hM: 22, s0: 4, sM: 22, tau: 10, bl: [4, 5], leaf: '#5f8a3c', bc: '#d7609c', fall: '#d6b23a', buy: '1.5″ caliper', note: 'Magenta-pink bloom on bare branches in late April and May; heart-shaped leaves.' });
+S('oak', { n: 'Swamp white oak', l: 'Quercus bicolor', c: 'tree', nat: 1, h0: 11, hM: 56, s0: 5, sM: 45, tau: 22, leaf: '#4c7836', fall: '#b4823a', buy: '1.5–2″ caliper', note: 'Clay- and wet-tolerant native oak; long-lived shade.' });
+S('bur', { n: 'Bur oak', l: 'Quercus macrocarpa', c: 'tree', nat: 1, h0: 10, hM: 70, s0: 5, sM: 70, tau: 26, leaf: '#4a7333', fall: '#a9853f', note: 'The open-grown savanna oak of pre-settlement Lapeer County.' });
+S('woak', { n: 'White oak', l: 'Quercus alba', c: 'tree', nat: 1, h0: 10, hM: 70, s0: 5, sM: 65, tau: 28, leaf: '#4f7537', fall: '#9c3f2e', note: 'Slow and very long-lived; burgundy fall color.' });
+S('hickory', { n: 'Shagbark hickory', l: 'Carya ovata', c: 'tree', nat: 1, ed: 1, h0: 9, hM: 70, s0: 4, sM: 40, tau: 26, fr: [9, 10], leaf: '#557d38', fc: '#7a6a3c', fall: '#d4a72c', note: 'Shaggy bark and edible nuts; deep taproot.' });
+S('service', { n: 'Serviceberry', v: 'clump', l: 'Amelanchier × grandiflora', c: 'tree', nat: 1, ed: 1, h0: 7, hM: 18, s0: 4, sM: 15, tau: 10, bl: [4], fr: [6], leaf: '#5a8540', bc: '#f4f1ea', fc: '#5b2a52', fall: '#d0602e', buy: '6–8′ clump', note: 'White April bloom, June berries (the birds compete), orange-red fall color.' });
+S('birch', { n: 'River birch', v: 'clump', l: 'Betula nigra', c: 'tree', nat: 1, h0: 9, hM: 45, s0: 5, sM: 30, tau: 12, leaf: '#5c8a44', fall: '#d6b13a', buy: '8–10′ clump', note: 'Peeling cinnamon bark; handles the wet ground by the pond.' });
+S('crab', { n: 'Crabapple', v: "'Prairifire'", l: 'Malus', c: 'tree', h0: 8, hM: 20, s0: 4, sM: 20, tau: 9, bl: [5], fr: [9, 10, 11, 12], leaf: '#5b5a3a', bc: '#d2477a', fc: '#9c1f3a', fall: '#a55a2c', note: 'Disease-resistant; pink-red bloom and persistent fruit for winter birds.' });
+S('lmaple', { n: 'Laceleaf maple', v: "'Tamukeyama'", l: 'Acer palmatum var. dissectum', c: 'tree', h0: 3, hM: 8, s0: 3, sM: 11, tau: 11, leaf: '#6b2232', fall: '#b8202a', note: 'Small weeping red focal tree by the path beds.' });
+// fruit trees
+S('apple', { n: 'Dwarf apple', v: "'Honeycrisp'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9], leaf: '#5c8a44', bc: '#f6e3ea', fc: '#c8302c', note: 'Needs a second apple variety nearby for pollination.' });
+S('apple2', { n: 'Dwarf apple', v: "'Liberty'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9, 10], leaf: '#5a8642', bc: '#f6e3ea', fc: '#a51f2a', note: 'Scab-immune; one of MSU Extension’s disease-resistant picks.' });
+S('appleL', { n: 'Apple', v: "'Liberty' semi-dwarf", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 7, hM: 16, s0: 3, sM: 15, tau: 8, bl: [5], fr: [9, 10], leaf: '#5a8642', bc: '#f6e3ea', fc: '#b3202a', note: 'Scab-immune, MSU disease-resistant list. Planted high on the clay.' });
+S('appleE', { n: 'Apple', v: "'Enterprise' semi-dwarf", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 7, hM: 16, s0: 3, sM: 15, tau: 8, bl: [5], fr: [10], leaf: '#5a8642', bc: '#f6e3ea', fc: '#9e1b24', note: 'Late keeper; scab-immune.' });
+S('appleG', { n: 'Apple', v: "'GoldRush' semi-dwarf", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 7, hM: 16, s0: 3, sM: 15, tau: 8, bl: [5], fr: [10, 11], leaf: '#5a8642', bc: '#f6e3ea', fc: '#d8c13c', note: 'Very late, tart-sweet; stores into spring.' });
+S('appleF', { n: 'Apple', v: "'Freedom' semi-dwarf", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 7, hM: 16, s0: 3, sM: 15, tau: 8, bl: [5], fr: [9], leaf: '#5a8642', bc: '#f6e3ea', fc: '#c2352a', note: 'Scab-immune, cedar-apple-rust resistant.' });
+S('pear', { n: 'Pear', v: "'Harrow Sweet'", l: 'Pyrus communis', c: 'fruit', ed: 1, h0: 7, hM: 18, s0: 3, sM: 11, tau: 9, bl: [4, 5], fr: [9], leaf: '#557f3c', bc: '#f7f4ee', fc: '#bdc44f', note: 'Fire-blight resistant.' });
+S('pear2', { n: 'Pear', v: "'Seckel'", l: 'Pyrus communis', c: 'fruit', ed: 1, h0: 7, hM: 17, s0: 3, sM: 11, tau: 9, bl: [4, 5], fr: [9], leaf: '#557f3c', bc: '#f7f4ee', fc: '#9a6b35', note: 'Small, very sweet “sugar pear”; pollinates Harrow Sweet.' });
+S('plum', { n: 'Plum', v: "'Stanley'", l: 'Prunus domestica', c: 'fruit', ed: 1, h0: 7, hM: 15, s0: 3, sM: 14, tau: 8, bl: [5], fr: [8, 9], leaf: '#527a3a', bc: '#f6f2ea', fc: '#4a2a6a', note: 'Self-fertile European plum.' });
+S('cherry', { n: 'Tart cherry', v: "'Montmorency'", l: 'Prunus cerasus', c: 'fruit', ed: 1, h0: 6, hM: 14, s0: 3, sM: 13, tau: 7, bl: [5], fr: [7], leaf: '#55803d', bc: '#f6f2ea', fc: '#e0142a', note: 'Self-fertile; the Michigan pie cherry.' });
+S('pawpaw', { n: 'Pawpaw', l: 'Asimina triloba', c: 'fruit', nat: 1, ed: 1, h0: 5, hM: 20, s0: 3, sM: 14, tau: 11, bl: [5], fr: [9], leaf: '#4f7d35', bc: '#6b2a2a', fc: '#9aa84a', note: 'Native fruit with a custard-tropical flavor. Needs two genetically different trees.' });
+// berries
+S('haskap', { n: 'Haskap', v: "'Boreal Beauty' + 'Boreal Beast'", l: 'Lonicera caerulea', c: 'berry', ed: 1, h0: 1.5, hM: 5, s0: 1.2, sM: 5, tau: 3, bl: [4], fr: [6], leaf: '#5d7a5a', bc: '#f2ecb8', fc: '#3a3f8f', buy: 'Bare-root or #1 pot', roots: 'Shallow and fibrous; most roots in the top 12–18″.', note: 'The first fruit of the year, early to mid June. Plant two compatible varieties. Net the row: birds take it the day it ripens. First berries in year 2–3, full crop by year 5.' });
+S('aronia', { n: 'Aronia', v: "'Viking'", l: 'Aronia melanocarpa', c: 'berry', nat: 1, ed: 1, h0: 1.5, hM: 6, s0: 1.2, sM: 6, tau: 4, bl: [5], fr: [8, 9], leaf: '#3f6b2c', bc: '#f4f1ea', fc: '#1c1a24', fall: '#a3262a', buy: 'Bare-root or #2 pot', roots: 'Shallow and fibrous; suckers slowly.', note: 'Black chokeberry. Astringent fresh, excellent in juice, jam and smoothies. Brilliant red fall color. First crop year 3, full crop year 5.' });
+S('rasp_fall', { n: 'Red raspberry, fall', v: "'Caroline'", l: 'Rubus idaeus', c: 'berry', ed: 1, row: 1, h0: 2, hM: 5, s0: 1.5, sM: 3, tau: 2, bl: [6, 7], fr: [8, 9, 10], leaf: '#557d33', bc: '#f2efe2', fc: '#c21f3a', buy: 'Bare-root canes, 2′ apart', roots: 'Most roots in the top 10–12″; spreads by suckers.', note: 'Crops the first fall. Mow every cane to the ground each March: no pruning decisions. Hates wet feet, which is why it sits on the high part of the patch.' });
+S('rasp_summer', { n: 'Red raspberry, summer', v: "'Nova'", l: 'Rubus idaeus', c: 'berry', ed: 1, row: 1, h0: 2, hM: 5.5, s0: 1.5, sM: 3, tau: 2, bl: [5, 6], fr: [7], leaf: '#5a8236', bc: '#f2efe2', fc: '#c8243e', buy: 'Bare-root canes, 2′ apart', roots: 'Most roots in the top 10–12″.', note: 'July crop on last year’s canes. Cut the spent canes out after harvest.' });
+S('rasp_d', { n: 'Red raspberry', v: 'trellised · variety TBD', l: 'Rubus idaeus', c: 'berry', ed: 1, row: 1, h0: 2, hM: 5.5, s0: 1.5, sM: 3, tau: 2, bl: [6], fr: [7, 8], leaf: '#5a8236', bc: '#f2efe2', fc: '#d0465a', note: 'Homestead berry row on a T-trellis, off the reserve.' });
+S('blackberry', { n: 'Thornless blackberry', v: 'trellised · variety TBD', l: 'Rubus subg. Rubus', c: 'berry', ed: 1, row: 1, h0: 2, hM: 6, s0: 1.5, sM: 4, tau: 2, bl: [6], fr: [8], leaf: '#4e7a32', bc: '#f2efe2', fc: '#1b1420', note: 'Needs a trellis; posts count as structures, so keep this off the septic reserve.' });
+S('elder', { n: 'American elderberry', l: 'Sambucus canadensis', c: 'berry', nat: 1, ed: 1, h0: 3, hM: 10, s0: 2, sM: 8, tau: 3, bl: [6, 7], fr: [8, 9], leaf: '#557f38', bc: '#f2efd9', fc: '#2a1630', note: 'Water-seeking and suckering: fine in a bed, not on the septic reserve.' });
+S('currant', { n: 'Black currant', l: 'Ribes nigrum', c: 'berry', ed: 1, h0: 2, hM: 5, s0: 2, sM: 5, tau: 3, bl: [4, 5], fr: [7], leaf: '#567d3b', bc: '#e6e0a8', fc: '#1a1520', warn: 'Michigan prohibits selling black currant statewide; it hosts white pine blister rust. Swap for haskap or aronia.', note: 'In the Homestead drive hedge as drawn. Flagged: see the warning.' });
+// shrubs
+S('viburnum', { n: 'Arrowwood viburnum', l: 'Viburnum dentatum', nat: 1, h0: 2.5, hM: 9, s0: 2, sM: 8, tau: 5, bl: [6], fr: [9], leaf: '#4f7a36', bc: '#f3efe2', fc: '#27406b', fall: '#a33a2a', note: 'Tough native screen shrub; blue berries for birds.' });
+S('dogwood', { n: 'Red-twig dogwood', l: 'Cornus sericea', nat: 1, h0: 2.5, hM: 7, s0: 2, sM: 8, tau: 4, bl: [6], fr: [8], leaf: '#53803b', bc: '#f2f0e4', fc: '#e8ecf0', fall: '#8a2a3a', note: 'Bright red stems all winter; salt-tolerant enough for the drive bed.' });
+S('graydog', { n: 'Gray dogwood', l: 'Cornus racemosa', nat: 1, h0: 3, hM: 10, s0: 2, sM: 10, tau: 5, bl: [6], fr: [9], leaf: '#56804a', bc: '#f2f0e4', fc: '#f0f0ea', fall: '#8a3a4a', note: 'Thicket-forming native; white berries on red stalks.' });
+S('hazel', { n: 'American hazelnut', l: 'Corylus americana', nat: 1, ed: 1, h0: 3, hM: 10, s0: 2, sM: 10, tau: 5, bl: [3], fr: [9], leaf: '#5a843d', bc: '#c9b04a', fc: '#8a6a3a', fall: '#c7862e', note: 'Edible nuts if you beat the squirrels; good thicket screen.' });
+S('hydrangea', { n: 'Panicle hydrangea', l: 'Hydrangea paniculata', h0: 2.5, hM: 7, s0: 2, sM: 7, tau: 4, bl: [7, 8, 9], leaf: '#5a8a42', bc: '#f4efe4', note: 'Big white cones that age to pink; tough in clay.' });
+S('inkberry', { n: 'Inkberry holly', l: 'Ilex glabra', nat: 0, ev: 1, h0: 2, hM: 6, s0: 2, sM: 6, tau: 5, leaf: '#2f5a32', note: 'Evergreen foundation shrub; tolerates wet soil.' });
+S('ninebark', { n: 'Ninebark', l: 'Physocarpus opulifolius', nat: 1, h0: 2.5, hM: 7, s0: 2, sM: 7, tau: 4, bl: [6], leaf: '#6b3a3e', bc: '#f3e9e4', fall: '#7a2a30', note: 'Purple-leaf native shrub with peeling bark.' });
+S('ninebark_dw', { n: 'Dwarf ninebark', l: 'Physocarpus opulifolius', nat: 1, h0: 1.5, hM: 4, s0: 1.5, sM: 4, tau: 3, bl: [6], leaf: '#6b3a3e', bc: '#f3e9e4', note: 'Compact form for the porch bed.' });
+S('spicebush', { n: 'Spicebush', l: 'Lindera benzoin', nat: 1, h0: 2.5, hM: 9, s0: 2, sM: 9, tau: 6, bl: [4], fr: [9], leaf: '#5d8a3c', bc: '#e8d35a', fc: '#c22a2a', fall: '#e2c23a', note: 'Shade-tolerant native for the moss grove edge.' });
+S('witchhazel', { n: 'Witch hazel', l: 'Hamamelis virginiana', nat: 1, h0: 3, hM: 15, s0: 2, sM: 14, tau: 8, bl: [10, 11], leaf: '#5a8540', bc: '#e9cc3c', fall: '#e0b43a', note: 'Yellow ribbon flowers in late fall, after the leaves drop.' });
+// perennials
+const PER = (k, n, l, bl, bc, o) => S(k, Object.assign({ n, l, c: 'perennial', h0: 1, hM: 3, s0: 1, sM: 2, tau: 2, bl, bc, leaf: '#5d8a40' }, o));
+PER('coneflower', 'Purple coneflower', 'Echinacea purpurea', [7, 8], '#b8508a', { nat: 1, note: 'Pollinator anchor; leave seedheads for goldfinches.' });
+PER('bes', 'Black-eyed Susan', 'Rudbeckia fulgida', [7, 8, 9], '#e8b014', { nat: 1, note: 'Salt-tolerant and long-blooming.' });
+PER('beebalm', 'Bee balm', 'Monarda fistulosa', [7, 8], '#b18ac8', { nat: 1, note: 'Wild bergamot; hummingbirds and bumblebees.' });
+PER('aster', 'New England aster', 'Symphyotrichum novae-angliae', [9, 10], '#7a4fb5', { nat: 1, hM: 4, note: 'Late fuel for migrating monarchs.' });
+PER('mtnmint', 'Mountain mint', 'Pycnanthemum virginianum', [7, 8], '#e8e6f0', { nat: 1, note: 'One of the top native pollinator plants.' });
+PER('catmint', 'Catmint', 'Nepeta × faassenii', [5, 6, 7, 8, 9], '#8c7fc8', { note: 'Blooms all season if sheared once in July.' });
+PER('hosta', 'Hosta', 'Hosta', [7], '#c9b6e0', { leaf: '#5f8f6a', note: 'Shade bed backbone; deer browse it.' });
+PER('fern', 'Ferns', 'Matteuccia / Athyrium', [], null, { nat: 1, leaf: '#5d9046', note: 'Ostrich and lady fern for shade.' });
+PER('astilbe', 'Astilbe', 'Astilbe', [6, 7], '#e68aa8', { note: 'Plumes for the shady nook; likes moisture.' });
+PER('wildginger', 'Wild ginger', 'Asarum canadense', [], null, { nat: 1, leaf: '#4f7f3c', hM: 0.6, note: 'Native shade groundcover for the pine grove.' });
+PER('yarrow', 'Yarrow', 'Achillea millefolium', [6, 7, 8], '#f0e8c8', { nat: 1, note: 'Fine-textured edge plant for the stone paths.' });
+PER('lambsear', "Lamb's ear", 'Stachys byzantina', [6], '#b5a0c8', { leaf: '#a9b3a0', note: 'Silver, soft foliage at path edges.' });
+PER('blazing', 'Blazing star', 'Liatris spicata', [7, 8], '#9a4fb0', { nat: 1, note: 'Purple spikes; monarch magnet.' });
+PER('rattlesnake', 'Rattlesnake master', 'Eryngium yuccifolium', [7, 8], '#dfe6d6', { nat: 1, leaf: '#8aa08a', note: 'Architectural native of the oak openings.' });
+PER('iris', 'Blue flag iris', 'Iris versicolor', [6], '#5a5ab8', { nat: 1, note: 'Rain garden: handles standing water.' });
+PER('milkweed', 'Swamp milkweed', 'Asclepias incarnata', [7, 8], '#d06a9a', { nat: 1, note: 'Monarch host plant for wet spots.' });
+PER('joepye', 'Joe-pye weed', 'Eutrochium maculatum', [8, 9], '#b8708a', { nat: 1, hM: 6, note: 'Tall wetland bloom for the rain garden.' });
+PER('asparagus', 'Asparagus', 'Asparagus officinalis', [], null, { ed: 1, fr: [5, 6], fc: '#7aa04a', leaf: '#7aa84f', note: 'Harvest spears May–June from year 3.' });
+PER('rhubarb', 'Rhubarb', 'Rheum rhabarbarum', [], null, { ed: 1, fr: [5, 6], fc: '#c23a4a', leaf: '#4f8a3a', note: 'Pull stalks in May and June.' });
+PER('lavender', 'Lavender', "Lavandula 'Munstead'", [6, 7], '#9a8ad0', { leaf: '#8a9a88', note: 'Hardy English lavender along the patio edge.' });
+PER('sage', 'Culinary sage', 'Salvia officinalis', [6], '#9a8ad0', { ed: 1, leaf: '#8a9a80', note: 'Kitchen herb by the patio.' });
+PER('thyme', 'Thyme', 'Thymus vulgaris', [6], '#c8a8d8', { ed: 1, leaf: '#6a8a5a', hM: 0.5, note: 'Kitchen herb by the patio.' });
+PER('chives', 'Chives', 'Allium schoenoprasum', [5, 6], '#b88ac8', { ed: 1, note: 'Edible edging in the drive hedge.' });
+PER('clover', 'White clover', 'Trifolium repens', [6, 7, 8], '#f4f4ee', { hM: 0.4, note: 'Orchard-floor mow strip; feeds bees, fixes nitrogen.' });
+PER('moss', 'Sheet moss', 'Hypnum', [], null, { leaf: '#3f6a35', hM: 0.1, note: 'Transplant or slurry once the hemlock canopy closes; keep leaf litter off.' });
+// grasses + sedges
+const GR = (k, n, l, o) => S(k, Object.assign({ n, l, c: 'grass', h0: 1, hM: 3, s0: 1, sM: 2, tau: 2, leaf: '#6f8f4a' }, o));
+GR('dropseed', 'Prairie dropseed', 'Sporobolus heterolepis', { nat: 1, bl: [8, 9], bc: '#d8c89a', fall: '#c08a3a', hM: 2.5, note: 'Fine fountain of leaves; seed heads smell like popcorn.' });
+GR('bluestem', 'Little bluestem', 'Schizachyrium scoparium', { nat: 1, leaf: '#6f8f8a', fall: '#b06a3a', note: 'Blue-green summer, copper-orange fall and winter.' });
+GR('bigblue', 'Big bluestem', 'Andropogon gerardii', { nat: 1, hM: 6, leaf: '#6a8a6a', fall: '#9a4a3a', note: 'Tall prairie grass; keep it off the reserve (deep roots).' });
+GR('indian', 'Indiangrass', 'Sorghastrum nutans', { nat: 1, hM: 6, bl: [9], bc: '#c8a040', fall: '#c08a3a', note: 'Golden plumes in September.' });
+GR('sideoats', 'Sideoats grama', 'Bouteloua curtipendula', { nat: 1, hM: 2.5, note: 'Short clumping prairie grass, safe on the reserve.' });
+GR('switch', 'Switchgrass', 'Panicum virgatum', { nat: 1, hM: 5, fall: '#c4a24a', note: 'Upright, salt-tolerant drive-bed grass.' });
+GR('featherreed', 'Feather reed grass', "Calamagrostis × acutiflora 'Karl Foerster'", { hM: 5, bl: [6, 7], bc: '#d8c08a', note: 'Vertical accent; plumes from June.' });
+GR('sedge', 'Pennsylvania sedge', 'Carex pensylvanica', { nat: 1, hM: 0.7, leaf: '#6a9a4a', note: 'Soft no-mow groundcover under the pines.' });
+GR('tussock', 'Tussock sedge', 'Carex stricta', { nat: 1, hM: 2.5, note: 'Rain garden edge.' });
+const CATS = { conifer: 'Evergreen trees', tree: 'Shade + flowering trees', fruit: 'Fruit trees', berry: 'Berries', shrub: 'Shrubs', perennial: 'Perennials + edibles', grass: 'Grasses + sedges' };
+const isTree = s => s.c === 'tree' || s.c === 'conifer' || s.c === 'fruit';
+const isWoody = s => isTree(s) || s.c === 'shrub' || s.c === 'berry';
+function grow(a, b, tau, yrs) { return a + (b - a) * (1 - Math.exp(-yrs / tau)); }
+
+/* ================= plans ================= */
+const Z = (id, name, kind, poly, comp, note, irr) => ({ id, name, kind, poly, comp: comp || [], note: note || '', irr: irr || '' });
+const D = 'drift';
+const RESERVE_P = R(7, 52.8, 13.1, 187.9);
+const MEADOW_MIX = [['coneflower', D], ['bes', D], ['beebalm', D], ['aster', D], ['dropseed', D]];
+const BERRY_ITEMS = () => [
+  ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => ({ id: 'H' + (i + 1), sp: 'haskap', x: 25, y: 47.5 + i * 5.5 })),
+  { id: 'R1', sp: 'rasp_fall', x: 34, y: 46, y1: 90 },
+  ...[0, 1, 2, 3].map(i => ({ id: 'A' + (i + 1), sp: 'aronia', x: 43, y: 47.5 + i * 6 })),
+  { id: 'R2', sp: 'rasp_summer', x: 43, y: 70, y1: 90 },
+];
+const T = (pre, list) => list.map(([sp, x, y], i) => ({ id: pre + (i + 1), sp, x, y }));
+const PLANS = {
+  A: { name: 'Balanced', short: 'Balanced', note: '15 trees · meadow strip · garden east of the patio',
+    items: () => [...T('T', [['pine', 165, 160], ['pine', 184, 170], ['pine', 162, 180], ['pine', 181, 186], ['pine', 205, 104], ['spruce', 200, 122], ['pine', 196, 140], ['redbud', 59, 135], ['oak', 70, 178], ['service', 157, 151], ['service', 58.5, 45], ['service', 58.5, 90], ['pine', 18, 200], ['pine', 38, 206], ['birch', 58, 210]]), ...BERRY_ITEMS()],
+    garden: { xs: [157, 164, 171, 178], ys: [116, 130], box: [155, 186, 112, 144] }, hard: [], vb: [89.6, 122.7],
+    zones: [
+      Z('grove', 'NE pine grove · needle bed', 'needle', [[152, 146], [172, 146], [193, 160], [191, 188.5], [150, 188.5], [150, 158]], [['sedge', 30], ['fern', 8], ['wildginger', 10]], 'Pine straw under T1–T4. Sedge, ferns and wild ginger come in Phase 3.', 'Z5 tree drip'),
+      Z('screen', 'East screen bed', 'needle', [[193, 96], [215, 96], [199, 148], [186, 148]], [['viburnum', 3], ['dogwood', 3]], 'White pines and a Norway spruce with viburnum and dogwood underneath.', 'Z4 bed drip · Z5 tree drip'),
+      Z('east', 'East foundation + patio side', 'mulch', [[129.8, 87.6], [152, 87.6], [152, 158], [144.9, 158], [144.9, 97.7], [134.8, 97.7], [134.8, 93], [129.8, 93]], [['hydrangea', 3], ['inkberry', 4], ['featherreed', 5], ['hosta', 6], ['catmint', 5]], '', 'Z4 bed drip'),
+      Z('drive', 'Drive bed', 'mulch', R(54, 63, 14, 114), [['dogwood', 6], ['switch', 12], ['bluestem', 12], ['bes', 15]], 'Salt-tolerant mix. Push plowed snow away from the dogwoods.', 'Z4 bed drip'),
+      Z('west', 'West border', 'mulch', R(54, 64, 120, 172), [['ninebark', 4], ['dropseed', 10], ['coneflower', 12]], '', 'Z4 bed drip'),
+      Z('porch', 'Front bed by the porch', 'mulch', R(115.7, 123.4, 87.6, 97.7), [['ninebark_dw', 1], ['dropseed', 3], ['catmint', 3]], '', 'Z4 bed drip'),
+      Z('nook', 'Nook shade bed', 'mulch', R(103.2, 122.4, 142.9, 149), [['hosta', 5], ['fern', 6], ['astilbe', 3]], 'Under the deck’s west end.', 'Z4 bed drip'),
+      Z('meadow', 'West pollinator meadow', 'meadow', R(7, 19, 13.1, 187.9), MEADOW_MIX, 'On the septic reserve: Michigan native seed mix plus plugs. No woody plants, no deep-rooted prairie grasses. Mow once in early spring. Pollinates the berry patch next door.', 'None'),
+      Z('reserveTurf', 'Septic reserve · low-mow fescue', 'reserve', R(19, 52.8, 13.1, 187.9), [], 'Held for a replacement septic field. No structures, trees, fill or grade changes.', 'None'),
+      Z('garden', 'Vegetable garden', 'garden', R(155, 186, 112, 144), [], 'Eight 4′×10′ raised beds, 12–18″ tall, fenced.', 'Z6 garden drip'),
+    ],
+    heads: [[1, 66, 119, 0, 90], [1, 92, 119, 90, 180], [1, 60, 189, -90, 0], [1, 100, 187, 180, 270], [1, 66, 150, -90, 90], [1, 81, 137, 0, 180], [2, 112, 151, 0, 180], [2, 133, 152, 0, 180], [2, 127, 187, 180, 360], [2, 104, 187, -90, 0], [2, 148, 187, 180, 270], [2, 147, 159, 90, 180], [3, 153, 89, 0, 90], [3, 187, 89, 90, 180], [3, 153, 110, -90, 0], [3, 186, 110, 180, 270]],
+    main: [[[90, 125], [90, 156], [150, 156], [150, 128], [156, 128]], [[150, 128], [150, 89]]],
+    flags: ['Deck size and the valve box location are assumptions.'] },
+  B: { name: 'Secluded', short: 'Secluded', note: '35 trees · pine corridor · moss grove · fire pit · greenhouse',
+    items: () => [...T('B', [...[[210, 104], [205, 120], [198, 140], [191, 160], [183, 180], [176, 200], [196, 110], [177, 150], [170, 170], [163, 190], [166, 213]].map(p => ['pine', ...p]),
+      ['hemlock', 38, 199], ['hemlock', 62, 196.5], ['hemlock', 68, 186], ['pine', 152, 210.5], ['pine', 138, 207.5], ['pine', 16, 193], ['pine', 21, 215], ['wspruce', 30, 187], ['wspruce', 25, 204], ['birch', 50, 197.5],
+      ['crab', 58.5, 26], ['crab', 58.5, 54], ['crab', 58.5, 78], ['crab', 80, 160], ['service', 58.5, 18], ['oak', 70, 170], ['redbud', 96, 180], ['service', 152, 148],
+      ['hemlock', 125.5, 187], ['hemlock', 128, 198.5], ['hemlock', 175, 218.5], ['apple', 140, 164], ['apple2', 152, 162], ['cherry', 146, 173.5], ['lmaple', 136, 155]]), ...BERRY_ITEMS()],
+    garden: { xs: [150, 157, 164, 171], ys: [108, 122], box: [148, 178, 104, 134] }, vb: [84, 127.7],
+    hard: [{ name: 'Glass greenhouse', poly: R(47, 57, 172, 188) }, { name: 'Driveway extension', poly: R(59, 65.1, 84, 125) }, { name: 'Driveway extension', poly: R(65.1, 94.7, 116.65, 125) }, { name: 'Fire-pit terrace', poly: ELL(145.4, 188.6, 12.8, 12.8, 28) }],
+    paths: [[[129, 151.4], [129, 159.5], [130.5, 164.5], [134, 169.5], [137.5, 174.5], [139.8, 181.6]], [[151.5, 134.6], [155.5, 137.8], [159.4, 142.6], [161.1, 150.2], [160.8, 158], [158.3, 169.4], [154.8, 177.2], [150.9, 181.5]],
+      [[52, 163], [52.6, 151], [55.5, 147], [62, 145], [75, 144.5], [90, 145.8], [100, 150.2], [112, 151.2], [122.4, 150]], [[160.5, 146], [167.5, 143.4], [177, 140.5], [183.5, 135], [185.5, 125], [185.5, 105], [184, 95], [179, 91.5], [160, 91.5], [150.5, 91], [149.8, 86.2], [140, 86], [131, 86]]],
+    zones: [
+      Z('corridor', 'East pine corridor', 'needle', [[208, 92], [230, 92], [196, 176], [176, 215], [150, 215], [166, 176]], [['sedge', D]], 'Two staggered rows of white pine, 18–22′ apart, stopping 25′+ from the trenches.', 'Z5 tree drip'),
+      Z('screenNW', 'NW corner screen', 'needle', R(8, 40, 188, 218), [], 'Pines and white spruce screen the west side above the reserve.', 'Z5 tree drip'),
+      Z('moss', 'Moss grove', 'moss', [[8, 200], [191, 200], [184.05, 220], [8, 220]], [['moss', D], ['fern', D], ['viburnum', 6], ['spicebush', 6], ['witchhazel', 4]], 'Hemlock walls with an open moss floor along the pond edge. Sits in Pond Easement #1: confirm planting is allowed.', 'Z5 tree drip'),
+      Z('meadow', 'West meadow (whole reserve)', 'meadow', [[7, 23], [52.5, 23], [52.8, 34], [50.5, 46], [44, 60], [34, 77], [27.5, 95], [25, 120], [25, 160], [24, 187.9], [7, 187.9]], [['bluestem', D], ['dropseed', D], ['sideoats', D], ['coneflower', D], ['beebalm', D], ['aster', D], ['mtnmint', D]], 'Clumping natives only, 3–4′ tall. Mow once in early spring.', 'None'),
+      Z('meadowSE', 'SE meadow (over trench ends)', 'meadow', [[207, 23], [235, 23], [235, 76.1], [230.3, 92], [208, 92], [205.5, 80], [204.5, 55], [205.5, 35]], [['dropseed', D], ['coneflower', D], ['bes', D], ['aster', D]], 'Over the east end of the septic field. Shallow-rooted natives only; flagged in the model.', 'None'),
+      Z('drive', 'Drive bed · framed entrance', 'mulch', R(54, 63, 14, 84), [['switch', 14], ['bes', 16], ['dropseed', 12]], 'Crabapples over grass-and-boulder masses.', 'Z4 bed drip'),
+      Z('entryW', 'Entry mass (west)', 'mulch', R(54, 63, 2, 14), [['dropseed', 6], ['coneflower', 4]], '', ''), Z('entryE', 'Entry mass (east)', 'mulch', R(88, 96, 2, 14), [['dropseed', 6], ['coneflower', 4]], 'No trees on this side: septic field.', ''),
+      Z('eastF', 'East foundation', 'mulch', [[134.8, 87.6], [147, 87.6], [147, 100], [144.9, 100], [144.9, 97.7], [134.8, 97.7]], [['hydrangea', 3], ['featherreed', 4], ['catmint', 5]], '', 'Z4 bed drip'),
+      Z('patioBed', 'Patio-side bed', 'mulch', R(144.9, 150, 134.8, 158), [['inkberry', 3], ['hosta', 6]], '', 'Z4 bed drip'),
+      Z('porch', 'Front bed by the porch', 'mulch', R(115.7, 123.4, 87.6, 97.7), [['ninebark_dw', 1], ['dropseed', 3], ['catmint', 3]], '', ''),
+      Z('nook', 'Nook shade bed', 'mulch', R(103.2, 122.4, 142.9, 149), [['hosta', 5], ['fern', 6], ['astilbe', 3]], '', ''),
+      Z('wedge', 'Path beds + orchard bed', 'mulch', [[129, 151.4], [129, 159.5], [130.5, 164.5], [134, 169.5], [137.5, 174.5], [139.8, 181.6], [150.9, 181.5], [154.8, 177.2], [158.3, 169.4], [160.8, 158], [161.1, 150.2], [159.4, 142.6], [155.5, 137.8], [151.5, 134.6], [145, 138], [144.8, 151], [129, 151]], [['yarrow', D], ['dropseed', D], ['catmint', D], ['lambsear', D], ['sedge', D]], 'Fine-textured beds between the two stone-slab paths, with two dwarf apples, a tart cherry and a laceleaf maple.', 'Z4 bed drip'),
+      Z('garden', 'Vegetable garden', 'garden', R(148, 178, 104, 134), [], 'Same eight raised beds, moved east-inboard.', 'Z6 garden drip'),
+    ],
+    heads: [[1, 56, 127, 0, 90], [1, 90, 127, 90, 180], [1, 100, 187, 180, 270], [1, 66, 150, -90, 90], [1, 81, 137, 0, 180], [2, 112, 154.5, 0, 180], [2, 121, 155, 90, 180], [2, 118, 187, 180, 360], [2, 104, 187, -90, 0], [3, 153, 88.3, 0, 90], [3, 187, 88.3, 90, 180], [3, 155, 101, -90, 0], [3, 181.5, 101, 180, 270]],
+    main: [[[84, 128], [80, 132], [80, 152], [100, 165], [146, 165], [150, 140], [150, 95]]],
+    flags: ['The greenhouse’s west ~6′ overlaps the septic reserve (owner’s call): needs county OK.', 'Fire-pit terrace and moss grove sit in Pond Easement #1.', 'Corridor pine at (163,190) may overhang the fire ring at maturity.', 'The SE meadow sits over the trench ends.'] },
+  C: { name: 'Oak Opening', short: 'Oak Opening', note: '10 trees · oak savanna · prairie + mown paths · council ring · rain garden',
+    items: () => [...T('C', [['bur', 66, 170], ['woak', 184, 178], ['bur', 200, 108], ['hickory', 196, 138], ['oak', 88, 204], ['service', 58.5, 40], ['service', 58.5, 78], ['service', 156, 154], ['redbud', 96, 178], ['redbud', 60, 128]]), ...BERRY_ITEMS()],
+    garden: { xs: [152, 159], ys: [106, 119], box: [149, 166, 103, 132] }, vb: [90, 125],
+    hard: [{ name: 'Council ring', poly: ELL(158, 178, 8, 8, 24) }, { name: 'Pond landing', poly: R(101, 107, 199, 203) }],
+    paths: [[[146, 168], [152, 173]], [[164, 183], [180, 169], [188, 150], [186, 128], [180, 106], [168, 98], [150, 99]], [[112, 175], [108, 188], [105, 198]], [[82, 164], [70, 156], [62, 146]]], mownPaths: true,
+    zones: [
+      Z('clearing', 'The clearing · lawn', 'lawn', ELL(116, 160, 40, 16), [], 'The only irrigated lawn in this plan, by the house.', 'Z1 · 7 MP rotators'),
+      Z('rain', 'Rain garden at the sump outlet', 'rain', ELL(78, 180, 12, 6.5), [['iris', D], ['milkweed', D], ['joepye', D], ['tussock', D]], 'Catches the sump discharge; a few boulders at the inlet.', 'None'),
+      Z('thicket', 'Dogwood + hazelnut thicket', 'thicket', [[212, 94], [229.5, 94], [196.5, 184], [190, 184]], [['graydog', 14], ['hazel', 12]], 'Screen and bird cover along the NE edge.', 'None'),
+      Z('prairie', 'Oak savanna prairie', 'prairie', [[53, 146], [53, 189.5], [195.1, 189.5], [229.5, 94], [168, 94], [168, 136], [146, 146]], [['bluestem', D], ['bigblue', D], ['indian', D], ['sideoats', D], ['coneflower', D], ['beebalm', D], ['blazing', D], ['rattlesnake', D], ['aster', D]], 'Dry-mesic prairie, seeded not sodded. Mown paths. Burn or mow once a year in spring.', 'None'),
+      Z('drive', 'Drive bed', 'mulch', R(54, 63, 14, 114), [['hazel', 7], ['dropseed', 22], ['bes', 14]], 'American hazelnut, dropseed and black-eyed Susan under the serviceberries.', 'Z5 drip'),
+      Z('garden', 'Raised beds', 'garden', R(149, 166, 103, 132), [], 'Four raised beds.', 'Z6 garden drip'),
+      Z('meadow', 'Reserve meadow', 'meadow', RESERVE_P, MEADOW_MIX, 'Pollinator meadow over the reserve.', 'None'),
+    ],
+    heads: [[1, 80, 150, 0, 90], [1, 80, 170, -90, 0], [1, 104, 176, 180, 360], [1, 128, 176, 180, 360], [1, 152, 170, 180, 270], [1, 152, 152, 90, 180], [1, 104, 146, 0, 180]],
+    main: [[[90, 125], [90, 146], [104, 146], [104, 152], [152, 152], [152, 124]]], flags: [] },
+  D: { name: 'Homestead', short: 'Homestead', note: '13 fruit trees · kitchen garden · hoop house · berry rows · grape pergola',
+    items: () => [...T('D', [['appleL', 160, 148], ['appleE', 176, 148], ['appleG', 192, 148], ['appleF', 160, 164], ['pear', 176, 164], ['pear2', 190, 164], ['plum', 160, 180], ['cherry', 176, 180], ['pawpaw', 62, 187], ['pawpaw', 76, 187], ['service', 58.5, 30], ['service', 58.5, 58], ['service', 58.5, 86]]),
+      { id: 'BR1', sp: 'rasp_d', x: 60, y: 148, y1: 178 }, { id: 'BR2', sp: 'blackberry', x: 67, y: 148, y1: 178 }, { id: 'BR3', sp: 'blackberry', x: 74, y: 148, y1: 178 }, ...BERRY_ITEMS()],
+    garden: { xs: [153, 160, 167, 174], ys: [99, 112, 125], box: [150, 186, 96, 138] }, vb: [90, 125],
+    hard: [{ name: 'Hoop house 12×24', poly: R(190, 202, 98, 122) }],
+    pergola: R(123, 144.2, 143.2, 150.4),
+    zones: [
+      Z('orchard', 'Back orchard', 'orchard', [[152, 140], [200, 140], [194, 188], [152, 188]], [['clover', D]], 'Semi-dwarf rootstocks, planted high on the clay. White clover in a short fescue mow strip.', 'Z5 orchard drip'),
+      Z('berryRows', 'Trellised berry rows', 'mulch', R(56.5, 77.5, 147, 179), [], 'Three rows on T-trellises, off the reserve.', 'Z5 drip'),
+      Z('perennial', 'Asparagus + rhubarb bed', 'mulch', R(80, 88, 156, 182), [['asparagus', 18], ['rhubarb', 4]], '', 'Z5 drip'),
+      Z('herbs', 'Patio herb edge', 'mulch', R(123.5, 144, 150.9, 153.4), [['lavender', 6], ['sage', 3], ['thyme', 3]], '', ''),
+      Z('drive', 'Edible drive hedge', 'mulch', R(54, 63, 14, 114), [['currant', 8], ['elder', 4], ['chives', 16]], 'Serviceberries over a currant, elderberry and chive hedge. Black currant is flagged: Michigan bans its sale.', 'Z5 drip'),
+      Z('garden', 'Kitchen garden · 12 beds', 'garden', R(150, 186, 96, 138), [], 'Twelve raised beds, three compost bays on the east strip.', 'Z6 garden drip'),
+      Z('meadow', 'Reserve meadow', 'meadow', RESERVE_P, MEADOW_MIX, 'Pollinator meadow over the reserve.', 'None'),
+    ],
+    heads: [[1, 66, 119, 0, 90], [1, 92, 119, 90, 180], [1, 66, 145, -90, 0], [1, 92, 145, 180, 270], [2, 96, 153, 0, 90], [2, 124, 153, 0, 180], [2, 150, 153, 90, 180], [2, 96, 187, -90, 0], [2, 124, 187, 180, 360], [2, 150, 187, 180, 270]],
+    main: [[[90, 125], [90, 150], [150, 153], [150, 117]]],
+    flags: ['Black currant in the drive hedge: Michigan prohibits its sale.', 'Hoop house needs HOA and township sign-off.'] },
+};
+const PLAN_KEYS = ['A', 'B', 'C', 'D'];
+const COMMON_ZONES = [
+  Z('berry', 'West berry patch', 'berry', R(BERRY.x0, BERRY.x1, BERRY.y0, BERRY.y1), [], 'On the septic reserve’s high, gentle front half (≈882→880, 4–5%). Haskap, fall raspberry, aronia, summer raspberry. Removable: no fill, posts or grade change. Lapeer County sign-off pending.', 'Z7 berry drip'),
+  Z('septic', 'Septic field · turf only', 'septic', R(SEPTIC.x0, SEPTIC.x1, SEPTIC.y0, SEPTIC.y1), [], '800 LF of 24″ trench in 14 runs. Hydroseed, no permanent irrigation, nothing woody.', 'None'),
+  Z('reserve', 'Septic reserve', 'reserve', RESERVE_P, [], 'Held for a replacement field. No structures, trees, fill or grade changes.', 'None'),
+  Z('buffer', 'Pond buffer · undisturbed', 'buffer', [[0, LOD], [195.1, LOD], [184.05, 220], [0, 220]], [], 'Beyond the limit of earth disturbance and inside Pond Easement #1. Keep existing; native no-mow overseed.', 'None'),
+];
+const HARD_COMMON = [{ name: 'House', poly: HOUSE }, { name: 'Driveway', poly: DRIVE }, { name: 'Walkout patio', poly: PATIO }, { name: 'Front porch', poly: PORCH }];
+
+/* ================= state ================= */
+const ST = { plan: 'A', items: {}, year: 1, month: 6, sel: null, armed: null, layers: { setbacks: true, irrigation: false, contours: true, labels: true, rings: false }, tab: 'plants', undo: {}, edited: {}, follow: true };
+for (const k of PLAN_KEYS) { ST.items[k] = PLANS[k].items(); ST.undo[k] = []; }
+const P = () => PLANS[ST.plan], ITEMS = () => ST.items[ST.plan];
+let catFilter = 'all', catQuery = '', locateIdx = {};
+
+/* ================= rules ================= */
+function eastLineDist(x, y) { return Math.min(distSeg(x, y, 236, 0, 236, 76.1), distSeg(x, y, 236, 76.1, 184.05, 220)); }
+function hardAt(x, y) { for (const h of HARD_COMMON.concat(P().hard || [])) if (inPoly(x, y, h.poly)) return h.name; const g = P().garden.box; if (x > g[0] && x < g[1] && y > g[2] && y < g[3]) return 'Vegetable garden'; return null; }
+function itemPts(it) { return it.y1 != null ? [[it.x, it.y], [it.x, (it.y + it.y1) / 2], [it.x, it.y1]] : [[it.x, it.y]]; }
+function checks(it, others) {
+  const s = SP[it.sp], out = [], seen = new Set(), add = (lv, m) => { if (!seen.has(m)) { seen.add(m); out.push([lv, m]); } };
+  const tree = isTree(s), woody = isWoody(s), shrubby = woody && !tree;
+  for (const [x, y] of itemPts(it)) {
+    if (!inPoly(x, y, LOT)) { add('err', 'Off the lot.'); continue; }
+    const h = hardAt(x, y); if (h && !(h === 'Vegetable garden' && !woody)) add('err', 'On ' + h.toLowerCase() + '.');
+    if (inRect(x, y, SEPTIC)) add(woody ? 'err' : 'warn', woody ? 'Septic field: turf only, nothing woody.' : 'Over the septic field: the county prefers turf here.');
+    if (distRect(x, y, TANK) < 10 && woody) add('err', 'Within 10′ of the septic tank lids.');
+    const dT = distRect(x, y, TRENCH);
+    if (tree && dT < 28 && !inRect(x, y, SEPTIC)) add('err', `Trunk ${dT.toFixed(0)}′ from the septic trenches; trees need ≥28′.`);
+    else if (shrubby && dT < 10 && !inRect(x, y, SEPTIC)) add('warn', `Shrub ${dT.toFixed(0)}′ from the trenches; roots may reach the laterals.`);
+    if (inRect(x, y, RES)) { if (tree) add('err', 'Septic reserve: no trees.'); else if (s.c === 'berry') add('warn', 'On the septic reserve: berry shrubs need Lapeer County OK (pending).'); else if (shrubby) add('warn', 'On the septic reserve: woody plants need Lapeer County OK.'); else if (['bigblue', 'indian', 'switch'].includes(s.k)) add('warn', 'Deep-rooted prairie grass on the reserve.'); }
+    const inEase = x < 12 || y < 12 || eastLineDist(x, y) < 12;
+    if (inEase) { if (tree) add('err', 'Inside the 12′ drainage / utility easement.'); else if (shrubby) add('warn', 'In the 12′ easement: may be removed for swale or utility work.'); }
+    const dW = Math.hypot(x - WELL[0], y - WELL[1]);
+    if (dW < 10 && woody) add('err', 'Within 10′ of the well; keep it reachable for a service rig.');
+    if (tree && inPoly(x, y, RIG)) add('warn', 'In the well-rig access path from the drive pad.');
+    if (tree && distPoly(x, y, HOUSE) < 20 && !inPoly(x, y, HOUSE)) add('warn', `${distPoly(x, y, HOUSE).toFixed(0)}′ from the house; trees should be ≥20′.`);
+    if (y > LOD) add('warn', 'Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed.');
+  }
+  if (s.warn) add('warn', s.warn);
+  if (tree && others) for (const o of others) { if (o === it) continue; const t = SP[o.sp]; if (!isTree(t)) continue; const d = Math.hypot(o.x - it.x, o.y - it.y), need = (s.sM + t.sM) / 2 * 0.5; if (d < need) add('warn', `Crowds ${o.id} at maturity (${d.toFixed(0)}′ apart, canopies ${(s.sM / 2 + t.sM / 2).toFixed(0)}′).`); }
+  if (!out.length) out.push(['ok', 'Clear of septic, well, house and easement setbacks.']);
+  return out;
+}
+const worst = c => c.some(m => m[0] === 'err') ? 'err' : c.some(m => m[0] === 'warn') ? 'warn' : 'ok';
+function zoneAt(x, y) {
+  for (const z of P().zones) if (inPoly(x, y, z.poly)) { if (z.id === 'meadow' || z.id === 'reserveTurf') { const b = COMMON_ZONES[0]; if (inPoly(x, y, b.poly)) return b; } return z; }
+  for (const z of COMMON_ZONES) if (inPoly(x, y, z.poly)) return z;
+  for (const h of HARD_COMMON.concat(P().hard || [])) if (inPoly(x, y, h.poly)) return { id: 'hard', name: h.name, kind: 'hard', poly: h.poly, comp: [], note: '', irr: '' };
+  if (!inPoly(x, y, LOT)) return { id: 'off', name: y < -21 ? 'Pine Lake Blvd' : y < 0 ? 'Road right-of-way' : pondSdf(x, y) < 0 ? 'Existing pond' : 'Off the lot', kind: 'off', poly: null, comp: [], note: '', irr: '' };
+  return { id: 'lawn', name: 'Lawn · hydroseed', kind: 'lawn', poly: null, comp: [], note: 'Irrigated hydroseed lawn (MP rotators on 4″ pop-ups).', irr: 'Z1–Z3' };
+}
+
+/* ================= canvas + camera ================= */
+const cv = $('map'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, small = false;
+const cam = { x: 34, y: 66, z: 6, tz: 6 };
+const av = { x: 29.5, y: 37, dir: Math.PI / 2, moving: 0, walk: null, step: 0 };
+const w2s = (x, y) => [(x - cam.x) * cam.z + W / 2, (cam.y - y) * cam.z + H / 2];
+const s2w = (sx, sy) => [(sx - W / 2) / cam.z + cam.x, cam.y - (sy - H / 2) / cam.z];
+function resize() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; small = W <= 820; cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0); sizeMini(); }
+let COL = {};
+function readColors() { const cs = getComputedStyle(document.documentElement); for (const k of ['paper', 'paper2', 'ink', 'mute', 'line', 'accent', 'blue', 'ok', 'warn', 'err', 'map-bg', 'map-grid', 'lawn', 'lawn2', 'road', 'conc', 'roof', 'water', 'mulch', 'needle', 'meadow', 'prairie', 'moss', 'gravel', 'buffer', 'reserve', 'septic', 'cast']) COL[k] = cs.getPropertyValue('--' + k).trim(); }
+const dark = () => { const c = COL['map-bg'] || '#000'; const n = parseInt(c.slice(1, 3), 16); return n < 100; };
+
+/* ================= static ground layer (cached raster) ================= */
+const WB = { x0: -70, x1: 290, y0: -60, y1: 250 };
+let ground = null, GP = 7, groundKey = '';
+function season(m) { return m === 12 || m <= 3 ? 'winter' : m === 10 || m === 11 ? 'fall' : 'grow'; }
+function speckle(g, poly, X, Y, cols, density, size, r) {
+  g.save(); g.beginPath(); poly.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.closePath(); g.clip();
+  const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), n = Math.round((x1 - x0) * (y1 - y0) * density);
+  for (let i = 0; i < n; i++) { g.fillStyle = cols[(r() * cols.length) | 0]; const s = size * (0.5 + r()); g.fillRect(X(lerp(x0, x1, r())), Y(lerp(y0, y1, r())), s, s); }
+  g.restore();
+}
+function plantColor(s, m) {
+  const sea = season(m);
+  if (s.bc && s.bl.includes(m)) return s.bc;
+  if (s.fc && s.fr.includes(m) && s.c !== 'tree') return s.fc;
+  if (sea === 'winter' && !s.ev) return s.c === 'grass' ? '#b39a68' : s.c === 'perennial' ? '#8a7a5a' : '#7b6d5c';
+  if (sea === 'fall' && s.fall) return s.fall;
+  if (sea === 'fall' && s.c === 'grass') return '#b9a065';
+  return s.leaf;
+}
+function buildGround() {
+  const key = [ST.plan, ST.month, ST.layers.contours, COL['map-bg'], GP].join('|'); if (key === groundKey && ground) return; groundKey = key;
+  const Wd = Math.round((WB.x1 - WB.x0) * GP), Hd = Math.round((WB.y1 - WB.y0) * GP);
+  if (!ground) ground = document.createElement('canvas');
+  ground.width = Wd; ground.height = Hd; const g = ground.getContext('2d'), X = x => (x - WB.x0) * GP, Y = y => (WB.y1 - y) * GP, r = rng(hash(ST.plan + ST.month));
+  const path = P => { g.beginPath(); P.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.closePath(); };
+  const fill = (P, c) => { path(P); g.fillStyle = c; g.fill(); };
+  const sea = season(ST.month);
+  // survey sheet beyond the lot
+  g.fillStyle = COL['map-bg']; g.fillRect(0, 0, Wd, Hd);
+  g.strokeStyle = COL['map-grid']; g.lineWidth = 1; g.beginPath();
+  for (let x = Math.ceil(WB.x0 / 10) * 10; x <= WB.x1; x += 10) { g.moveTo(X(x), 0); g.lineTo(X(x), Hd); } for (let y = Math.ceil(WB.y0 / 10) * 10; y <= WB.y1; y += 10) { g.moveTo(0, Y(y)); g.lineTo(Wd, Y(y)); } g.stroke();
+  // neighbours' land, road, pond
+  fill([[WB.x0, 0], [WB.x1, 0], [WB.x1, WB.y1], [WB.x0, WB.y1]], sea === 'winter' ? '#9a9a80' : COL.buffer); speckle(g, [[WB.x0, 0], [WB.x1, 0], [WB.x1, WB.y1], [WB.x0, WB.y1]], X, Y, ['rgba(0,0,0,.08)', 'rgba(255,255,255,.07)'], 0.5, 3, r);
+  fill([[WB.x0, -21], [WB.x1, -21], [WB.x1, 0], [WB.x0, 0]], COL.lawn2);
+  fill([[WB.x0, -45], [WB.x1, -45], [WB.x1, -21], [WB.x0, -21]], COL.road);
+  g.setLineDash([10 * GP / 4, 8 * GP / 4]); g.strokeStyle = '#e6d48a'; g.lineWidth = GP * 0.4; g.beginPath(); g.moveTo(0, Y(-33)); g.lineTo(Wd, Y(-33)); g.stroke(); g.setLineDash([]);
+  { g.beginPath(); const P0 = POND, x0 = P0.cx - P0.hx, x1 = P0.cx + P0.hx, y0 = P0.cy - P0.hy, y1 = P0.cy + P0.hy, rr = P0.r * GP; g.roundRect(X(x0), Y(y1), (x1 - x0) * GP, (y1 - y0) * GP, rr); g.fillStyle = COL.water; g.fill(); g.lineWidth = GP * 3; g.strokeStyle = 'rgba(70,90,50,.55)'; g.stroke(); }
+  // the lot
+  fill(LOT, COL.lawn); speckle(g, LOT, X, Y, ['rgba(255,255,255,.06)', 'rgba(0,0,0,.07)', COL.lawn2], 2.2, 2, r);
+  g.save(); path(LOT); g.clip();
+  fill(R(SEPTIC.x0, SEPTIC.x1, SEPTIC.y0, SEPTIC.y1), COL.septic);
+  fill(COMMON_ZONES[3].poly, COL.buffer); speckle(g, COMMON_ZONES[3].poly, X, Y, ['#8a8f5a', '#6c7445', '#a29a64', '#5a6538'], 1.8, 3, r);
+  // zones
+  const tex = { meadow: [COL.meadow, ['rgba(0,0,0,.1)', 'rgba(255,255,255,.08)']], needle: [COL.needle, ['#8a5a2c', '#c08d52', '#9b6a37']], mulch: [COL.mulch, ['#3f2c1f', '#70523a', '#4d3727']], reserve: [COL.reserve, ['rgba(255,255,255,.07)', 'rgba(0,0,0,.06)']], garden: [COL.gravel, ['rgba(0,0,0,.08)', 'rgba(255,255,255,.1)']], moss: [COL.moss, ['#2f4f22', '#4f7a32', '#6d8f3c']], prairie: [COL.prairie, ['#9c8f55', '#7a8a45', '#b19a5c', '#6f7f3e']], orchard: [COL.lawn2, ['rgba(255,255,255,.12)']], lawn: [COL.lawn, ['rgba(255,255,255,.06)']], thicket: [COL.mulch, ['#4e4a30', '#5c5836']], rain: ['#3d4f34', ['#2f4a2a', '#4a6a38', '#3a3527']], berry: [COL.lawn, []] };
+  const zs = [...P().zones].reverse();
+  for (const z of zs) { const t = tex[z.kind]; if (!t) continue; fill(z.poly, t[0]); if (t[1].length) speckle(g, z.poly, X, Y, t[1], z.kind === 'mulch' || z.kind === 'needle' ? 4 : 2.5, z.kind === 'needle' ? 2.5 : 2, r); }
+  // bed drifts: each composition entry scattered inside its zone, coloured by month
+  for (const z of P().zones) {
+    if (!z.comp.length) continue; const xs = z.poly.map(p => p[0]), ys = z.poly.map(p => p[1]), bx0 = Math.min(...xs), bx1 = Math.max(...xs), by0 = Math.min(...ys), by1 = Math.max(...ys), ar = area(z.poly);
+    for (const [k, n] of z.comp) {
+      const s = SP[k]; if (!s) continue; const count = n === D ? Math.round(ar / (s.c === 'grass' ? 22 : s.c === 'shrub' ? 90 : 30)) : n, col = plantColor(s, ST.month);
+      let placed = 0, tries = 0;
+      while (placed < count && tries < count * 40) {
+        tries++; const x = lerp(bx0, bx1, r()), y = lerp(by0, by1, r()); if (!inPoly(x, y, z.poly)) continue; placed++;
+        const sz = clamp(grow(s.s0, s.sM, s.tau, ST.year + 1) * 0.5, 0.6, 5) * GP;
+        if (s.c === 'grass') { g.strokeStyle = col; g.lineWidth = Math.max(1, GP * 0.12); g.beginPath(); for (let i = 0; i < 9; i++) { const a = r() * Math.PI * 2, l = sz * (0.4 + r() * 0.6); g.moveTo(X(x), Y(y)); g.lineTo(X(x) + Math.cos(a) * l, Y(y) + Math.sin(a) * l); } g.stroke(); }
+        else if (s.k === 'moss') { g.fillStyle = 'rgba(120,170,80,.35)'; g.beginPath(); g.arc(X(x), Y(y), sz * 1.4, 0, 7); g.fill(); }
+        else { const lf = sea === 'winter' && !s.ev ? col : s.leaf; g.fillStyle = s.c === 'shrub' ? shade(lf, -0.15) : lf; g.beginPath(); g.arc(X(x), Y(y), sz * (s.c === 'shrub' ? 0.9 : 0.6), 0, 7); g.fill();
+          if (col !== lf && col !== s.leaf || (s.bc && s.bl.includes(ST.month))) { g.fillStyle = col; for (let i = 0; i < 5; i++) { g.beginPath(); g.arc(X(x) + (r() - 0.5) * sz, Y(y) + (r() - 0.5) * sz, Math.max(1.2, sz * 0.18), 0, 7); g.fill(); } } }
+      }
+    }
+  }
+  // berry patch rows (mulch strips) + mown margin
+  { const b = BERRY; fill(R(b.x0, b.x1, b.y0, b.y1), shade(COL.lawn, 0.04)); for (const x of [25, 34, 43]) { fill(R(x - 2, x + 2, 45, 91), COL.mulch); speckle(g, R(x - 2, x + 2, 45, 91), X, Y, ['#3f2c1f', '#70523a'], 5, 2, r); } }
+  g.restore();
+  // garden beds + fence
+  { const G = P().garden; fill(R(G.box[0], G.box[1], G.box[2], G.box[3]), COL.gravel); for (const x of G.xs) for (const y of G.ys) { fill(R(x, x + 4, y, y + 10), '#a47848'); fill(R(x + 0.3, x + 3.7, y + 0.3, y + 9.7), sea === 'winter' ? '#5a4635' : '#4a6a2e'); if (sea !== 'winter') { g.fillStyle = 'rgba(140,190,90,.6)'; for (let i = 0; i < 18; i++) { g.beginPath(); g.arc(X(x + 0.8 + (i % 3) * 1.2), Y(y + 1 + Math.floor(i / 3) * 1.55), GP * 0.45, 0, 7); g.fill(); } } }
+    g.setLineDash([GP, GP * 0.7]); g.strokeStyle = 'rgba(40,44,46,.7)'; g.lineWidth = GP * 0.25; path(R(G.box[0], G.box[1], G.box[2], G.box[3])); g.stroke(); g.setLineDash([]); }
+  // stone / mown paths
+  if (P().paths) { g.lineCap = 'round'; g.lineJoin = 'round'; for (const pp of P().paths) { g.beginPath(); pp.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); if (P().mownPaths) { g.strokeStyle = COL.lawn2; g.lineWidth = GP * 5; g.stroke(); } else { g.strokeStyle = 'rgba(30,30,30,.35)'; g.lineWidth = GP * 4.4; g.stroke(); g.setLineDash([GP * 2.6, GP * 0.8]); g.strokeStyle = '#9d9a92'; g.lineWidth = GP * 3.6; g.stroke(); g.setLineDash([]); } } }
+  // hardscape
+  fill(DRIVE, COL.conc); g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = 1; g.beginPath(); for (let y = -10; y < 116; y += 10) { g.moveTo(X(65.1), Y(y)); g.lineTo(X(85.1), Y(y)); } g.moveTo(X(75.1), Y(-21)); g.lineTo(X(75.1), Y(116.65)); g.stroke();
+  fill(PATIO, COL.conc); fill(PORCH, COL.conc);
+  for (const h of P().hard || []) { const isG = /greenhouse/i.test(h.name), isH = /hoop/i.test(h.name); fill(h.poly, isG ? 'rgba(190,220,225,.92)' : isH ? 'rgba(235,238,232,.95)' : /terrace|ring|landing/i.test(h.name) ? '#8f8a80' : COL.conc); if (isG || isH) { g.strokeStyle = '#2b2f33'; g.lineWidth = GP * 0.3; path(h.poly); g.stroke(); const c = centroid(h.poly); g.beginPath(); g.moveTo(X(c[0]), Y(Math.min(...h.poly.map(p => p[1])))); g.lineTo(X(c[0]), Y(Math.max(...h.poly.map(p => p[1])))); g.stroke(); } }
+  if (ST.plan === 'B') { const F = [145.4, 188.6]; g.beginPath(); g.arc(X(F[0]), Y(F[1]), 2.4 * GP, 0, 7); g.fillStyle = '#3a3633'; g.fill(); g.strokeStyle = '#6e6962'; g.lineWidth = GP * 0.8; g.stroke(); }
+  if (ST.plan === 'C') { g.beginPath(); g.arc(X(158), Y(178), 6.5 * GP, 0, 7); g.strokeStyle = '#6d6a62'; g.lineWidth = GP * 1.6; g.stroke(); }
+  // deck boards + house roof (hip planes) + porch roof
+  fill(DECK, '#8c6a4c'); g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; g.beginPath(); for (let x = DECK[0][0]; x < DECK[1][0]; x += 0.6) { g.moveTo(X(x), Y(DECK[0][1])); g.lineTo(X(x), Y(DECK[2][1])); } g.stroke();
+  if (P().pergola) { const pg = P().pergola; g.strokeStyle = '#7a5a3a'; g.lineWidth = GP * 0.25; g.beginPath(); for (let x = pg[0][0]; x <= pg[1][0]; x += 1.6) { g.moveTo(X(x), Y(pg[0][1])); g.lineTo(X(x), Y(pg[2][1])); } g.stroke(); g.fillStyle = sea === 'winter' ? 'rgba(90,70,50,.3)' : 'rgba(70,120,50,.55)'; path(pg); g.fill(); }
+  { const x0 = 94.7 - 1.2, x1 = 144.54 + 1.2, y0 = 89.9 - 1.2, y1 = 134.73 + 1.2, ym = (y0 + y1) / 2, inset = (y1 - y0) / 2, rf = COL.roof;
+    const plane = (pts, k) => { fill(pts, shade(rf, k)); };
+    plane([[x0, y0], [x1, y0], [x1 - inset, ym], [x0 + inset, ym]], 0.12); plane([[x0, y1], [x1, y1], [x1 - inset, ym], [x0 + inset, ym]], -0.12);
+    plane([[x0, y0], [x0 + inset, ym], [x0, y1]], 0.02); plane([[x1, y0], [x1 - inset, ym], [x1, y1]], -0.06);
+    fill([[102.87 - 0.8, 134.73], [122.54 + 0.8, 134.73], [122.54 + 0.8, 143.5], [102.87 - 0.8, 143.5]], shade(rf, -0.06));
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = Math.max(1, GP * 0.15); g.beginPath(); g.moveTo(X(x0), Y(y0)); g.lineTo(X(x0 + inset), Y(ym)); g.lineTo(X(x1 - inset), Y(ym)); g.lineTo(X(x1), Y(y0)); g.moveTo(X(x0), Y(y1)); g.lineTo(X(x0 + inset), Y(ym)); g.moveTo(X(x1 - inset), Y(ym)); g.lineTo(X(x1), Y(y1)); g.stroke();
+    fill(R(123.3, 133.3, 93.4, 98.4), shade(rf, 0.08)); }
+  // septic tank lids + well head
+  g.fillStyle = '#6f6b63'; for (const yy of [79, 83]) { g.beginPath(); g.arc(X(159.25), Y(yy), 1.1 * GP, 0, 7); g.fill(); }
+  // contours (1 ft, heavier every 5 ft) from the plot-plan grades
+  if (ST.layers.contours) drawContours(g, X, Y);
+  // lot line
+  g.strokeStyle = '#d24a7a'; g.lineWidth = Math.max(2, GP * 0.35); g.setLineDash([GP * 3, GP, GP * 0.6, GP]); path(LOT); g.stroke(); g.setLineDash([]);
+}
+function shade(hex, k) { if (!hex || hex[0] !== '#') return hex; const n = parseInt(hex.slice(1), 16); let r = n >> 16, gg = n >> 8 & 255, b = n & 255; const f = v => clamp(Math.round(k > 0 ? v + (255 - v) * k : v * (1 + k)), 0, 255); return '#' + ((1 << 24) + (f(r) << 16) + (f(gg) << 8) + f(b)).toString(16).slice(1); }
+let CONT = null;
+function drawContours(g, X, Y) {
+  const st = 2, x0 = -20, x1 = 250, y0 = -20, y1 = 228, nx = Math.round((x1 - x0) / st) + 1, ny = Math.round((y1 - y0) / st) + 1;
+  if (!CONT) { CONT = new Float32Array(nx * ny); for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = x0 + i * st, y = y0 + j * st; CONT[j * nx + i] = inPoly(x, y, HOUSE) ? NaN : grade(x, y); } }
+  const H = CONT, lines = {};
+  for (let lv = 862; lv <= 890; lv++) {
+    const seg = [];
+    for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+      const a = H[j * nx + i], b = H[j * nx + i + 1], c = H[(j + 1) * nx + i + 1], d = H[(j + 1) * nx + i]; if (isNaN(a + b + c + d)) continue;
+      const xa = x0 + i * st, ya = y0 + j * st, pts = [], e = (p, q, xp, yp, xq, yq) => { if ((p < lv) !== (q < lv)) { const t = (lv - p) / (q - p); pts.push([xp + (xq - xp) * t, yp + (yq - yp) * t]); } };
+      e(a, b, xa, ya, xa + st, ya); e(b, c, xa + st, ya, xa + st, ya + st); e(c, d, xa + st, ya + st, xa, ya + st); e(d, a, xa, ya + st, xa, ya);
+      if (pts.length >= 2) seg.push(pts[0], pts[1]); if (pts.length === 4) seg.push(pts[2], pts[3]);
+    }
+    lines[lv] = seg;
+  }
+  for (const lv in lines) { const major = lv % 5 === 0; g.strokeStyle = major ? 'rgba(90,60,30,.55)' : 'rgba(90,60,30,.25)'; g.lineWidth = major ? Math.max(1.2, GP * 0.16) : Math.max(0.8, GP * 0.09); g.beginPath(); const s = lines[lv]; for (let k = 0; k < s.length; k += 2) { g.moveTo(X(s[k][0]), Y(s[k][1])); g.lineTo(X(s[k + 1][0]), Y(s[k + 1][1])); } g.stroke();
+    if (major && s.length > 20) { const m = s[(s.length / 2 | 0) & ~1]; g.font = `600 ${Math.round(GP * 1.4)}px "IBM Plex Mono", monospace`; g.fillStyle = 'rgba(90,60,30,.85)'; g.fillText(lv, X(m[0]) + 3, Y(m[1]) - 3); } }
+}
+
+/* ================= plant drawing (live) ================= */
+const SHAPE = new Map();
+function shapeOf(it) { let s = SHAPE.get(it.id + it.sp); if (!s) { const r = rng(hash(it.id + it.sp)); s = { lobes: Array.from({ length: 9 }, () => 0.82 + r() * 0.26), rot: r() * 6.28, dots: Array.from({ length: 18 }, () => [r() * 2 - 1, r() * 2 - 1]) }; SHAPE.set(it.id + it.sp, s); } return s; }
+function canopyFt(s, yrs) { return grow(s.s0, s.sM, s.tau, yrs); }
+function lobePath(sx, sy, r, sh, n) { ctx.beginPath(); n = n || 9; for (let i = 0; i <= n; i++) { const a = sh.rot + i / n * Math.PI * 2, rr = r * sh.lobes[i % sh.lobes.length]; const px = sx + Math.cos(a) * rr, py = sy + Math.sin(a) * rr; if (i === 0) ctx.moveTo(px, py); else { const am = sh.rot + (i - 0.5) / n * Math.PI * 2, rm = r * 1.08; ctx.quadraticCurveTo(sx + Math.cos(am) * rm, sy + Math.sin(am) * rm, px, py); } } ctx.closePath(); }
+function drawItem(it, ghost) {
+  const s = SP[it.sp], sh = shapeOf(it), m = ST.month, sea = season(m), z = cam.z;
+  const ft = canopyFt(s, ST.year), r = Math.max(2.5, ft / 2 * z);
+  if (it.y1 != null) {   // hedge row
+    const [ax, ay] = w2s(it.x, it.y1), [, by] = w2s(it.x, it.y), w = Math.max(3, ft * z);
+    ctx.fillStyle = COL.cast; ctx.fillRect(ax - w / 2 + w * 0.25, ay - w * 0.3, w, by - ay);
+    ctx.fillStyle = sea === 'winter' ? '#8a6a5a' : shade(s.leaf, -0.05); roundRect(ax - w / 2, ay, w, by - ay, w / 2); ctx.fill();
+    ctx.fillStyle = shade(s.leaf, 0.15); for (let y = ay + w * 0.4; y < by - w * 0.3; y += Math.max(4, w * 0.7)) { ctx.beginPath(); ctx.arc(ax + ((y * 7) % 5 - 2.5) * w * 0.05, y, w * 0.32, 0, 7); ctx.fill(); }
+    const fruit = s.fr.includes(m), bloom = s.bl.includes(m);
+    if (fruit || bloom) { ctx.fillStyle = fruit ? s.fc : s.bc; for (let y = ay + 3; y < by - 2; y += Math.max(3, z * 0.9)) for (const dx of [-0.25, 0.22]) { ctx.beginPath(); ctx.arc(ax + dx * w + Math.sin(y) * w * 0.08, y, Math.max(1.3, z * 0.18), 0, 7); ctx.fill(); } }
+    return;
+  }
+  const [sx, sy] = w2s(it.x, it.y), bare = sea === 'winter' && !s.ev;
+  ctx.fillStyle = COL.cast; ctx.beginPath(); ctx.ellipse(sx + r * 0.22, sy - r * 0.38, r * 0.98, r * 0.86, 0, 0, 7); ctx.fill();   // sun from the south, shadow falls north
+  if (s.c === 'conifer') {
+    const n = 14; ctx.beginPath(); for (let i = 0; i <= n * 2; i++) { const a = sh.rot + i / (n * 2) * Math.PI * 2, rr = r * (i % 2 ? 0.72 : 1) * sh.lobes[i % 9]; const px = sx + Math.cos(a) * rr, py = sy + Math.sin(a) * rr; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath();
+    const gr = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r); gr.addColorStop(0, shade(s.leaf, 0.25)); gr.addColorStop(1, shade(s.leaf, -0.25)); ctx.fillStyle = gr; ctx.fill();
+    ctx.strokeStyle = shade(s.leaf, -0.4); ctx.lineWidth = 1; ctx.beginPath(); for (let i = 0; i < n; i++) { const a = sh.rot + i / n * Math.PI * 2; ctx.moveTo(sx, sy); ctx.lineTo(sx + Math.cos(a) * r * 0.7, sy + Math.sin(a) * r * 0.7); } ctx.stroke();
+    ctx.fillStyle = shade(s.leaf, -0.45); ctx.beginPath(); ctx.arc(sx, sy, Math.max(1.5, r * 0.08), 0, 7); ctx.fill();
+  } else if (bare) {
+    ctx.strokeStyle = dark() ? '#a89a88' : '#6b5a48'; ctx.lineWidth = Math.max(1, r * 0.05); ctx.beginPath();
+    for (let i = 0; i < 7; i++) { const a = sh.rot + i / 7 * Math.PI * 2, l = r * sh.lobes[i]; const mx = sx + Math.cos(a) * l * 0.55, my = sy + Math.sin(a) * l * 0.55; ctx.moveTo(sx, sy); ctx.lineTo(mx, my); ctx.lineTo(sx + Math.cos(a - 0.25) * l, sy + Math.sin(a - 0.25) * l); ctx.moveTo(mx, my); ctx.lineTo(sx + Math.cos(a + 0.3) * l * 0.9, sy + Math.sin(a + 0.3) * l * 0.9); } ctx.stroke();
+    ctx.fillStyle = 'rgba(120,100,80,.12)'; ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.fill();
+  } else {
+    const lf = sea === 'fall' && s.fall ? s.fall : s.leaf;
+    lobePath(sx, sy, r, sh, s.c === 'berry' || s.c === 'shrub' ? 7 : 9);
+    const gr = ctx.createRadialGradient(sx - r * 0.35, sy - r * 0.35, r * 0.1, sx, sy, r * 1.05); gr.addColorStop(0, shade(lf, 0.28)); gr.addColorStop(0.7, lf); gr.addColorStop(1, shade(lf, -0.3)); ctx.fillStyle = gr; ctx.fill();
+    ctx.strokeStyle = shade(lf, -0.4); ctx.lineWidth = 1; ctx.stroke();
+    if (r > 10) { ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1; for (let i = 0; i < 4; i++) { const d = sh.dots[i]; ctx.beginPath(); ctx.arc(sx + d[0] * r * 0.4, sy + d[1] * r * 0.4, r * 0.35, 3.6, 5.4); ctx.stroke(); } }
+  }
+  const bloom = s.bc && s.bl.includes(m), fruit = s.fc && s.fr.includes(m);
+  if ((bloom || fruit) && !(bare && fruit && s.c !== 'tree')) { ctx.fillStyle = bloom ? s.bc : s.fc; const n = bloom ? 18 : 12, dr = Math.max(1.4, Math.min(r * (bloom ? 0.12 : 0.1), z * 0.35)); for (let i = 0; i < n; i++) { const d = sh.dots[i % 18], k = i >= 18 ? 0.5 : 0.75; ctx.beginPath(); ctx.arc(sx + d[0] * r * k, sy + d[1] * r * k, dr, 0, 7); ctx.fill(); } }
+  if (ghost) { ctx.strokeStyle = ghost === 'err' ? COL.err : ghost === 'warn' ? COL.warn : COL.ok; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(sx, sy, r + 5, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
+}
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); }
+
+/* ================= overlays ================= */
+function lineW(pts, col, w, dash) { ctx.beginPath(); pts.forEach(([x, y], i) => { const [a, b] = w2s(x, y); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]); }
+function polyW(P, fill, stroke, w, dash) { ctx.beginPath(); P.forEach(([x, y], i) => { const [a, b] = w2s(x, y); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w || 1.5; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]); } }
+function label(t, x, y, col, size, bg) { const [sx, sy] = w2s(x, y); ctx.font = `600 ${size || 10}px "IBM Plex Mono", monospace`; const w = ctx.measureText(t).width; if (bg !== false) { ctx.fillStyle = dark() ? 'rgba(20,26,31,.82)' : 'rgba(242,239,228,.86)'; ctx.fillRect(sx - w / 2 - 4, sy - 7, w + 8, 14); } ctx.fillStyle = col || COL.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, sx, sy); ctx.textAlign = 'start'; ctx.textBaseline = 'alphabetic'; }
+const ZL = new Map();
+function zoneLabel(z) {
+  let L = ZL.get(z); if (!L) { const xs = z.poly.map(p => p[0]), ys = z.poly.map(p => p[1]), bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
+    // pick an interior point away from the berry patch: best of a coarse grid by distance to the edge
+    let best = null, bd = -1; for (let i = 1; i < 12; i++) for (let j = 1; j < 12; j++) { const x = Math.min(...xs) + bw * i / 12, y = Math.min(...ys) + bh * j / 12; if (!inPoly(x, y, z.poly) || (z.id !== 'berry' && x > BERRY.x0 - 2 && x < BERRY.x1 + 2 && y > BERRY.y0 - 2 && y < BERRY.y1 + 2)) continue; const d = distPoly(x, y, z.poly); if (d > bd) { bd = d; best = [x, y]; } }
+    L = { p: best, vert: bh > bw * 2.2, len: Math.max(bw, bh) }; ZL.set(z, L); }
+  if (!L.p) return; const t = z.name.toUpperCase(); ctx.font = '600 9px "IBM Plex Mono", monospace'; if (ctx.measureText(t).width > L.len * cam.z * 0.95) return;
+  const [sx, sy] = w2s(L.p[0], L.p[1]); ctx.save(); ctx.translate(sx, sy); if (L.vert) ctx.rotate(-Math.PI / 2); ctx.fillStyle = dark() ? 'rgba(231,226,212,.75)' : 'rgba(27,34,40,.62)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, 0, 0); ctx.restore();
+}
+function drawSetbacks() {
+  polyW(R(SEPTIC.x0, SEPTIC.x1, SEPTIC.y0, SEPTIC.y1), null, '#2e9e57', 1.6, [7, 4]);
+  for (const [xa, xb] of [[97.1, 148.1], [170.1, 221.1]]) for (let i = 0; i < 7; i++) { const y = 11.8 + i * (64 / 6); lineW([[xa, y], [xb, y]], 'rgba(46,158,87,.75)', Math.max(1, cam.z * 0.6)); }
+  polyW(RESERVE_P, 'rgba(46,158,87,.06)', '#2e9e57', 1.6, [3, 4]);
+  { const [a, b] = w2s(WELL[0], WELL[1]); ctx.beginPath(); ctx.arc(a, b, 50 * cam.z, 0, 7); ctx.strokeStyle = 'rgba(31,95,158,.7)'; ctx.lineWidth = 1.4; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]); ctx.beginPath(); ctx.arc(a, b, Math.max(3, cam.z * 0.6), 0, 7); ctx.fillStyle = COL.blue; ctx.fill(); }
+  polyW(RIG, 'rgba(31,95,158,.06)', 'rgba(31,95,158,.45)', 1, [2, 4]);
+  lineW([[0, LOD], [195.1, LOD]], 'rgba(140,90,40,.8)', 1.4, [10, 4, 2, 4]);
+  // easements: hatch bands inside the lot
+  const hatch = (P) => { ctx.save(); ctx.beginPath(); P.forEach(([x, y], i) => { const [a, b] = w2s(x, y); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.closePath(); ctx.clip(); ctx.strokeStyle = 'rgba(194,64,42,.28)'; ctx.lineWidth = 1; ctx.beginPath(); for (let k = -3000; k < 3000; k += 9) { ctx.moveTo(k, 0); ctx.lineTo(k + H, H); } ctx.stroke(); ctx.restore(); };
+  hatch([[0, 0], [12, 12], [12, 220], [0, 220]]); hatch([[0, 0], [236, 0], [224, 12], [12, 12]]); hatch([[236, 0], [236, 76.1], [184.05, 220], [171.3, 220], [224, 74], [224, 12]]);
+  if (cam.z > 2.2) { label('SEPTIC FIELD · 14 RUNS', 160, 44, '#1f7a43', 10); label('SEPTIC RESERVE', 30, 160, '#1f7a43', 10); label('WELL · 50′ CIRCLE', WELL[0], WELL[1] - 6, COL.blue, 10); label('LIMIT OF DISTURBANCE', 120, LOD + 3, '#8c5a28', 9); label('12′ EASEMENT', 6, 110, COL.err, 9); }
+}
+function drawIrrigation() {
+  const p = P(), ZC = { 1: '#2a78c2', 2: '#7b4fb5', 3: '#d2691e' };
+  for (const [zn, x, y, a0, a1] of p.heads) { const [sx, sy] = w2s(x, y); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.arc(sx, sy, 26 * cam.z, -a1 * Math.PI / 180, -a0 * Math.PI / 180); ctx.closePath(); ctx.fillStyle = ZC[zn] + '22'; ctx.fill(); ctx.strokeStyle = ZC[zn] + '88'; ctx.lineWidth = 1; ctx.stroke(); ctx.beginPath(); ctx.arc(sx, sy, 3, 0, 7); ctx.fillStyle = ZC[zn]; ctx.fill(); }
+  for (const m of p.main) lineW(m, '#174a7c', 2.4);
+  const vb = p.vb; lineW([vb, [53.5, vb[1]], [53.5, 92], [25, 92]], '#14a08c', 2); for (const x of [25, 34, 43]) lineW([[x, 92], [x, 46]], '#14a08c', 1.6, [4, 3]);
+  const [a, b] = w2s(vb[0], vb[1]); ctx.fillStyle = '#174a7c'; ctx.fillRect(a - 5, b - 4, 10, 8);
+  if (cam.z > 2.2) { label('Z7 BERRY DRIP', 34, 96, '#0e7a6a', 10); label('VALVE BOX (ASSUMED)', vb[0] + 2, vb[1] - 5, '#174a7c', 9); }
+}
+
+/* ================= avatar ================= */
+function drawAvatar() {
+  const [sx, sy] = w2s(av.x, av.y), k = clamp(cam.z / 6, 0.75, 2.2), bob = av.moving ? Math.sin(av.step * 9) * 1.2 : 0;
+  ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.beginPath(); ctx.ellipse(3 * k, -4 * k, 9 * k, 7 * k, 0, 0, 7); ctx.fill();
+  ctx.rotate(-av.dir + Math.PI / 2);
+  ctx.fillStyle = '#2d3a46'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * 3.5 * k, (s * bob) * k, 2.3 * k, 3.4 * k, 0, 0, 7); ctx.fill(); }   // boots
+  ctx.fillStyle = COL.accent; ctx.beginPath(); ctx.ellipse(0, 0, 7 * k, 5 * k, 0, 0, 7); ctx.fill();   // shoulders
+  ctx.fillStyle = '#e8c79a'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 7.2 * k, (-s * bob - 1) * k, 2 * k, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#d8b56a'; ctx.beginPath(); ctx.arc(0, 0, 6.2 * k, 0, 7); ctx.fill(); ctx.strokeStyle = '#a8843e'; ctx.lineWidth = 1; ctx.stroke();   // straw hat
+  ctx.fillStyle = '#c9a457'; ctx.beginPath(); ctx.arc(0, 0, 3.4 * k, 0, 7); ctx.fill(); ctx.fillStyle = '#7a2d22'; ctx.fillRect(-3.4 * k, -0.6 * k, 6.8 * k, 1.2 * k);
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.moveTo(0, -10 * k); ctx.lineTo(-2.4 * k, -7 * k); ctx.lineTo(2.4 * k, -7 * k); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* ================= frame ================= */
+let near = null, curZone = null, ghostPos = null, drag = null, flashT = 0, flashId = null;
+function frame(t) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (t - (frame.t || t)) / 1000); frame.t = t; update(dt);
+  ctx.fillStyle = COL['map-bg']; ctx.fillRect(0, 0, W, H);
+  cam.z = lerp(cam.z, cam.tz, Math.min(1, dt * 10));
+  if (ST.follow) { cam.x = lerp(cam.x, av.x, Math.min(1, dt * 4)); cam.y = lerp(cam.y, av.y + (small ? -12 / cam.z * 6 : 0), Math.min(1, dt * 4)); }
+  const [gx, gy] = w2s(WB.x0, WB.y1); ctx.imageSmoothingEnabled = true; ctx.drawImage(ground, gx, gy, (WB.x1 - WB.x0) * cam.z, (WB.y1 - WB.y0) * cam.z);
+  if (ST.layers.setbacks) drawSetbacks();
+  if (ST.layers.irrigation) drawIrrigation();
+  // zone highlight under the gardener
+  if (curZone && curZone.poly && cam.z > 2) polyW(curZone.poly, null, COL.ink + '88', 1.4, [2, 3]);
+  const its = ITEMS().slice().sort((a, b) => canopyFt(SP[a.sp], ST.year) - canopyFt(SP[b.sp], ST.year) || b.y - a.y);
+  const lowZoom = cam.z < 2.6;
+  for (const it of its) if (!isTree(SP[it.sp]) || it.y1 != null) drawItem(it, drag && drag.it === it ? drag.lv : null);
+  drawAvatar();
+  for (const it of its) if (isTree(SP[it.sp]) && it.y1 == null) drawItem(it, drag && drag.it === it ? drag.lv : null);
+  if (ST.layers.rings) for (const it of its) { const s = SP[it.sp]; if (!isTree(s)) continue; const [sx, sy] = w2s(it.x, it.y); ctx.beginPath(); ctx.arc(sx, sy, s.sM / 2 * cam.z, 0, 7); ctx.strokeStyle = COL.ink + '66'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.stroke(); ctx.setLineDash([]); }
+  // selection, proximity, flash
+  const ring = (it, col, w, pad) => { const s = SP[it.sp]; if (it.y1 != null) { const [a, b] = w2s(it.x - 2.5, it.y1 + 0.5), [c, d] = w2s(it.x + 2.5, it.y - 0.5); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.strokeRect(a, b, c - a, d - b); return; } const [sx, sy] = w2s(it.x, it.y), r = Math.max(2.5, canopyFt(s, ST.year) / 2 * cam.z) + pad; ctx.beginPath(); ctx.arc(sx, sy, r, 0, 7); ctx.strokeStyle = col; ctx.lineWidth = w; ctx.stroke(); };
+  if (near && near !== ST.sel) { ring(near, COL.paper, 3, 4); ring(near, COL.ink, 1.2, 4); }
+  if (ST.sel && ITEMS().includes(ST.sel)) { const lv = worst(checks(ST.sel, ITEMS())); ring(ST.sel, COL.paper, 5, 5); ring(ST.sel, lv === 'ok' ? COL.ink : COL[lv], 2.5, 5); }
+  if (flashId && t < flashT) { const it = ITEMS().find(i => i.id === flashId); if (it) { const k = ((flashT - t) % 600) / 600; ring(it, COL.accent, 3, 6 + k * 22); } }
+  if (ST.armed && ghostPos) { const g = { id: '__ghost', sp: ST.armed, x: ghostPos[0], y: ghostPos[1] }; if (SP[ST.armed].row) g.y1 = ghostPos[1] + 20; ctx.globalAlpha = 0.65; drawItem(g, worst(checks(g, ITEMS()))); ctx.globalAlpha = 1; }
+  if (av.walk) { const [a, b] = w2s(av.walk[0], av.walk[1]); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a, b, 6 + Math.sin(t / 150) * 2, 0, 7); ctx.stroke(); }
+  if (ST.layers.labels && !lowZoom) {
+    for (const it of its) { const s = SP[it.sp]; if (cam.z < 4.5 && !isTree(s)) continue; const yy = it.y1 != null ? it.y1 + 2.2 : it.y - canopyFt(s, ST.year) / 2 - 1.6; label(it.id + (cam.z > 7 ? ' ' + s.n.toUpperCase() : ''), it.x, yy, COL.ink, 9.5); }
+  }
+  if (ST.layers.labels && cam.z > 1.8 && cam.z < 9) for (const z of P().zones.concat([COMMON_ZONES[1]])) zoneLabel(z);
+  if (near && !ST.armed && !drag) { const s = SP[near.sp], [sx, sy] = w2s(av.x, av.y); const t2 = (small ? 'INSPECT · ' : 'E · ') + (s.n + (s.v ? ' ' + s.v : '')).toUpperCase(); ctx.font = '600 10.5px "IBM Plex Mono", monospace'; const w = ctx.measureText(t2).width; ctx.fillStyle = COL.paper; ctx.strokeStyle = COL.line; ctx.lineWidth = 1.2; ctx.fillRect(sx - w / 2 - 6, sy - 44, w + 12, 18); ctx.strokeRect(sx - w / 2 - 6, sy - 44, w + 12, 18); ctx.fillStyle = COL.ink; ctx.textAlign = 'center'; ctx.fillText(t2, sx, sy - 31); ctx.textAlign = 'start'; }
+  drawHUD();
+  drawMini();
+}
+function drawHUD() {
+  // north arrow (grid north is N05°06'W; true north is ~5° east of grid up) + scale bar
+  const x = W - (small ? 34 : 400 > W ? 34 : 34 + (innerWidth > 820 && !$('card').hidden ? 356 : 0)), y = small ? 120 : 70;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(5.1 * Math.PI / 180); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(6, 6); ctx.lineTo(0, 2); ctx.lineTo(-6, 6); ctx.closePath(); ctx.fill(); ctx.font = '700 11px "Barlow Semi Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, -20); ctx.restore();
+  let ft = 10; while (ft * cam.z < 60) ft *= 2; while (ft * cam.z > 160) ft /= 2;
+  const bx = small ? 16 : 360, by = small ? H - 132 : H - 24; if (small) return;
+  ctx.fillStyle = COL.ink; ctx.fillRect(bx, by, ft * cam.z, 3); ctx.fillRect(bx, by - 5, 2, 8); ctx.fillRect(bx + ft * cam.z - 2, by - 5, 2, 8); ctx.font = '600 10px "IBM Plex Mono", monospace'; ctx.fillText(ft + ' FT', bx, by - 8);
+}
+
+/* ================= update / movement ================= */
+const KEYS = {}; let joyV = [0, 0];
+function blocked(x, y) { if (inPoly(x, y, HOUSE)) return true; for (const h of P().hard || []) if (/greenhouse|hoop/i.test(h.name) && inPoly(x, y, h.poly)) return true; if (pondSdf(x, y) < -2 && y > 200) return true; return x < WB.x0 + 4 || x > WB.x1 - 4 || y < -44 || y > WB.y1 - 4; }
+function update(dt) {
+  let vx = (KEYS.d || KEYS.arrowright ? 1 : 0) - (KEYS.a || KEYS.arrowleft ? 1 : 0) + joyV[0], vy = (KEYS.w || KEYS.arrowup ? 1 : 0) - (KEYS.s || KEYS.arrowdown ? 1 : 0) + joyV[1];
+  if (vx || vy) av.walk = null;
+  else if (av.walk) { const dx = av.walk[0] - av.x, dy = av.walk[1] - av.y, d = Math.hypot(dx, dy); if (d < 0.6) av.walk = null; else { vx = dx / d; vy = dy / d; } }
+  const m = Math.hypot(vx, vy); av.moving = m > 0.05;
+  if (av.moving) {
+    const sp = (KEYS.shift ? 26 : 13) * Math.min(1, m) * dt, ux = vx / m, uy = vy / m;
+    const nx = av.x + ux * sp, ny = av.y + uy * sp;
+    if (!blocked(nx, av.y)) av.x = nx; else if (av.walk) av.walk = null; if (!blocked(av.x, ny)) av.y = ny; else if (av.walk) av.walk = null;
+    av.dir = Math.atan2(uy, ux); av.step += dt; ST.follow = true;
+    if (ST.armed && small) ghostPos = [av.x + Math.cos(av.dir) * 4, av.y + Math.sin(av.dir) * 4];
+  }
+  // nearest plant + zone
+  let best = null, bd = 1e9; for (const it of ITEMS()) { const s = SP[it.sp], d = it.y1 != null ? distSeg(av.x, av.y, it.x, it.y, it.x, it.y1) : Math.hypot(it.x - av.x, it.y - av.y); const reach = Math.max(4, canopyFt(s, ST.year) / 2 + 2.5); if (d < reach && d < bd) { bd = d; best = it; } }
+  near = best; $('actInspect').textContent = near ? 'Inspect' : 'Zone';
+  const z = zoneAt(av.x, av.y); if (!curZone || z.name !== curZone.name) { curZone = z; $('zoneName').textContent = z.name; }
+}
+
+/* ================= inspect card ================= */
+function calHTML(s) { let h = '<div class="cal" aria-label="Bloom and fruit calendar">'; for (let m = 1; m <= 12; m++) { const b = s.bl.includes(m), f = s.fr.includes(m); const c = f ? s.fc : b ? s.bc : null; h += `<span class="${m === ST.month ? 'now' : ''}" title="${MONTH_FULL[m - 1]}${b ? ' · bloom' : ''}${f ? ' · fruit' : ''}" style="${c ? 'background:' + c : ''}"></span>`; } return h + '</div>'; }
+function esc(t) { return String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function openItem(it) {
+  ST.sel = it; const s = SP[it.sp], c = checks(it, ITEMS()), yrs = ST.year, h = grow(s.h0, s.hM, s.tau, yrs), w = canopyFt(s, yrs), z = zoneAt(it.x, it.y);
+  const chips = [CATS[s.c].replace(/s?$/, '').replace(/ \+.*/, ''), s.nat ? 'Native' : '', s.ed ? 'Edible' : '', s.ev ? 'Evergreen' : ''].filter(Boolean).map(t => `<span class="chip">${t}</span>`).join('') + `<span class="chip ${worst(c)}">${worst(c) === 'ok' ? 'Setbacks clear' : worst(c) === 'warn' ? 'Check notes' : 'Breaks a rule'}</span>`;
+  const count = it.y1 != null ? ` · ${Math.round(Math.abs(it.y1 - it.y) / 2)} plants @ 2′` : '';
+  $('card').innerHTML = `<header><h3>${esc(s.n)}<small>${esc(s.v || s.l)}${s.v ? ' · <i>' + esc(s.l) + '</i>' : ''}</small></h3><button class="x" id="cardX" aria-label="Close">✕</button></header>
+  <div class="body">${heroHTML(it.sp)}<div class="chips">${chips}</div>
+  <div class="facts"><div><span class="k">ID · grid</span><b>${esc(it.id)}</b><span class="k">${it.x.toFixed(1)}, ${it.y.toFixed(1)}${it.y1 != null ? '–' + it.y1.toFixed(0) : ''}</span></div><div><span class="k">${2027 + yrs} size</span><b>${h.toFixed(0)}′ × ${w.toFixed(0)}′</b><span class="k">h × spread</span></div><div><span class="k">Mature</span><b>${s.hM}′ × ${s.sM}′</b><span class="k">${s.buy ? esc(s.buy) : 'h × spread'}</span></div></div>
+  <div><span class="k">Bloom · fruit · ${MON[ST.month - 1]} outlined</span>${calHTML(s)}</div>
+  <p>${esc(s.note)}${count}</p>${s.roots ? `<p><span class="k">Roots</span>${esc(s.roots)}</p>` : ''}
+  <div><span class="k">Site checks · ${esc(z.name)}</span>${c.map(([lv, m]) => `<div class="msg ${lv}">${esc(m)}</div>`).join('')}</div>
+  <div class="acts"><button id="cMove">Move to me</button><button id="cCenter">Center</button><button id="cDel">Remove</button></div></div>`;
+  $('card').hidden = false; $('cardX').onclick = closeCard; wireShots();
+  $('cMove').onclick = () => { const old = [it.x, it.y, it.y1]; pushUndo(); const dy = it.y1 != null ? it.y1 - it.y : 0; it.x = +av.x.toFixed(1); it.y = +av.y.toFixed(1); if (it.y1 != null) it.y1 = it.y + dy; const lv = worst(checks(it, ITEMS())); if (lv === 'err') { it.x = old[0]; it.y = old[1]; it.y1 = old[2]; ST.undo[ST.plan].pop(); toast(checks({ ...it, x: +av.x, y: +av.y }, ITEMS()).filter(m => m[0] === 'err')[0]?.[1] || 'Can’t plant there.', 'err'); return; } changed(); openItem(it); };
+  $('cCenter').onclick = () => { ST.follow = false; cam.x = it.x; cam.y = it.y; cam.tz = Math.max(cam.tz, 7); };
+  $('cDel').onclick = () => { pushUndo(); ST.items[ST.plan] = ITEMS().filter(i => i !== it); closeCard(); changed(); toast(`Removed ${it.id}. Undo brings it back.`); };
+}
+function openZone(z) {
+  ST.sel = null; const ar = z.poly ? area(z.poly) : null;
+  const inside = z.poly ? ITEMS().filter(it => inPoly(it.x, it.y, z.poly)) : [];
+  const counts = {}; for (const it of inside) counts[it.sp] = (counts[it.sp] || 0) + (it.y1 != null ? Math.round(Math.abs(it.y1 - it.y) / 2) : 1);
+  const comp = z.comp.map(([k, n]) => `<button class="row" data-sp="${k}"><span class="sw" style="background:${plantColor(SP[k], ST.month)}"></span><span class="nm"><b>${esc(SP[k].n)}</b><i>${esc(SP[k].l)}</i></span><span class="cnt">${n === D ? 'drift' : '×' + n}</span></button>`).join('');
+  const pl = Object.entries(counts).map(([k, n]) => `<button class="row" data-sp="${k}"><span class="sw" style="background:${SP[k].leaf}"></span><span class="nm"><b>${esc(SP[k].n)}</b><i>${esc(SP[k].v || SP[k].l)}</i></span><span class="cnt">×${n}</span></button>`).join('');
+  const rules = { septic: ['Turf only. No trees or shrubs; no permanent irrigation.'], reserve: ['No structures, trees, fill or grade change.', 'Shallow-rooted perennials only; berries need county OK.'], berry: ['Shallow-rooted berry shrubs only, removable.', 'No fill, posts or grade change. County OK pending.'], meadow: ['No woody plants on the reserve.', 'Mow once in early spring.'], buffer: ['Beyond the limit of disturbance: keep existing.', 'Pond Easement #1: confirm any planting.'] }[z.kind === 'meadow' && z.id === 'meadowSE' ? 'septic' : z.kind] || [];
+  $('card').innerHTML = `<header><h3>${esc(z.name)}<small>${ar ? Math.round(ar).toLocaleString() + ' sf' : 'Zone'}${z.irr ? ' · ' + esc(z.irr) : ''}</small></h3><button class="x" id="cardX" aria-label="Close">✕</button></header>
+  <div class="body">${z.note ? `<p>${esc(z.note)}</p>` : ''}${rules.length ? `<div><span class="k">Rules here</span>${rules.map(r => `<div class="msg warn">${esc(r)}</div>`).join('')}</div>` : ''}
+  ${comp ? `<div><span class="k">Bed planting</span>${comp}</div>` : ''}${pl ? `<div><span class="k">Placed plants</span>${pl}</div>` : ''}${!comp && !pl && !rules.length ? '<p>Nothing planted here yet. Pick a plant in the hotbar and tap the map to add one.</p>' : ''}</div>`;
+  if (z.id === 'berry') $('card').querySelector('.body').insertAdjacentHTML('beforeend', shotsHTML());
+  $('card').hidden = false; $('cardX').onclick = closeCard; for (const b of $('card').querySelectorAll('[data-sp]')) b.onclick = () => openSpecies(b.dataset.sp); wireShots();
+}
+function openSpecies(k) {
+  const s = SP[k], n = ITEMS().filter(i => i.sp === k).length, inBeds = P().zones.filter(z => z.comp.some(c => c[0] === k)).map(z => z.name);
+  $('card').innerHTML = `<header><h3>${esc(s.n)}<small>${esc(s.v || s.l)}${s.v ? ' · <i>' + esc(s.l) + '</i>' : ''}</small></h3><button class="x" id="cardX" aria-label="Close">✕</button></header>
+  <div class="body">${heroHTML(k)}<div class="chips"><span class="chip">${CATS[s.c]}</span>${s.nat ? '<span class="chip">Native</span>' : ''}${s.ed ? '<span class="chip">Edible</span>' : ''}${s.ev ? '<span class="chip">Evergreen</span>' : ''}${s.warn ? '<span class="chip warn">Flagged</span>' : ''}</div>
+  <div class="facts"><div><span class="k">This plan</span><b>${n ? '×' + n : inBeds.length ? 'beds' : '—'}</b></div><div><span class="k">Mature</span><b>${s.hM}′ × ${s.sM}′</b></div><div><span class="k">Buy as</span><b style="font-size:12px">${esc(s.buy || '—')}</b></div></div>
+  <div><span class="k">Bloom · fruit</span>${calHTML(s)}</div><p>${esc(s.note)}</p>${s.roots ? `<p><span class="k">Roots</span>${esc(s.roots)}</p>` : ''}${s.warn ? `<div class="msg warn">${esc(s.warn)}</div>` : ''}${inBeds.length ? `<p><span class="k">In beds</span>${esc(inBeds.join(' · '))}</p>` : ''}
+  <div class="acts">${n ? '<button id="cFind">Find on map</button>' : ''}<button id="cArm">Plant one</button></div></div>`;
+  $('card').hidden = false; $('cardX').onclick = closeCard; wireShots(); if ($('cFind')) $('cFind').onclick = () => locate(k); $('cArm').onclick = () => arm(k);
+}
+const SHOTS = [['aisle_june', 'June, looking north up the haskap aisle · haskap ripe'], ['aisle_august', 'Late August, same view · fall raspberries and aronia ripe'], ['aerial', 'Aerial from the southwest · berry patch, meadow strip, drive bed'], ['haskap_closeup', 'Haskap in mid-June'], ['raspberry_closeup', "'Caroline' fall raspberries, late August"], ['aronia_closeup', "'Viking' aronia, late August"]];
+const SHOT_FOR = { haskap: 'haskap_closeup', rasp_fall: 'raspberry_closeup', aronia: 'aronia_closeup', rasp_summer: 'aisle_june' };
+let shotI = 0, shotsOK = true;
+const shotSrc = k => 'renders/berry_' + k + '.jpg';
+function shotsHTML() { return shotsOK ? `<div><span class="k">Blender renders · tap to enlarge</span><div class="shots">${SHOTS.map(([k, c], i) => `<button data-shot="${i}" aria-label="${esc(c)}"><img src="${shotSrc(k)}" alt="${esc(c)}" loading="lazy"></button>`).join('')}</div></div>` : ''; }
+function heroHTML(sp) { const k = SHOT_FOR[sp]; if (!k || !shotsOK) return ''; const i = SHOTS.findIndex(s => s[0] === k); return `<button class="hero" data-shot="${i}" aria-label="${esc(SHOTS[i][1])}"><img src="${shotSrc(k)}" alt="${esc(SHOTS[i][1])}"></button>`; }
+function wireShots() { for (const b of $('card').querySelectorAll('[data-shot]')) { b.onclick = () => openShot(+b.dataset.shot); const im = b.querySelector('img'); im.onerror = () => { shotsOK = false; b.remove(); }; } }
+function openShot(i) { shotI = (i + SHOTS.length) % SHOTS.length; $('shotImg').src = shotSrc(SHOTS[shotI][0]); $('shotImg').alt = SHOTS[shotI][1]; $('shotCap').textContent = SHOTS[shotI][1]; $('shot').hidden = false; }
+$('shotPrev').onclick = () => openShot(shotI - 1); $('shotNext').onclick = () => openShot(shotI + 1); $('shotX').onclick = () => $('shot').hidden = true; $('shot').onclick = e => { if (e.target === $('shot')) $('shot').hidden = true; };
+function closeCard() { $('card').hidden = true; ST.sel = null; }
+
+/* ================= edit / place / persistence ================= */
+function pushUndo() { const u = ST.undo[ST.plan]; u.push(JSON.stringify(ITEMS())); if (u.length > 60) u.shift(); }
+function undo() { const u = ST.undo[ST.plan]; if (!u.length) return toast('Nothing to undo.'); ST.items[ST.plan] = JSON.parse(u.pop()); ST.sel = null; $('card').hidden = true; changed(); toast('Undone.'); }
+function newId(sp) { const pre = SP[sp].c === 'berry' ? 'NB' : isTree(SP[sp]) ? 'NT' : 'NS'; let n = 1; while (ITEMS().some(i => i.id === pre + n)) n++; return pre + n; }
+function arm(k) { ST.armed = ST.armed === k ? null : k; ghostPos = ST.armed ? [av.x + Math.cos(av.dir) * 4, av.y + Math.sin(av.dir) * 4] : null; renderHotbar(); $('actPlant').hidden = !ST.armed; if (ST.armed) { closeCard(); toast(`Planting ${SP[k].n}${SP[k].row ? ' (20′ row)' : ''}: tap the map${small ? ' or Plant here' : ' or press Space'}. Esc cancels.`); } }
+function placeAt(x, y) {
+  const k = ST.armed; if (!k) return; const it = { id: newId(k), sp: k, x: +x.toFixed(1), y: +y.toFixed(1) }; if (SP[k].row) it.y1 = +(y + 20).toFixed(1);
+  const c = checks(it, ITEMS()), lv = worst(c); if (lv === 'err') return toast(c.find(m => m[0] === 'err')[1] + ' Pick another spot.', 'err');
+  pushUndo(); ITEMS().push(it); changed(); toast(`Planted ${it.id} · ${SP[k].n}${lv === 'warn' ? ' — ' + c.find(m => m[0] === 'warn')[1] : ''}`, lv === 'warn' ? 'warn' : '');
+  flashId = it.id; flashT = performance.now() + 1200;
+}
+let saveTimer = null, DB = null;
+function changed() { ST.edited[ST.plan] = true; renderAll(); clearTimeout(saveTimer); saveTimer = setTimeout(save, 700); }
+function setSave(t, on) { for (const id of ['save1', 'save2']) { $(id).textContent = t; $(id).classList.toggle('on', !!on); } }
+async function save() {
+  const key = ST.plan, data = { plan: key, name: PLANS[key].name, items: ITEMS().map(i => ({ id: i.id, sp: i.sp, x: i.x, y: i.y, ...(i.y1 != null ? { y1: i.y1 } : {}) })), updated: new Date().toISOString() };
+  if (DB) { try { await DB.doc('plans/' + key).set(data); setSave('Saved · shared', true); return; } catch (e) { setSave('Save failed'); } }
+  try { localStorage.setItem('plp-plan-' + key, JSON.stringify(data)); setSave('Saved · device', true); } catch (e) { setSave('Not saved'); }
+}
+function applySaved(key, d) { if (!d || !Array.isArray(d.items)) return; const ok = d.items.filter(i => SP[i.sp] && isFinite(i.x) && isFinite(i.y)); ST.items[key] = ok; ST.edited[key] = true; }
+async function loadSaved() {
+  for (const k of PLAN_KEYS) { try { const raw = localStorage.getItem('plp-plan-' + k); if (raw) applySaved(k, JSON.parse(raw)); } catch (e) {} }
+  setSave(Object.values(ST.edited).some(Boolean) ? 'Saved · device' : 'Not edited');
+  renderAll();
+  if (!window.claude || !window.claude.use) return;
+  try { const db = await window.claude.use('db'); if (!db) return; DB = db;
+    for (const k of PLAN_KEYS) { try { const snap = await db.doc('plans/' + k).get(); if (snap && snap.exists) applySaved(k, snap.data()); } catch (e) {} }
+    setSave('Synced · shared', true); renderAll(); } catch (e) {}
+}
+async function resetPlan() { pushUndo(); ST.items[ST.plan] = PLANS[ST.plan].items(); ST.edited[ST.plan] = false; closeCard(); renderAll(); if (DB) { try { await DB.doc('plans/' + ST.plan).delete(); } catch (e) {} } try { localStorage.removeItem('plp-plan-' + ST.plan); } catch (e) {} setSave('Reset'); toast(`${P().name} reset to the drawn plan. Undo restores your edits.`); }
+function copyPlan() {
+  const lines = [`${P().name} plan · 7305 Pine Lake Blvd · lot grid in feet (origin SW corner, +x east, +y north)`, 'ID\tPlant\tVariety\tx\ty\tChecks'];
+  for (const it of ITEMS()) { const s = SP[it.sp], c = checks(it, ITEMS()); lines.push([it.id, s.n, s.v || '', it.x, it.y1 != null ? it.y + '–' + it.y1 : it.y, c.filter(m => m[0] !== 'ok').map(m => m[1]).join(' | ') || 'clear'].join('\t')); }
+  const txt = lines.join('\n');
+  const done = () => toast('Plan table copied. Paste it into a chat or a spreadsheet.');
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => showText(txt)); else showText(txt);
+}
+function showText(txt) { $('card').innerHTML = `<header><h3>Plan table<small>Select all and copy</small></h3><button class="x" id="cardX">✕</button></header><div class="body"><textarea id="cpy" style="width:100%;height:260px;font:11px var(--mono);background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:6px" readonly></textarea></div>`; $('cpy').value = txt; $('card').hidden = false; $('cardX').onclick = closeCard; $('cpy').select(); }
+let toastT = null;
+function toast(t, kind) { const el = $('toast'); el.textContent = t; el.className = 'sheet' + (kind ? ' ' + kind : ''); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 3800); }
+function locate(k) { const list = ITEMS().filter(i => i.sp === k); if (!list.length) return; const i = (locateIdx[k] = ((locateIdx[k] ?? -1) + 1) % list.length), it = list[i]; ST.follow = false; cam.x = it.x; cam.y = it.y; cam.tz = Math.max(cam.tz, 6.5); flashId = it.id; flashT = performance.now() + 1800; if (small) document.body.classList.remove('open'); toast(`${it.id} · ${SP[k].n} (${i + 1} of ${list.length}). Tap again for the next one.`); }
+
+/* ================= panel rendering ================= */
+function renderAll() {
+  const p = P(), its = ITEMS();
+  $('tbPlan').textContent = p.name.toUpperCase(); $('tbTrees').textContent = its.filter(i => isTree(SP[i.sp])).length;
+  $('tbShrubs').textContent = its.filter(i => !isTree(SP[i.sp])).reduce((n, i) => n + (i.y1 != null ? Math.round(Math.abs(i.y1 - i.y) / 2) : 1), 0);
+  const all = its.map(i => worst(checks(i, its))); const e = all.filter(x => x === 'err').length, w = all.filter(x => x === 'warn').length; $('tbChecks').textContent = e ? `${e} ✕ · ${w} !` : w ? `${w} TO CHECK` : 'ALL CLEAR'; $('tbChecks').style.color = e ? COL.err : w ? COL.warn : COL.ok;
+  $('plans').innerHTML = PLAN_KEYS.map(k => `<button data-plan="${k}" aria-pressed="${k === ST.plan}">${PLANS[k].short}${ST.edited[k] ? '<span class="dot" title="Edited"></span>' : ''}</button>`).join('');
+  for (const b of $('plans').children) b.onclick = () => setPlan(b.dataset.plan);
+  $('planSel').innerHTML = PLAN_KEYS.map(k => `<option value="${k}" ${k === ST.plan ? 'selected' : ''}>${PLANS[k].name}${ST.edited[k] ? ' •' : ''}</option>`).join('');
+  for (const b of $('tabs').children) b.setAttribute('aria-pressed', b.dataset.tab === ST.tab);
+  ({ plants: renderPlants, catalog: renderCatalog, checks: renderChecks, month: renderMonth, layers: renderLayers })[ST.tab]();
+  renderHotbar(); buildGround();
+}
+function spRow(k, right, sub) { const s = SP[k]; return `<button class="row" data-sp="${k}"><span class="sw ${s.c === 'perennial' || s.c === 'grass' ? 'sq' : ''}" style="background:${plantColor(s, ST.month)}"></span><span class="nm"><b>${esc(s.n)}${s.warn ? ' <span style="color:var(--warn)">!</span>' : ''}</b><i>${esc(sub ?? (s.v || s.l))}</i>${calHTML(s)}</span><span class="cnt">${right}</span></button>`; }
+function renderPlants() {
+  const its = ITEMS(), counts = {}; for (const it of its) counts[it.sp] = (counts[it.sp] || 0) + (it.y1 != null ? Math.round(Math.abs(it.y1 - it.y) / 2) : 1);
+  const bed = {}; for (const z of P().zones) for (const [k, n] of z.comp) { bed[k] = bed[k] || { n: 0, d: false, z: [] }; if (n === D) bed[k].d = true; else bed[k].n += n; bed[k].z.push(z.name); }
+  let h = `<p style="font-size:11.5px;margin-bottom:10px;color:var(--mute)">${esc(P().note)}. Tap a placed plant to find it on the map.</p>`;
+  for (const c of Object.keys(CATS)) {
+    const placed = Object.keys(counts).filter(k => SP[k].c === c), beds = Object.keys(bed).filter(k => SP[k].c === c && !counts[k]);
+    if (!placed.length && !beds.length) continue;
+    h += `<div class="grp"><h2>${CATS[c]}</h2>${placed.map(k => spRow(k, '×' + counts[k])).join('')}${beds.map(k => spRow(k, bed[k].d && !bed[k].n ? 'drift' : '×' + bed[k].n + (bed[k].d ? '+' : ''), bed[k].z.join(' · '))).join('')}</div>`;
+  }
+  $('drawer').innerHTML = h;
+  for (const b of $('drawer').querySelectorAll('[data-sp]')) b.onclick = () => counts[b.dataset.sp] ? (locate(b.dataset.sp), openSpecies(b.dataset.sp)) : openSpecies(b.dataset.sp);
+}
+function renderCatalog() {
+  const q = catQuery.toLowerCase(), list = Object.values(SP).filter(s => (catFilter === 'all' || (catFilter === 'edible' ? s.ed : catFilter === 'native' ? s.nat : s.c === catFilter)) && (!q || (s.n + ' ' + s.v + ' ' + s.l).toLowerCase().includes(q)));
+  const f = [['all', 'All'], ['berry', 'Berries'], ['fruit', 'Fruit trees'], ['tree', 'Trees'], ['conifer', 'Evergreens'], ['shrub', 'Shrubs'], ['perennial', 'Perennials'], ['grass', 'Grasses'], ['edible', 'Edible'], ['native', 'Native']];
+  $('drawer').innerHTML = `<input class="search" id="q" type="search" placeholder="Search ${Object.keys(SP).length} plants" value="${esc(catQuery)}" aria-label="Search plants"><div class="filt">${f.map(([k, t]) => `<button data-f="${k}" aria-pressed="${catFilter === k}">${t}</button>`).join('')}</div>${list.map(s => spRow(s.k, isWoody(s) ? `<span style="font-size:10px">${s.hM}′</span>` : '')).join('') || '<p>No plants match.</p>'}`;
+  $('q').oninput = e => { catQuery = e.target.value; const pos = e.target.selectionStart; renderCatalog(); $('q').focus(); $('q').setSelectionRange(pos, pos); };
+  for (const b of $('drawer').querySelectorAll('[data-f]')) b.onclick = () => { catFilter = b.dataset.f; renderCatalog(); };
+  for (const b of $('drawer').querySelectorAll('[data-sp]')) b.onclick = () => openSpecies(b.dataset.sp);
+}
+function renderChecks() {
+  const its = ITEMS(); let h = '', any = false;
+  for (const lv of ['err', 'warn']) { const rows = its.map(it => [it, checks(it, its).filter(m => m[0] === lv)]).filter(r => r[1].length); if (!rows.length) continue; any = true; h += `<div class="grp"><h2>${lv === 'err' ? 'Breaks a rule' : 'To check'}</h2>${rows.map(([it, ms]) => `<button class="row" data-id="${it.id}"><span class="sw" style="background:${COL[lv]}"></span><span class="nm"><b>${it.id} · ${esc(SP[it.sp].n)}</b>${ms.map(m => `<i style="white-space:normal">${esc(m[1])}</i>`).join('')}</span><span class="cnt"></span></button>`).join('')}</div>`; }
+  if (!any) h += '<div class="msg">Every placed plant clears the septic, well, house and easement setbacks.</div>';
+  if (P().flags.length) h += `<div class="grp"><h2>Plan notes</h2>${P().flags.map(f => `<div class="msg warn">${esc(f)}</div>`).join('')}</div>`;
+  h += `<div class="grp"><h2>Rules used</h2>${['Trees: trunk ≥28′ from the septic trenches, ≥20′ from the house, outside the 12′ easements, never on the septic field or reserve.', 'Septic field: turf only. Septic reserve: no trees, fill or structures; berries need county OK.', 'Well: nothing woody within 10′; keep the rig path from the drive pad open.', 'Beyond the limit of disturbance (Pond Easement #1): confirm before planting.'].map(t => `<div class="msg">${esc(t)}</div>`).join('')}</div>`;
+  $('drawer').innerHTML = h;
+  for (const b of $('drawer').querySelectorAll('[data-id]')) b.onclick = () => { const it = ITEMS().find(i => i.id === b.dataset.id); if (!it) return; ST.follow = false; cam.x = it.x; cam.y = it.y; cam.tz = Math.max(cam.tz, 7); openItem(it); if (small) document.body.classList.remove('open'); };
+}
+const TASKS = {
+  1: ['Order bare-root berries, shrubs and trees for April delivery.', 'Check young trunks for rabbit and vole damage.'],
+  2: ['Prune apples, pears and plum (late winter, dormant).', 'Pull the soil-test results for the berry patch if it isn’t done.'],
+  3: ['Mow the fall raspberries to the ground.', 'Mow the meadow strip once, early spring.', 'Thin last year’s weak summer-raspberry canes.'],
+  4: ['Plant bare-root berries and shrubs (Phase 2, April 2028).', 'Cut new beds; turn on drip zones 4, 6 and 7.', 'Refresh mulch on the berry rows.'],
+  5: ['Watch late frosts on blooming haskap and fruit trees.', 'Set out the raised beds; start the kitchen garden.'],
+  6: ['Net the haskap row before it colors up.', 'Harvest haskap (early–mid June).', 'Shear catmint after its first flush.'],
+  7: ['Harvest summer raspberries (Nova).', 'Deep-water new plantings weekly if it’s dry.', 'Cut out spent summer-raspberry canes after harvest.'],
+  8: ['Fall raspberries start mid-August.', 'Hydroseed window: late August to mid-September (Phase 1, 2027).', 'Aronia starts to ripen.'],
+  9: ['Harvest aronia and fall raspberries.', 'Plant trees (Phase 1); deciduous through October.'],
+  10: ['Plant evergreens by mid-October.', 'Fall raspberries until hard frost.', 'Smother-mulch new bed areas with cardboard + chips.'],
+  11: ['Blow out the irrigation lines.', 'Seed the meadow strip (needs winter stratification).', 'Wrap young trunks; deer rub season.'],
+  12: ['Plan next year’s changes here; copy the plan table into a chat for a review.'],
+};
+function renderMonth() {
+  const m = ST.month, its = ITEMS(), have = new Set(its.map(i => i.sp)); for (const z of P().zones) for (const [k] of z.comp) have.add(k);
+  const bl = [...have].filter(k => SP[k].bl.includes(m)), fr = [...have].filter(k => SP[k].fr.includes(m) && SP[k].ed);
+  $('drawer').innerHTML = `<h2>${MONTH_FULL[m - 1]} on this plan</h2>
+  <div class="grp"><span class="k">Harvest</span>${fr.map(k => spRow(k, '')).join('') || '<p style="font-size:11.5px;padding:4px 0">Nothing to pick this month.</p>'}</div>
+  <div class="grp"><span class="k">In bloom</span>${bl.map(k => spRow(k, '')).join('') || '<p style="font-size:11.5px;padding:4px 0">Nothing blooming.</p>'}</div>
+  <div class="grp"><span class="k">To do</span>${(TASKS[m] || []).map(t => `<div class="task">${esc(t)}</div>`).join('')}</div>`;
+  for (const b of $('drawer').querySelectorAll('[data-sp]')) b.onclick = () => openSpecies(b.dataset.sp);
+}
+function renderLayers() {
+  const L = [['setbacks', 'Septic, well + easement setbacks', '#2e9e57'], ['irrigation', 'Irrigation heads, main + Z7 drip', '#2a78c2'], ['contours', '1′ contours from the plot plan', '#8c5a28'], ['labels', 'Plant IDs + zone names', COL.ink], ['rings', 'Mature canopy rings (trees)', COL.mute]];
+  $('drawer').innerHTML = `<h2>Map layers</h2>${L.map(([k, t, c]) => `<label class="tog"><input type="checkbox" id="ly-${k}" ${ST.layers[k] ? 'checked' : ''}>${t}<span class="sw sq" style="background:${c}"></span></label>`).join('')}
+  <h2 style="margin-top:14px">Spot grade</h2><p style="font-size:11.5px" id="spot"></p>
+  <h2 style="margin-top:14px">Saving</h2><p style="font-size:11.5px">Edits save per plan${DB ? ' to this page’s shared store, so Claude can read your layout back in a later chat' : ' on this device'}. “Copy plan” puts a table of every plant and its grid position on the clipboard.</p>`;
+  for (const [k] of L) $('ly-' + k).onchange = e => { ST.layers[k] = e.target.checked; if (k === 'contours') buildGround(); };
+  updSpot();
+}
+function updSpot() { const el = $('spot'); if (el) el.textContent = `Gardener at x ${av.x.toFixed(1)}, y ${av.y.toFixed(1)} · existing grade ≈ ${grade(av.x, av.y).toFixed(1)}′`; }
+setInterval(updSpot, 500);
+const HOT = ['haskap', 'aronia', 'rasp_fall', 'elder', 'pine', 'service', 'redbud', 'oak', 'viburnum', 'coneflower'];
+function renderHotbar() {
+  $('hotbar').innerHTML = `<span class="lbl">Plant</span>` + HOT.map(k => `<button data-sp="${k}" aria-pressed="${ST.armed === k}"><span class="sw" style="background:${SP[k].leaf}"></span>${esc(SP[k].n.replace(/, fall| \(.*\)/, ''))}</button>`).join('') + `<button data-more="1">More…</button>`;
+  for (const b of $('hotbar').querySelectorAll('[data-sp]')) b.onclick = () => arm(b.dataset.sp);
+  $('hotbar').querySelector('[data-more]').onclick = () => { ST.tab = 'catalog'; renderAll(); document.body.classList.add('open'); };
+}
+function setPlan(k) { if (k === ST.plan) return; ST.plan = k; ST.sel = null; closeCard(); curZone = null; groundKey = ''; renderAll(); toast(`${PLANS[k].name}: ${PLANS[k].note}.`); }
+
+/* ================= minimap ================= */
+const mini = $('miniCv'), mg = mini.getContext('2d'); const MM = { x0: -20, x1: 256, y0: -30, y1: 236 };
+function sizeMini() { const r = mini.getBoundingClientRect(); mini.width = Math.max(1, r.width * DPR); mini.height = Math.max(1, r.height * DPR); }
+function drawMini() {
+  if (small || !mini.width) return; const w = mini.width, h = mini.height, sc = Math.min(w / (MM.x1 - MM.x0), h / (MM.y1 - MM.y0)), X = x => (x - MM.x0) * sc + (w - (MM.x1 - MM.x0) * sc) / 2, Y = y => (MM.y1 - y) * sc;
+  if (ground) mg.drawImage(ground, (MM.x0 - WB.x0) * GP, (WB.y1 - MM.y1) * GP, (MM.x1 - MM.x0) * GP, (MM.y1 - MM.y0) * GP, X(MM.x0), 0, (MM.x1 - MM.x0) * sc, (MM.y1 - MM.y0) * sc);
+  mg.fillStyle = 'rgba(30,60,30,.8)'; for (const it of ITEMS()) if (isTree(SP[it.sp])) { mg.beginPath(); mg.arc(X(it.x), Y(it.y), Math.max(1.5, canopyFt(SP[it.sp], ST.year) / 2 * sc), 0, 7); mg.fill(); }
+  const [a, b] = s2w(0, 0), [c, d] = s2w(W, H); mg.strokeStyle = COL.accent; mg.lineWidth = 1.5 * DPR; mg.strokeRect(X(a), Y(b), (c - a) * sc, (b - d) * sc);
+  mg.fillStyle = COL.accent; mg.beginPath(); mg.arc(X(av.x), Y(av.y), 3.5 * DPR, 0, 7); mg.fill();
+  drawMini.map = { X0: (w - (MM.x1 - MM.x0) * sc) / 2, sc };
+}
+$('mini').onclick = e => { const r = mini.getBoundingClientRect(), m = drawMini.map; if (!m) return; const x = MM.x0 + ((e.clientX - r.left) * DPR - m.X0) / m.sc, y = MM.y1 - (e.clientY - r.top) * DPR / m.sc; ST.follow = false; cam.x = x; cam.y = y; };
+
+/* ================= input ================= */
+const ptrs = new Map(); let pinch = null, tapStart = null;
+function hitItem(x, y) { let best = null, bd = 1e9; for (const it of ITEMS()) { const s = SP[it.sp]; const d = it.y1 != null ? (Math.abs(x - it.x) < 2.6 && y > Math.min(it.y, it.y1) - 0.5 && y < Math.max(it.y, it.y1) + 0.5 ? 0 : 1e9) : Math.hypot(x - it.x, y - it.y); const r = it.y1 != null ? 0.1 : Math.max(2.2, canopyFt(s, ST.year) / 2, 9 / cam.z); if (d <= r && d < bd) { bd = d; best = it; } } return best; }
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; pinch = { d: Math.hypot(p1.x - p2.x, p1.y - p2.y), z: cam.tz }; tapStart = null; drag = null; return; }
+  const [wx, wy] = s2w(e.clientX, e.clientY); tapStart = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false, t: performance.now() };
+  const hit = hitItem(wx, wy); if (hit && hit === ST.sel && !ST.armed) { drag = { it: hit, ox: hit.x - wx, oy: hit.y - wy, orig: { x: hit.x, y: hit.y, y1: hit.y1 }, lv: null }; }
+});
+cv.addEventListener('pointermove', e => {
+  const [wx, wy] = s2w(e.clientX, e.clientY);
+  if (ST.armed && e.pointerType === 'mouse') ghostPos = [wx, wy];
+  if (!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && ptrs.size === 2) { const [p1, p2] = [...ptrs.values()]; cam.tz = clamp(pinch.z * Math.hypot(p1.x - p2.x, p1.y - p2.y) / pinch.d, 1.2, 22); cam.z = cam.tz; return; }
+  if (!tapStart) return; const dx = e.clientX - tapStart.x, dy = e.clientY - tapStart.y; if (Math.hypot(dx, dy) > 6) tapStart.moved = true; if (!tapStart.moved) return;
+  if (drag) { const it = drag.it, ddy = it.y1 != null ? it.y1 - it.y : 0; it.x = +(wx + drag.ox).toFixed(1); it.y = +(wy + drag.oy).toFixed(1); if (it.y1 != null) it.y1 = +(it.y + ddy).toFixed(1); drag.lv = worst(checks(it, ITEMS())); return; }
+  ST.follow = false; cam.x = tapStart.cx - dx / cam.z; cam.y = tapStart.cy + dy / cam.z;
+});
+function endPtr(e) {
+  ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch = null; if (!tapStart) return; const ts = tapStart; tapStart = null;
+  if (drag) { const it = drag.it, o = drag.orig, moved = ts.moved; const lv = drag.lv; drag = null;
+    if (moved) { if (lv === 'err') { const msg = checks(it, ITEMS()).find(m => m[0] === 'err')[1]; it.x = o.x; it.y = o.y; if (o.y1 != null) it.y1 = o.y1; toast(msg + ' Moved back.', 'err'); } else { const cur = { x: it.x, y: it.y, y1: it.y1 }; Object.assign(it, o); pushUndo(); Object.assign(it, cur); changed(); openItem(it); toast(`${it.id} moved to ${it.x.toFixed(0)}, ${it.y.toFixed(0)}.`, lv === 'warn' ? 'warn' : ''); } return; } }
+  if (ts.moved || e.type === 'pointercancel') return;
+  const [wx, wy] = s2w(e.clientX, e.clientY);
+  if (ST.armed) { placeAt(wx, wy); return; }
+  const hit = hitItem(wx, wy); if (hit) { openItem(hit); return; }
+  av.walk = blocked(wx, wy) ? null : [wx, wy]; ST.follow = true; if (!$('card').hidden && small) closeCard();
+}
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && ST.armed) ghostPos = null; });
+cv.addEventListener('wheel', e => { e.preventDefault(); const [wx, wy] = s2w(e.clientX, e.clientY), nz = clamp(cam.tz * Math.exp(-e.deltaY * 0.0015), 1.2, 22); ST.follow = false; cam.x = wx - (e.clientX - W / 2) / nz; cam.y = wy + (e.clientY - H / 2) / nz; cam.tz = cam.z = nz; }, { passive: false });
+addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea')) return; const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); undo(); return; }
+  if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'shift'].includes(k)) { KEYS[k] = true; if (k.startsWith('arrow')) e.preventDefault(); }
+  if (k === 'e') near ? openItem(near) : openZone(curZone);
+  if (k === ' ' && ST.armed && !e.repeat) { e.preventDefault(); placeAt(av.x + Math.cos(av.dir) * 4, av.y + Math.sin(av.dir) * 4); }
+  if (k === 'escape' && !$('shot').hidden) { $('shot').hidden = true; return; }
+  if (!$('shot').hidden && (k === 'arrowleft' || k === 'arrowright')) { openShot(shotI + (k === 'arrowright' ? 1 : -1)); e.preventDefault(); return; }
+  if (k === 'escape') { if (ST.armed) arm(ST.armed); else closeCard(); $('help').hidden = true; }
+  if ((k === 'delete' || k === 'backspace') && ST.sel) $('cDel') && $('cDel').click();
+  if (k === 'c') { ST.follow = true; }
+  if (k === '+' || k === '=') cam.tz = clamp(cam.tz * 1.25, 1.2, 22); if (k === '-') cam.tz = clamp(cam.tz / 1.25, 1.2, 22);
+  if (/^[1-9]$/.test(k)) arm(HOT[+k - 1]);
+});
+addEventListener('keyup', e => { KEYS[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in KEYS) KEYS[k] = false; });
+// joystick
+{ const j = $('joy'), knob = j.querySelector('i'); let id = null;
+  const mv = e => { const r = j.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2); const m = Math.hypot(dx, dy); if (m > 1) { dx /= m; dy /= m; } joyV = [dx, -dy]; knob.style.transform = `translate(${dx * 34}px,${dy * 34}px)`; };
+  j.addEventListener('pointerdown', e => { id = e.pointerId; j.setPointerCapture(id); mv(e); });
+  j.addEventListener('pointermove', e => { if (e.pointerId === id) mv(e); });
+  const up = e => { if (e.pointerId !== id) return; id = null; joyV = [0, 0]; knob.style.transform = ''; }; j.addEventListener('pointerup', up); j.addEventListener('pointercancel', up); }
+$('actInspect').onclick = () => near ? openItem(near) : openZone(curZone);
+$('actPlant').onclick = () => { if (ST.armed) placeAt(av.x + Math.cos(av.dir) * 4, av.y + Math.sin(av.dir) * 4); };
+$('actCenter').onclick = () => { ST.follow = true; };
+$('zone').onclick = () => openZone(curZone); $('zone').onkeydown = e => { if (e.key === 'Enter') openZone(curZone); };
+$('undoBtn').onclick = undo; $('copyBtn').onclick = copyPlan; $('resetBtn').onclick = () => { if ($('resetBtn').dataset.sure) { delete $('resetBtn').dataset.sure; $('resetBtn').textContent = 'Reset plan'; resetPlan(); } else { $('resetBtn').dataset.sure = 1; $('resetBtn').textContent = 'Tap to confirm'; setTimeout(() => { delete $('resetBtn').dataset.sure; $('resetBtn').textContent = 'Reset plan'; }, 3000); } };
+for (const b of $('tabs').children) b.onclick = () => { ST.tab = b.dataset.tab; renderAll(); };
+$('planSel').onchange = e => setPlan(e.target.value);
+$('menuBtn').onclick = () => document.body.classList.toggle('open');
+document.addEventListener('pointerdown', e => { if (small && document.body.classList.contains('open') && !$('panel').contains(e.target) && e.target !== $('menuBtn')) document.body.classList.remove('open'); });
+$('helpBtn').onclick = () => $('help').hidden = false; $('helpClose').onclick = () => { $('help').hidden = true; try { localStorage.setItem('plp-help', '1'); } catch (e) {} };
+$('months').innerHTML = MON.map((m, i) => `<button data-m="${i + 1}" aria-pressed="${i + 1 === ST.month}">${m}</button>`).join('');
+for (const b of $('months').children) b.onclick = () => { ST.month = +b.dataset.m; for (const c of $('months').children) c.setAttribute('aria-pressed', c === b); renderAll(); if (ST.sel) openItem(ST.sel); };
+$('year').oninput = e => { ST.year = +e.target.value; $('yearv').textContent = (2027 + ST.year) + (ST.year ? ' · +' + ST.year + ' YR' : ' · PLANTING'); buildGround(); if (ST.sel) openItem(ST.sel); };
+
+/* ================= boot ================= */
+function boot() {
+  readColors(); resize(); GP = small ? 5 : 7; cam.tz = cam.z = small ? 4.2 : 6;
+  $('year').dispatchEvent(new Event('input'));
+  renderAll(); loadSaved();
+  try { if (!localStorage.getItem('plp-help')) $('help').hidden = false; } catch (e) { $('help').hidden = false; }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', () => { const was = small; resize(); if (was !== small) { GP = small ? 5 : 7; groundKey = ''; buildGround(); } });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); groundKey = ''; buildGround(); });
+new MutationObserver(() => { readColors(); groundKey = ''; buildGround(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { groundKey = ''; if (ground) buildGround(); });
+boot();
+</script>
