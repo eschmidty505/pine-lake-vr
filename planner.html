@@ -67,6 +67,17 @@ details.sec>summary>span:first-of-type{flex:1;min-width:0;overflow:hidden;text-o
 .secb>.swg:last-child,.secb>.seg:last-child{margin-bottom:0}
 .secb>.k{display:block;margin:6px 0 4px}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:11px;margin-top:6px;align-items:center}.keys kbd{font:600 10px var(--mono);border:1px solid var(--line);padding:1px 5px;white-space:nowrap;background:var(--paper2)}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:2px 0 4px}
+.pcard{display:grid;grid-template-rows:auto auto auto;gap:3px;padding:0 0 6px;text-transform:none;letter-spacing:0;text-align:left;min-height:0;overflow:hidden;background:var(--paper)}
+.pcard canvas{width:100%;aspect-ratio:300/170;display:block;border-bottom:1px solid var(--line)}
+.pcard .pn{padding:0 6px;min-width:0}.pcard .pn b{display:block;font-size:11.5px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard .pn i{display:block;font-style:normal;font-size:10px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .pm{display:block;font-size:9.5px;color:var(--ink);margin-top:2px;line-height:1.3}.pcard .pm em{font-style:normal;color:var(--ok)}.pcard .pm em.w{color:var(--warn)}
+.pcard .cal{margin:0 6px}
+.pcard[aria-pressed="true"]{outline:2.5px solid var(--accent);outline-offset:-2px;background:var(--paper2);color:var(--ink)}
+.pcard:hover canvas{filter:brightness(1.04)}
+.ages{margin-bottom:0}.ages button{font-size:9.5px;padding:3px 2px}
+.grow{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line)}.grow button{border:0;border-right:1px solid var(--line);padding:4px 2px;display:grid;gap:1px;text-transform:none;letter-spacing:0;font-size:9.5px;min-height:0}.grow button:last-child{border-right:0}.grow button b{font:700 13px/1.1 var(--display)}.grow button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .tip{font-size:11px;color:var(--mute);line-height:1.45;margin:2px 0 8px}
 .subtabs{position:sticky;top:-10px;z-index:2;background:var(--paper);padding-top:2px;margin:-2px 0 8px}
 .subtabs button{font-size:9.5px}
@@ -76,10 +87,10 @@ details.sec>summary>span:first-of-type{flex:1;min-width:0;overflow:hidden;text-o
 body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){#tools .vbtn{display:none}}body.v3 #map,body.v3 #mini,body.v3 #joy,body.v3 #walkacts{display:none!important}
 #viewBtn{font:700 11px var(--display);letter-spacing:.08em}
 #tools button.vbtn{border-top:1.5px solid var(--line);color:var(--accent)}
-#ovbar{display:none}body.v3 #ovbar{display:flex;position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;gap:4px;align-items:center;padding:5px 6px;flex-wrap:wrap;max-width:calc(100% - 24px)}
-#ovbar .k{margin:0 4px}#ovbar button{font-size:9.5px;padding:4px 8px;min-height:28px}
+#ovbar{display:none}body.v3 #ovbar{display:flex;flex-direction:column;align-items:stretch;width:200px;position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;gap:4px;padding:6px}
+#ovbar .k{margin:0 4px}#ovbar select{font-size:10px;min-height:28px;padding:2px 4px;width:auto}#ovbar button{font-size:9.5px;padding:4px 8px;min-height:28px}
 @media (max-width:1180px){body.v3 #timebar{bottom:62px}}
-@media (max-width:820px){body.v3 #ovbar{left:max(8px,env(safe-area-inset-left,0px));right:auto;top:calc(52px + env(safe-area-inset-top,0px));bottom:auto;padding:3px 4px}body.v3 #ovbar .k{display:none}body.v3 #ovbar button{font-size:9px;min-height:26px;padding:3px 6px}body.v3 #hud{top:calc(90px + env(safe-area-inset-top,0px))}}
+@media (max-width:820px){body.v3 #ovbar{flex-direction:row;flex-wrap:wrap;align-items:center;width:auto;max-width:calc(100% - 16px);left:max(8px,env(safe-area-inset-left,0px));right:auto;top:calc(52px + env(safe-area-inset-top,0px));bottom:auto;padding:3px 4px}body.v3 #ovbar .k{display:none}body.v3 #ovbar button{font-size:9px;min-height:26px;padding:3px 6px}body.v3 #hud{top:calc(90px + env(safe-area-inset-top,0px))}}
 #gtip{position:fixed;z-index:9;pointer-events:none;max-width:340px;padding:4px 8px;font-size:11px;line-height:1.35;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-left:4px solid #2e9e57;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 #v3load{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;padding:10px 14px;font-size:12px}
 .row{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 4px;border:0;border-bottom:1px dashed color-mix(in srgb,var(--line) 35%,transparent);cursor:pointer;width:100%;text-align:left;background:none;text-transform:none;letter-spacing:0;font-size:11.5px;min-height:0}
@@ -171,6 +182,7 @@ body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){
 .mix select,.mix input{min-height:28px;padding:2px 4px;font-size:11px}
 
 /* bottom */
+#timebar .ages{grid-column:1/-1;margin:0}#timebar .ages button{font-size:9px;min-height:24px;padding:2px 4px}
 #timebar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;width:min(520px,calc(100% - 32px));display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;padding:7px 10px}
 .months{display:grid;grid-template-columns:repeat(12,1fr);grid-column:1/3}
 .months button{border:0;border-right:1px solid color-mix(in srgb,var(--line) 40%,transparent);padding:4px 0;min-height:26px;font-size:9.5px;letter-spacing:.03em}
@@ -259,7 +271,7 @@ body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){
 <section id="insp" class="sheet" hidden aria-live="polite"></section>
 <div id="strip" class="sheet" aria-label="Quick palette"></div>
 
-<div id="timebar" class="sheet"><span class="yearv" id="yearv">2028</span><input id="year" type="range" min="0" max="25" step="1" value="1" aria-label="Years after planting"><div class="months" id="months"></div></div>
+<div id="timebar" class="sheet"><span class="yearv" id="yearv">2028</span><input id="year" type="range" min="0" max="25" step="1" value="1" aria-label="Years after planting"><div class="months" id="months"></div><div class="ages seg" id="ages0"></div></div>
 <div id="mini" class="sheet" aria-label="Minimap; click to jump"><canvas id="miniCv"></canvas></div>
 <div id="joy" aria-label="Move joystick"><i></i></div>
 <div id="walkacts"><button id="actInspect">Inspect</button><button id="actCenter">Center</button></div>
@@ -365,6 +377,10 @@ S('pussywillow', { n: 'Pussy willow', l: 'Salix discolor', c: 'shrub', nat: 1, h
 S('dwillow', { n: 'Dappled willow', v: "'Hakuro Nishiki'", l: 'Salix integra', c: 'shrub', h0: 2, hM: 7, s0: 2, sM: 6, tau: 3, leaf: '#b7c69c', fall: '#d6c25c', reach: 30, buy: '#3 container', note: 'Pink-and-white new growth all season; shear in early summer for a fresh flush. Good screening hedge or standard.', roots: 'Willow roots: keep ≥30′ from septic lines and the well.' });
 S('crab', { n: 'Crabapple', v: "'Prairifire'", l: 'Malus', c: 'tree', h0: 8, hM: 20, s0: 4, sM: 20, tau: 9, bl: [5], fr: [9, 10, 11, 12], leaf: '#5b5a3a', bc: '#d2477a', fc: '#9c1f3a', fall: '#a55a2c', note: 'Disease-resistant; pink-red bloom and persistent fruit for winter birds.' });
 S('lilactree', { n: 'Japanese tree lilac', v: "'Ivory Silk'", l: 'Syringa reticulata', c: 'tree', h0: 8, hM: 25, s0: 4, sM: 15, tau: 10, bl: [6], leaf: '#557f3c', bc: '#f2ecd6', note: 'Best salt tolerance of the flowering trees; creamy June plumes.' });
+S('sweetgum', { n: 'Columnar sweetgum', v: "'Slender Silhouette'", l: 'Liquidambar styraciflua', c: 'tree', form: 'column', h0: 10, hM: 50, s0: 2, sM: 8, tau: 11, leaf: '#4f7a3a', fall: '#9c2f3c', fall2: '#d0832c', buy: '2″ caliper or 10–12′ B&B', note: 'A 50-foot exclamation point only 6–8′ wide: star-shaped leaves that go burgundy, orange and gold in late October. Few gumballs. Fits tight spots and frames an entry or a view.' });
+S('fmaple', { n: 'Freeman maple', v: "'Autumn Blaze'", l: 'Acer × freemanii', c: 'tree', form: 'oval', h0: 10, hM: 50, s0: 5, sM: 40, tau: 9, leaf: '#4b7735', fall: '#c42e1e', fall2: '#e0702a', buy: '2″ caliper', note: 'Fast, dense oval crown with blazing red-orange fall color that comes in from the outside, like the one on the walk. Wants room: 40′ wide. Prune young for a strong central leader.' });
+S('blackgum', { n: 'Black gum', v: "'Wildfire'", l: 'Nyssa sylvatica', c: 'tree', nat: 1, form: 'oval', h0: 8, hM: 40, s0: 4, sM: 25, tau: 12, leaf: '#3f6e34', fall: '#c22f22', fall2: '#e3842e', buy: '1.5–2″ caliper', note: 'Michigan native with glossy oval leaves and some of the best scarlet-orange fall color of any tree. Handles wet clay. The native pick if you like the look of a Callery pear.' });
+S('callery', { n: 'Callery pear', v: "'Cleveland Select'", l: 'Pyrus calleryana', c: 'tree', form: 'oval', h0: 10, hM: 35, s0: 4, sM: 18, tau: 8, bl: [4], leaf: '#4e7436', bc: '#f6f3ea', fall: '#a8423a', fall2: '#c8803a', warn: 'Invasive: Michigan restricted Callery pear in May 2026 (sale and planting banned from Jan 1, 2028). Plant black gum, serviceberry or a crabapple instead.', note: 'Flagged: see the warning. Glossy leaves, white April bloom, late rusty-red fall color.' });
 S('lmaple', { n: 'Laceleaf maple', v: "'Tamukeyama'", l: 'Acer palmatum var. dissectum', c: 'tree', h0: 3, hM: 8, s0: 3, sM: 11, tau: 11, leaf: '#6b2232', fall: '#b8202a', note: 'Small weeping red focal tree.' });
 S('apple', { n: 'Dwarf apple', v: "'Honeycrisp'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9], leaf: '#5c8a44', bc: '#f6e3ea', fc: '#c8302c', note: 'Needs a second apple variety nearby for pollination.' });
 S('apple2', { n: 'Dwarf apple', v: "'Liberty'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9, 10], leaf: '#5a8642', bc: '#f6e3ea', fc: '#a51f2a', note: 'Scab-immune; one of MSU Extension’s disease-resistant picks.' });
@@ -426,6 +442,7 @@ PER('lavender', 'Lavender', "Lavandula 'Munstead'", [6, 7], '#9a8ad0', { leaf: '
 PER('sage', 'Culinary sage', 'Salvia officinalis', [6], '#9a8ad0', { ed: 1, leaf: '#8a9a80', note: 'Kitchen herb.' });
 PER('thyme', 'Thyme', 'Thymus vulgaris', [6], '#c8a8d8', { ed: 1, leaf: '#6a8a5a', hM: 0.5, note: 'Kitchen herb; creeping forms fill between stepping stones.' });
 PER('chives', 'Chives', 'Allium schoenoprasum', [5, 6], '#b88ac8', { ed: 1, note: 'Edible edging.' });
+PER('allium', "Ornamental onion", "Allium 'Millenium'", [7, 8], '#a165c8', { hM: 1.6, sM: 1.4, fr: [9, 10, 11], fc: '#5a4a52', note: 'Perennial Plant of the Year 2018. Rosy-purple globes in July–August, then dark seed heads that stand all fall (the round heads in your photo). Deer and rabbits leave it alone.' });
 PER('clover', 'White clover', 'Trifolium repens', [6, 7, 8], '#f4f4ee', { hM: 0.4, note: 'Feeds bees, fixes nitrogen, stays green in drought.' });
 PER('moss', 'Sheet moss', 'Hypnum', [], null, { leaf: '#3f6a35', hM: 0.1, note: 'Transplant or slurry once a canopy closes; keep leaf litter off.' });
 const GR = (k, n, l, o) => S(k, Object.assign({ n, l, c: 'grass', h0: 1, hM: 3, s0: 1, sM: 2, tau: 2, leaf: '#6f8f4a' }, o));
@@ -435,6 +452,8 @@ GR('bigblue', 'Big bluestem', 'Andropogon gerardii', { nat: 1, hM: 6, leaf: '#6a
 GR('indian', 'Indiangrass', 'Sorghastrum nutans', { nat: 1, hM: 6, bl: [9], bc: '#c8a040', fall: '#c08a3a', note: 'Golden plumes in September.' });
 GR('sideoats', 'Sideoats grama', 'Bouteloua curtipendula', { nat: 1, hM: 2.5, note: 'Short clumping prairie grass, safe on the reserve.' });
 GR('switch', 'Switchgrass', 'Panicum virgatum', { nat: 1, hM: 5, fall: '#c4a24a', note: 'Upright, salt-tolerant drive-bed grass.' });
+GR('fountain', 'Fountain grass', "Pennisetum alopecuroides 'Red Head'", { hM: 3.5, sM: 3.5, bl: [8, 9, 10], bc: '#5e4a56', fr: [11, 12, 1, 2], fc: '#b39a68', fall: '#c9a755', note: 'Big dark, bottlebrush plumes from August into winter, as in the parking-lot bed. Leave it standing for winter interest; cut to 4″ in March.' });
+GR('fountain2', 'Dwarf fountain grass', "Pennisetum alopecuroides 'Hameln'", { hM: 2.5, sM: 2.5, bl: [8, 9], bc: '#cdbf9d', fall: '#d0ad55', note: 'Tidy 2½′ mounds with tan plumes; good edging along a walk or patio.' });
 GR('featherreed', 'Feather reed grass', "Calamagrostis × acutiflora 'Karl Foerster'", { hM: 5, bl: [6, 7], bc: '#d8c08a', note: 'Vertical accent; plumes from June.' });
 GR('sedge', 'Pennsylvania sedge', 'Carex pensylvanica', { nat: 1, hM: 0.7, leaf: '#6a9a4a', note: 'Soft no-mow groundcover under pines.' });
 GR('tussock', 'Tussock sedge', 'Carex stricta', { nat: 1, hM: 2.5, note: 'Rain garden edge.' });
@@ -1367,7 +1386,7 @@ function renderHint() {
   $('hintActs').innerHTML = acts.map(([n, k, en]) => `<button data-h="${k}" ${en ? '' : 'disabled'}>${n}</button>`).join('');
   for (const b of $('hintActs').children) b.onclick = () => { const k = b.dataset.h; if (k === 'done') finishDraft(); else if (k === 'cancel') finishDraft(true); else if (k === 'back') { ST.draft.pts.pop(); if (!ST.draft.pts.length) ST.draft = null; renderHint(); } else if (k === 'row') { ST.rowMode = !ST.rowMode; renderHint(); if (ST.tab === 'palette') renderDrawer(); } };
 }
-const HOTPLANTS = ['haskap', 'aronia', 'rasp_fall', 'rasp_summer', 'blueberry', 'strawberry', 'elder', 'pine', 'arbor', 'service', 'redbud', 'rmaple', 'oak', 'appleL', 'viburnum', 'hydrangea', 'coneflower', 'dropseed'];
+const HOTPLANTS = ['haskap', 'aronia', 'rasp_fall', 'rasp_summer', 'blueberry', 'strawberry', 'elder', 'pine', 'arbor', 'sweetgum', 'fmaple', 'blackgum', 'service', 'redbud', 'rmaple', 'oak', 'fountain', 'allium', 'appleL', 'viburnum', 'hydrangea', 'coneflower', 'dropseed'];
 const STRIPCAT = { plant: 'rec', bed: null, path: null, build: null };
 function stripGroups(t) {
   if (t === 'plant') return [['rec', 'Picks for this lot', HOTPLANTS], ...Object.keys(CATS).map(c => [c, CATS[c], Object.values(SP).filter(s => s.c === c).map(s => s.k)])];
@@ -1391,6 +1410,41 @@ function renderStrip() {
   const on = $('strip').querySelector('[aria-pressed="true"]'); if (on) on.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 function arm(k) { const t = ST.tool; if (t === 'plant') { ST.armed.plant = k; OPEN['pl-' + SP[k].c] = true; } else if (t === 'bed') ST.armed.bed = k; else if (t === 'path') ST.armed.path = k; else if (t === 'build') ST.armed.st = k; renderStrip(); renderHint(); if (ST.tab === 'palette') renderDrawer(); }
+
+/* ---- plant cards: side-view silhouette at the chosen age, mature outline, a 6-ft person for scale ---- */
+const AGES = [[0, 'Planting'], [3, '3 yr'], [5, '5 yr'], [10, '10 yr'], [25, 'Mature']];
+let palView = 'cards'; try { palView = localStorage.getItem('plb-pal') || 'cards'; } catch (e) {}
+function formOf(s) { if (s.form) return s.form; if (s.c === 'conifer') return s.k === 'arbor' ? 'column' : s.k === 'pine' ? 'pine' : 'cone'; if (s.k === 'willow') return 'weep'; if (s.row) return 'cane'; if (s.c === 'tree' || s.c === 'fruit') return s.v === 'clump' ? 'clump' : s.k === 'lmaple' ? 'mound' : 'round'; if (s.c === 'grass') return 'grass'; if (s.c === 'perennial' || s.k === 'strawberry') return 'clumpf'; return 'shrub'; }
+function drawPlantIcon(cv, s, yrs) {
+  const g = cv.getContext('2d'), Wc = cv.width, Hc = cv.height, gnd = Hc - 10 * (Wc / 300), hM = Math.max(s.hM, 1), wM = Math.max(s.sM, 1), scale = Math.min((gnd - 8) / Math.max(hM, 6.5), (Wc * 0.62) / Math.max(wM, 3)), cx = Wc * 0.56;
+  g.clearRect(0, 0, Wc, Hc); const dk = isDark(); g.fillStyle = dk ? '#2b3134' : '#eef0e6'; g.fillRect(0, 0, Wc, Hc); g.fillStyle = dk ? '#3d4a36' : '#cfd9bd'; g.fillRect(0, gnd, Wc, Hc - gnd);
+  const sea = season(ST.month), bare = sea === 'winter' && !s.ev, fol = foliage(s, ST.month) || '#8a7a5a', bloom = s.bc && s.bl.includes(ST.month) ? s.bc : null, fruit = s.fc && s.fr.includes(ST.month) ? s.fc : null, r = rng(hash(s.k));
+  const shape = (h, w, mode) => { const H2 = h * scale, W2 = w * scale, f = formOf(s); g.beginPath();
+    if (f === 'cone' || f === 'pine') { g.moveTo(cx, gnd - H2); g.lineTo(cx + W2 / 2, gnd - H2 * 0.1); g.lineTo(cx - W2 / 2, gnd - H2 * 0.1); g.closePath(); }
+    else if (f === 'column') g.ellipse(cx, gnd - H2 * 0.52, Math.max(1, W2 / 2), H2 * 0.5, 0, 0, 7);
+    else if (f === 'weep') { g.moveTo(cx - W2 / 2, gnd - H2 * 0.12); g.quadraticCurveTo(cx - W2 / 2, gnd - H2 * 1.05, cx, gnd - H2); g.quadraticCurveTo(cx + W2 / 2, gnd - H2 * 1.05, cx + W2 / 2, gnd - H2 * 0.12); g.closePath(); }
+    else if (f === 'round' || f === 'clump' || f === 'oval') { const th = h * (s.c === 'fruit' ? 0.3 : 0.38) * scale, ch = H2 - th; g.ellipse(cx, gnd - th - ch / 2, Math.max(1, W2 / 2), ch / 2 * (f === 'oval' ? 1.04 : 1), 0, 0, 7); }
+    else if (f === 'grass') { for (let i = 0; i < 9; i++) { const a = -0.9 + i * 0.225; g.moveTo(cx, gnd); g.quadraticCurveTo(cx + Math.sin(a) * W2 * 0.3, gnd - H2 * 0.6, cx + Math.sin(a) * W2 * 0.55, gnd - H2 * Math.cos(a * 0.6)); } }
+    else { g.ellipse(cx, gnd - H2 * 0.48, Math.max(1, W2 / 2), H2 * 0.5, 0, 0, 7); }
+    if (mode === 'line') { g.setLineDash([4, 3]); g.strokeStyle = dk ? 'rgba(231,226,212,.45)' : 'rgba(27,34,40,.35)'; g.lineWidth = 1.5; g.stroke(); g.setLineDash([]); return; }
+    if (formOf(s) === 'grass') { g.strokeStyle = fol; g.lineWidth = Math.max(1.5, W2 * 0.05); g.stroke(); } else { g.fillStyle = fol; g.fill(); } };
+  shape(hM, wM, 'line');
+  const h = Math.max(0.4, grow(s.h0, s.hM, s.tau, yrs)), w = Math.max(0.4, canopyFt(s, yrs)), f = formOf(s);
+  if (['round', 'clump', 'oval', 'weep', 'cone', 'pine', 'column'].includes(f)) { g.fillStyle = s.k === 'birch' ? '#d9d3c4' : '#5d4a3a'; const tw = Math.max(1.5, w * 0.05 * scale); g.fillRect(cx - tw / 2, gnd - h * scale * 0.45, tw, h * scale * 0.45); }
+  if (!bare) shape(h, w); else if (f !== 'grass') { g.strokeStyle = '#6b5440'; g.lineWidth = 1.2; for (let i = 0; i < 9; i++) { const a = -1.1 + i * 0.27; g.beginPath(); g.moveTo(cx, gnd - h * scale * 0.4); g.lineTo(cx + Math.sin(a) * w * scale * 0.48, gnd - h * scale * (0.55 + 0.4 * Math.cos(a))); g.stroke(); } }
+  const dots = bloom || fruit; if (dots && !bare) { g.fillStyle = dots; for (let i = 0; i < 22; i++) { const a = r() * 6.28, q = Math.sqrt(r()) * 0.45; g.beginPath(); g.arc(cx + Math.cos(a) * q * w * scale, gnd - h * scale * (f === 'grass' ? 0.85 : 0.55) + Math.sin(a) * q * h * scale * 0.7, Math.max(1.5, Wc / 110), 0, 7); g.fill(); } }
+  // person for scale
+  const ps = 6 * scale, px = Wc * 0.12; g.fillStyle = dk ? 'rgba(231,226,212,.55)' : 'rgba(27,34,40,.45)'; g.beginPath(); g.arc(px, gnd - ps + ps * 0.08, ps * 0.08, 0, 7); g.fill(); g.fillRect(px - ps * 0.07, gnd - ps * 0.84, ps * 0.14, ps * 0.84);
+  g.font = `600 ${Math.round(Wc / 17)}px "IBM Plex Mono", monospace`; g.fillStyle = dk ? '#e7e2d4' : '#1b2228'; g.textAlign = 'right'; g.fillText(`${Math.round(h)}′×${Math.round(w)}′`, Wc - 6, 16 * (Wc / 300)); g.textAlign = 'start';
+}
+function plantCard(s, pressed) {
+  const tags = [s.nat ? 'Native' : '', s.ed ? 'Edible' : '', s.ev ? 'Evergreen' : '', s.warn ? '!' : ''].filter(Boolean);
+  return `<button class="pcard" data-sp="${s.k}" aria-pressed="${!!pressed}" title="${esc(s.n + (s.v ? ' ' + s.v : '') + ' · ' + s.l)}"><canvas width="300" height="170" data-pc="${s.k}"></canvas><span class="pn"><b>${esc(s.n)}</b><i>${esc(s.v || s.l)}</i><span class="pm">${s.hM}′ tall · ${s.sM}′ wide${tags.length ? ` · <em class="${s.warn ? 'w' : ''}">${tags.join(' · ')}</em>` : ''}</span></span>${calHTML(s)}</button>`;
+}
+function paintCards(root) { const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => { for (const en of es) if (en.isIntersecting) { io.unobserve(en.target); const s = SP[en.target.dataset.pc]; if (s) drawPlantIcon(en.target, s, ST.year); } }, { root: null, rootMargin: '200px' }) : null;
+  for (const c of root.querySelectorAll('canvas[data-pc]')) { if (io) io.observe(c); else drawPlantIcon(c, SP[c.dataset.pc], ST.year); } }
+function ageChips(id) { return `<div class="seg ages" id="${id}">${AGES.map(([y, n]) => `<button data-age="${y}" aria-pressed="${ST.year === y}">${n}</button>`).join('')}</div>`; }
+function wireAges(root) { root.querySelectorAll('[data-age]').forEach(b => b.onclick = () => setYear(+b.dataset.age)); }
 
 /* ================= UI: panel ================= */
 const OPEN = {};
@@ -1416,9 +1470,11 @@ function renderPalette() {
     h += `<input class="search" id="q" type="search" placeholder="Search ${Object.keys(SP).length} plants" value="${esc(catQuery)}" aria-label="Search plants"><div class="seg">${[['all', 'All'], ['edible', 'Edible'], ['native', 'Native']].map(([k, n]) => `<button data-f="${k}" aria-pressed="${catFilter === k}">${n}</button>`).join('')}</div>`;
     h += sec('pl-place', 'Placement', s.row ? tip('Raspberries and blackberries plant as a hedgerow: drag along the row.') : `<div class="seg"><button data-row="0" aria-pressed="${!ST.rowMode}">One at a time</button><button data-row="1" aria-pressed="${ST.rowMode}">Drag a row</button></div>${ST.rowMode ? `<div class="field"><label for="rowsp">Spacing (ft)</label><input id="rowsp" type="number" min="1" max="60" step="0.5" value="${ST.rowSpacing || Math.round(s.sM * 0.8 * 2) / 2}"></div>` : ''}`, true, s.n);
     const row = s2 => spRow(s2.k, isWoody(s2) ? `<span style="font-size:10px">${s2.hM}′</span>` : '', null, s2.k === ST.armed.plant);
-    if (q || catFilter !== 'all') { const list = Object.values(SP).filter(pass); h += sec('pl-res', q ? 'Search results' : catFilter === 'edible' ? 'Edible plants' : 'Michigan natives', list.map(row).join('') || tip('No plants match.'), true, list.length); }
-    else { h += sec('pl-rec', 'Picks for this lot', HOTPLANTS.map(k => row(SP[k])).join(''), true, HOTPLANTS.length);
-      for (const c of Object.keys(CATS)) { const list = Object.values(SP).filter(x => x.c === c); h += sec('pl-' + c, CATS[c], list.map(row).join(''), false, list.length); } }
+    const many = L => palView === 'cards' ? `<div class="pgrid">${L.map(s2 => plantCard(s2, s2.k === ST.armed.plant)).join('')}</div>` : L.map(row).join('');
+    h += sec('pl-age', 'Plant age shown', ageChips('agesP') + `<div class="seg" style="margin-top:6px"><button data-pv="cards" aria-pressed="${palView === 'cards'}">Cards</button><button data-pv="list" aria-pressed="${palView === 'list'}">List</button></div>` + tip('Every plant on the map, in 3D and on these cards grows to the age you pick. The dashed outline on a card is its mature size; the figure is 6′ tall.'), true, ST.year >= 25 ? 'mature' : ST.year ? ST.year + ' yr' : 'planting');
+    if (q || catFilter !== 'all') { const list = Object.values(SP).filter(pass); h += sec('pl-res', q ? 'Search results' : catFilter === 'edible' ? 'Edible plants' : 'Michigan natives', many(list) || tip('No plants match.'), true, list.length); }
+    else { h += sec('pl-rec', 'Picks for this lot', many(HOTPLANTS.map(k => SP[k])), true, HOTPLANTS.length);
+      for (const c of Object.keys(CATS)) { const list = Object.values(SP).filter(x => x.c === c); h += sec('pl-' + c, CATS[c], many(list), false, list.length); } }
   } else if (t === 'bed') {
     h += sec('bed-shape', 'Shape + edging', `<div class="seg"><button data-shape="poly" aria-pressed="${ST.bedShape === 'poly'}">Freeform</button><button data-shape="rect" aria-pressed="${ST.bedShape === 'rect'}">Rectangle</button><button data-shape="ellipse" aria-pressed="${ST.bedShape === 'ellipse'}">Oval</button></div>${ST.bedShape === 'poly' ? `<label class="tog"><input type="checkbox" id="bedSmooth" ${ST.bedSmooth ? 'checked' : ''}>Curved edges (smooth through the corners)</label>` : ''}<div class="field" style="margin-top:8px"><label for="edgeDef">Edging</label><select id="edgeDef">${Object.entries(EDGES).map(([k, n]) => `<option value="${k}" ${k === ST.edgeDef ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`, true);
     BM_GROUPS.forEach(([n, keys], i) => { h += sec('bed-g' + i, n, swatchGrid('bed', keys, ST.armed.bed), true, keys.length); });
@@ -1427,7 +1483,8 @@ function renderPalette() {
     h += sec('path-set', 'Line settings', (m.fence || m.s === 'thin' ? tip('Fences and walls run straight between the points you place.') : `<div class="field"><label for="pw">Width</label><div class="pair3"><input id="pw" type="range" min="1" max="12" step="0.5" value="${w}"><b class="num" id="pwv">${w}′</b><span></span></div></div><label class="tog"><input type="checkbox" id="pathSmooth" ${ST.pathSmooth ? 'checked' : ''}>Curved (smooth through the points)</label>`) + tip(`Snaps to ${ST.snap.obj ? 'path ends, bed corners, structure edges and the house' : 'nothing (object snap is off)'} · grid ${ST.snap.grid ? ST.snap.grid + '′' : 'off'}. Change it under View.`), true);
     PM_GROUPS.forEach(([n, keys], i) => { h += sec('path-g' + i, n, swatchGrid('path', keys, ST.armed.path), true, keys.length); });
   } else if (t === 'build') { SD_GROUPS.forEach(g => { const keys = Object.keys(SD).filter(k => SD[k].g === g); h += sec('st-' + g, g, swatchGrid('st', keys, ST.armed.st), true, keys.length); }); }
-  dr.innerHTML = h; paintSwatches(dr);
+  dr.innerHTML = h; paintSwatches(dr); paintCards(dr); wireAges(dr);
+  dr.querySelectorAll('[data-pv]').forEach(b => b.onclick = () => { palView = b.dataset.pv; try { localStorage.setItem('plb-pal', palView); } catch (e) {} renderDrawer(); });
   dr.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { if (ST.tool !== 'plant') setTool('plant'); ST.armed.plant = b.dataset.sp; renderDrawer(); renderHint(); renderStrip(); if (small) document.body.classList.remove('open'); });
   dr.querySelectorAll('[data-id]').forEach(b => b.onclick = () => { const e = byId(b.dataset.id); if (!e) return; if (ST.tool !== 'select') setTool('select'); setSel([e.id]); centerOn(...center(e), 4.5); if (small) document.body.classList.remove('open'); });
   dr.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { catFilter = b.dataset.f; renderDrawer(); });
@@ -1482,11 +1539,11 @@ const TASKS = { 1: ['Order bare-root berries, shrubs and trees for April deliver
 function renderSeason() {
   const m = ST.month, have = new Set(); for (const e of ents()) { if (e.t === 'plant' || e.t === 'row') have.add(e.sp); if (e.t === 'bed') for (const [k] of e.comp || []) have.add(k); }
   const bl = [...have].filter(k => SP[k] && SP[k].bl.includes(m)), fr = [...have].filter(k => SP[k] && SP[k].fr.includes(m) && SP[k].ed);
-  $('drawer').innerHTML = sec('sea-time', 'Time', `<div class="field"><label for="year2">Year</label><div class="pair3"><input id="year2" type="range" min="0" max="25" step="1" value="${ST.year}"><b class="num" id="year2v">${2027 + ST.year}</b><span></span></div></div><div class="months" id="months2" style="border:1px solid var(--line)"></div>`, true, MONTH_FULL[m - 1])
+  $('drawer').innerHTML = sec('sea-time', 'Time', `<div class="field"><label for="year2">Year</label><div class="pair3"><input id="year2" type="range" min="0" max="25" step="1" value="${ST.year}"><b class="num" id="year2v">${2027 + ST.year}</b><span></span></div></div><div class="months" id="months2" style="border:1px solid var(--line);margin-bottom:6px"></div>` + ageChips('agesS'), true, MONTH_FULL[m - 1])
     + sec('sea-harvest', 'Harvest', fr.map(k => spRow(k, '')).join('') || tip('Nothing to pick this month.'), true, fr.length)
     + sec('sea-bloom', 'In bloom', bl.map(k => spRow(k, '')).join('') || tip('Nothing blooming.'), true, bl.length)
     + sec('sea-todo', 'To do', (TASKS[m] || []).map(t2 => `<div class="task">${esc(t2)}</div>`).join(''), true);
-  buildMonths($('months2')); $('year2').oninput = ev => setYear(+ev.target.value);
+  buildMonths($('months2')); $('year2').oninput = ev => setYear(+ev.target.value); wireAges($('drawer'));
   $('drawer').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setTool('plant'); ST.armed.plant = b.dataset.sp; renderHint(); renderStrip(); });
 }
 function renderView() {
@@ -1542,6 +1599,7 @@ function renderInspector() {
     <div class="field"><label for="iSp">Swap for</label><select id="iSp">${opts}</select></div>
     ${e.t === 'plant' ? `<div class="field"><label>Position (ft)</label><div class="pair"><input id="iX" type="number" step="0.5" value="${e.x}" aria-label="x"><input id="iY" type="number" step="0.5" value="${e.y}" aria-label="y"></div></div>` : `<div class="field"><label for="iSpc">Spacing (ft)</label><div class="pair"><input id="iSpc" type="number" min="1" max="10" step="0.5" value="${e.spacing || 2}"><span class="num" style="align-self:center">${rowCount(e)} plants · ${Math.round(geo(e).len)}′</span></div></div>`}
     <div class="facts"><div><span class="k">ID</span><b>${esc(e.id)}</b></div><div><span class="k">${2027 + ST.year} size</span><b>${hh.toFixed(0)}′ × ${ww.toFixed(0)}′</b></div><div><span class="k">Mature</span><b>${s.hM}′ × ${s.sM}′</b></div></div>
+    ${sec('in-grow', 'Growth · tall × wide', `<div class="grow">${AGES.map(([y, n]) => `<button data-age="${y}" aria-pressed="${ST.year === y}"><span>${n}</span><b>${Math.round(grow(s.h0, s.hM, s.tau, y))}′×${Math.round(canopyFt(s, y))}′</b></button>`).join('')}</div>`, true)}
     ${sec('in-about', 'About this plant', `<span class="k">Bloom · fruit · ${MON[ST.month - 1]} outlined</span>${calHTML(s)}<p style="margin-top:8px">${esc(s.note)}</p>${s.roots ? `<p><span class="k">Roots</span>${esc(s.roots)}</p>` : ''}${s.buy ? `<p><span class="k">Buy as</span>${esc(s.buy)}</p>` : ''}`, true)}${checksHTML}${actions}</div>`;
   } else if (e.t === 'bed') {
     const g = geo(e), [q, u] = bedQty(e);
@@ -1571,7 +1629,7 @@ function renderInspector() {
     ${e.k === 'kgarden' ? `<div class="field"><label for="iBedSz">Raised beds</label><div class="pair"><select id="iBedSz">${['3x8', '4x8', '4x10', '4x12'].map(b => `<option value="${b}" ${b === (e.bed || '4x10') ? 'selected' : ''}>${b.replace('x', '′ × ')}′</option>`).join('')}</select><span class="num" style="align-self:center">${kgBeds(e).length} beds fit</span></div></div>` : ''}
     <div class="facts"><div><span class="k">Footprint</span><b>${Math.round(geo(e).area)} sf</b></div><div><span class="k">Est. cost</span><b>${money(priceOf(typeof d.cost === 'function' ? 'st:' + e.id : 'st:' + e.k, cost))}</b></div><div><span class="k">ID</span><b>${e.id}</b></div></div>${checksHTML}${actions}</div>`;
   }
-  el.innerHTML = h; el.hidden = false; el.scrollTop = scrollTop; paintSwatches(el); wireShots(el); wireSecs(el);
+  el.innerHTML = h; el.hidden = false; el.scrollTop = scrollTop; paintSwatches(el); wireShots(el); wireSecs(el); wireAges(el);
   const on = (id, evn, fn) => { const x = $(id); if (x) x[evn] = fn; };
   on('ix', 'onclick', () => setSel([])); on('iDup', 'onclick', duplicateSel); on('iDel', 'onclick', deleteSel); on('iCenter', 'onclick', () => centerOn(...center(e)));
   on('iSp', 'onchange', ev => edit(() => { e.sp = ev.target.value; if (e.t === 'row') e.spacing = SP[e.sp].sp || e.spacing; dirty(e); }));
@@ -2096,8 +2154,8 @@ class PB {
   stick(ax, ay, az, bx, by, bz, r, col) { const d = new THREE.Vector3(bx - ax, by - ay, bz - az), L = d.length(); if (L < 0.01) return; this.m.compose(new THREE.Vector3(ax, ay, az), this.q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()), new THREE.Vector3(r * 2, L, r * 2)); this.add('cyl', col); }
   geo() { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(this.P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.N, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(this.C, 3)); g.computeBoundingSphere(); return g; }
 }
-function foliage(s, m) { const sea = season(m); if (sea === 'winter' && !s.ev) return s.c === 'grass' ? '#b39a68' : s.c === 'perennial' ? '#8a7a5a' : null; if (sea === 'fall' && s.fall) return s.fall; if (sea === 'fall' && s.c === 'grass') return '#b9a065'; return s.leaf; }
-const mixC = (a, b, t) => '#' + new THREE.Color(a).lerp(new THREE.Color(b), t).getHexString();
+function foliage(s, m) { const sea = season(m); if (m === 10 && s.fall && !s.ev && s.c !== 'grass') return mixC(s.leaf, s.fall, 0.55); if (sea === 'winter' && !s.ev) return s.c === 'grass' ? '#b39a68' : s.c === 'perennial' ? '#8a7a5a' : null; if (sea === 'fall' && s.fall) return s.fall; if (sea === 'fall' && s.c === 'grass') return '#b9a065'; return s.leaf; }
+function mixC(a, b, t) { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
 function plantGeo(s, h, w, m, v, lite) {
   const key = [s.k, Math.round(h * 2), Math.round(w * 2), m, v, lite ? 1 : 0].join('|'); let G = PCACHE.get(key); if (G) return G;
   const b = new PB(hash(key)), r = b.r, fol = foliage(s, m), bloom = s.bc && s.bl.includes(m) ? s.bc : null, fruit = s.fc && s.fr.includes(m) ? s.fc : null;
@@ -2126,14 +2184,15 @@ function plantGeo(s, h, w, m, v, lite) {
       if (fol) b.at('lump', mx, (top + bot) / 2, mz, clamp(w * R(0.035, 0.06), 0.3, 1.3), top - bot, clamp(w * R(0.035, 0.06), 0.3, 1.3), i % 5 === 0 && bloom ? mixC(fol, bloom, 0.5) : mixC(fol, '#bcd36a', R(0, 0.3)), 0.1, 0, a, 0);
       else b.stick(mx * 0.6, top + h * 0.05, mz * 0.6, mx, bot, mz, 0.04, twig); }
   } else if (s.c === 'tree' || s.c === 'fruit') {
+    if (s.form === 'column') { const tr = Math.max(0.12, w * 0.05); b.stick(0, 0, 0, 0, h * 0.95, 0, tr, bark); const n = lite ? 6 : 16; for (let i = 0; i < n && fol; i++) { const t = i / (n - 1), y = h * (0.12 + 0.8 * t), rr = (w / 2) * (0.25 + 0.35 * Math.sin(Math.PI * Math.min(1, t * 1.1))) , a = i * 2.4; b.at('blob', Math.cos(a) * rr * 0.6, y, Math.sin(a) * rr * 0.6, w * R(0.55, 0.8) * (1 - t * 0.45), h * 0.14, w * R(0.55, 0.8) * (1 - t * 0.45), fol ? (m === 10 ? mixC(s.leaf, r() < 0.5 ? s.fall : (s.fall2 || s.fall), R(0.35, 1)) : m === 11 ? mixC(s.fall, s.fall2 || s.fall, r()) : fol) : null, 0.12, 0, r() * 6, 0); } if (!fol) for (let i = 0; i < (lite ? 6 : 14); i++) { const y = h * R(0.15, 0.9), a = r() * 6.28, l = w * 0.4; b.stick(0, y, 0, Math.cos(a) * l, y + 1, Math.sin(a) * l, 0.05, bark); } G = b.geo(); PCACHE.set(key, G); return G; }
     const low = s.k === 'lmaple', clump = s.v === 'clump', th = h * (low ? 0.2 : s.c === 'fruit' ? 0.32 : 0.42), tr = Math.max(0.14, w * (s.c === 'fruit' ? 0.04 : 0.035)), cy = th + (h - th) * 0.52, ry = (h - th) / 2, rx = w / 2;
     const trunks = clump ? [[-0.5, 0.2], [0.45, 0.35], [0.05, -0.5]] : [[0, 0]];
     for (const [ox, oz] of trunks) { const lx = ox * w * 0.16, lz = oz * w * 0.16; b.stick(ox * 0.6, 0, oz * 0.6, lx, th * 1.05, lz, clump ? tr * 0.7 : tr, bark); }
     const nb = fol ? (lite ? 4 : 6) : (lite ? 6 : 10);
     for (let i = 0; i < nb; i++) { const a = i / nb * 6.28 + r() * 0.6, ex = Math.cos(a) * rx * R(0.45, 0.75), ez = Math.sin(a) * rx * R(0.45, 0.75), ey = cy + ry * R(-0.1, 0.55); b.stick(0, th * 0.85, 0, ex, ey, ez, tr * 0.42, bark);
       if (!fol && !lite) for (let j = 0; j < 3; j++) { const a2 = a + R(-0.8, 0.8), l = rx * R(0.2, 0.35); b.stick(ex, ey, ez, ex + Math.cos(a2) * l, ey + R(0.3, 1.4), ez + Math.sin(a2) * l, tr * 0.18, bark); } }
-    if (fol) { const n = lite ? 5 : clamp(Math.round(w / 2.2) + 6, 7, 14);
-      for (let i = 0; i < n; i++) { const a = r() * 6.28, u = R(-0.55, 0.85), q = Math.sqrt(1 - u * u) * R(0.25, 0.62), bx = Math.cos(a) * q * rx, bz = Math.sin(a) * q * rx, by = cy + u * ry * 0.55, sz = w * R(0.36, 0.52), col = bloom && r() < 0.75 ? mixC(fol, bloom, R(0.55, 0.9)) : fol; b.at('blob', bx, by, bz, sz, Math.min(sz, (h - th) * R(0.5, 0.7)), sz, col, 0.14, 0, r() * 6.28, 0); } }
+    if (fol) { const n = lite ? 5 : clamp(Math.round(w / 2.2) + 6, 7, 14) + (s.form === 'oval' ? 4 : 0);
+      for (let i = 0; i < n; i++) { const a = r() * 6.28, u = R(-0.55, 0.85), q = Math.sqrt(1 - u * u) * R(0.25, 0.62), bx = Math.cos(a) * q * rx, bz = Math.sin(a) * q * rx, by = cy + u * ry * 0.55, sz = w * R(0.36, 0.52) * (s.form === 'oval' ? 1.12 : 1), col = bloom && r() < 0.75 ? mixC(fol, bloom, R(0.55, 0.9)) : m === 10 && s.fall ? mixC(s.leaf, r() < 0.6 ? s.fall : (s.fall2 || s.fall), clamp(R(-0.1, 1.2) + (u > 0.3 ? 0.3 : 0), 0, 1)) : m === 11 && s.fall2 ? mixC(s.fall, s.fall2, r() * 0.6) : fol; b.at('blob', bx, by, bz, sz, Math.min(sz, (h - th) * R(0.5, 0.7)), sz, col, 0.14, 0, r() * 6.28, 0); } }
     else if (bloom) dots(0, cy, 0, rx * 0.75, ry * 0.75, rx * 0.75, lite ? 20 : 60, bloom, Math.max(0.25, w * 0.05));
     if (bloom && fol) dots(0, cy, 0, rx * 0.86, ry * 0.86, rx * 0.86, lite ? 12 : 40, bloom, Math.max(0.22, w * 0.04));
     if (fruit) dots(0, cy, 0, rx * 0.84, ry * 0.8, rx * 0.84, lite ? 10 : s.c === 'fruit' ? 46 : 30, fruit, s.c === 'fruit' ? 0.38 : 0.22);
@@ -2338,7 +2397,7 @@ function buildOverlays3D() {
 }
 function syncOverlays3D() { if (!V3.zonesG) return; V3.zonesG.visible = !!ST.layers.setbacks; V3.irrG.visible = !!ST.layers.irrigation; for (const G of [V3.zonesG, V3.irrG]) for (const s of G.children) if (s.isSprite) s.visible = !!ST.layers.labels; V3.dirty = true; renderOvbar(); }
 const OVS = [['setbacks', 'Septic · well · easements'], ['irrigation', 'Sprinklers'], ['contours', 'Contours'], ['labels', 'Labels']];
-function renderOvbar() { const b = $('ovbar'); if (!b) return; b.innerHTML = `<span class="k">Show</span>` + OVS.map(([k, n]) => `<button data-ov="${k}" aria-pressed="${!!ST.layers[k]}">${n}</button>`).join(''); for (const x of b.querySelectorAll('[data-ov]')) x.onclick = () => { const k = x.dataset.ov; ST.layers[k] = !ST.layers[k]; savePrefs(); syncOverlays3D(); DIRTY = true; if (ST.tab === 'view') renderDrawer(); }; }
+function renderOvbar() { const b = $('ovbar'); if (!b) return; b.innerHTML = `<span class="k">Show</span>` + OVS.map(([k, n]) => `<button data-ov="${k}" aria-pressed="${!!ST.layers[k]}">${n}</button>`).join('') + `<select id="ovAge" aria-label="Plant age"><option value="" disabled>Age…</option>${AGES.map(([y, n]) => `<option value="${y}" ${ST.year === y ? 'selected' : ''}>${n === 'Planting' ? 'At planting' : n === 'Mature' ? 'Mature' : n + ' old'}</option>`).join('')}</select>`; $('ovAge').onchange = ev => setYear(+ev.target.value); if (!AGES.some(a => a[0] === ST.year)) $('ovAge').value = ''; for (const x of b.querySelectorAll('[data-ov]')) x.onclick = () => { const k = x.dataset.ov; ST.layers[k] = !ST.layers[k]; savePrefs(); syncOverlays3D(); DIRTY = true; if (ST.tab === 'view') renderDrawer(); }; }
 
 /* ---- placement ghost, hover hints + keyboard camera (3D) ---- */
 const LVC = { ok: '#2e9e57', warn: '#c8901f', err: '#c2402a' };
@@ -2509,8 +2568,10 @@ function savePrefs() { try { localStorage.setItem('plb-prefs', JSON.stringify({ 
 let toastT = null;
 function toast(t, kind) { const el = $('toast'); el.textContent = t; el.className = 'sheet' + (kind && kind !== 'ok' ? ' ' + kind : ''); el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 3600); }
 function buildMonths(root) { root.innerHTML = MON.map((m, i) => `<button data-m="${i + 1}" aria-pressed="${i + 1 === ST.month}">${m}</button>`).join(''); for (const b of root.children) b.onclick = () => setMonth(+b.dataset.m); }
-function setMonth(m) { ST.month = m; buildMonths($('months')); groundKey = ''; buildGround(); if (ST.tab === 'season') renderSeason(); renderInspector(); }
-function setYear(y) { ST.year = y; $('year').value = y; $('yearv').textContent = (2027 + y) + (y ? ' · +' + y + ' YR' : ' · PLANTING'); if ($('year2v')) $('year2v').textContent = 2027 + y; }
+function setMonth(m) { ST.month = m; buildMonths($('months')); groundKey = ''; buildGround(); if (ST.tab === 'season') renderSeason(); renderInspector(); for (const c of document.querySelectorAll('canvas[data-pc]')) drawPlantIcon(c, SP[c.dataset.pc], ST.year); }
+function setYear(y) { const ch = ST.year !== y; ST.year = y; $('year').value = y; if ($('year2')) $('year2').value = y; $('yearv').textContent = (2027 + y) + (y ? ' · +' + y + ' YR' : ' · PLANTING'); if ($('year2v')) $('year2v').textContent = 2027 + y;
+  document.querySelectorAll('[data-age]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.age === y)); if ($('ovAge')) $('ovAge').value = AGES.some(a => a[0] === y) ? y : ''; const sum = document.querySelector('[data-sec="pl-age"] .cnt2'); if (sum) sum.textContent = y >= 25 ? 'mature' : y ? y + ' yr' : 'planting';
+  if (ch) { for (const c of document.querySelectorAll('canvas[data-pc]')) drawPlantIcon(c, SP[c.dataset.pc], y); if (ST.sel.length === 1 && !(OP && OP.moved)) { const e = byId(ST.sel[0]); if (e && (e.t === 'plant' || e.t === 'row')) renderInspector(); } DIRTY = true; } }
 $('year').oninput = ev => setYear(+ev.target.value);
 $('undoBtn').onclick = undo; $('redoBtn').onclick = redo; $('undo2').onclick = undo; $('redo2').onclick = redo; $('copyBtn').onclick = copyPlan;
 for (const b of $('tabs').children) b.onclick = () => { ST.tab = b.dataset.tab; renderDrawer(); };
@@ -2531,7 +2592,7 @@ $('helpBtn').onclick = () => { openDlg(helpHTML()); $('hX').onclick = () => { cl
 
 /* ================= boot ================= */
 function boot() {
-  readColors(); resize(); GP = small ? 4 : 6; buildMonths($('months')); setYear(1); renderTools(); renderTabs(); fitLot(); cam.z = cam.tz;
+  readColors(); resize(); GP = small ? 4 : 6; buildMonths($('months')); $('ages0').outerHTML = ageChips('ages0'); wireAges($('ages0')); setYear(1); renderTools(); renderTabs(); fitLot(); cam.z = cam.tz;
   buildGround(); renderUI(); renderHint(); renderStrip(); loadSaved();
   try { if (!localStorage.getItem('plb-help')) $('helpBtn').click(); } catch (e) { $('helpBtn').click(); }
   requestAnimationFrame(frame); if (V3.want) setView('3d');
