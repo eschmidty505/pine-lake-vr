@@ -360,6 +360,9 @@ S('smaple', { n: 'Sugar maple', l: 'Acer saccharum', c: 'tree', nat: 1, h0: 10, 
 S('rmaple', { n: 'Red maple', v: "'Redpointe'", l: 'Acer rubrum', c: 'tree', nat: 1, h0: 10, hM: 45, s0: 5, sM: 30, tau: 15, bl: [3, 4], leaf: '#557f3a', bc: '#b8323a', fall: '#c0282f', buy: '1.5–2″ caliper', note: 'Fast, tidy pyramid; reliable red fall color; handles wet clay.' });
 S('service', { n: 'Serviceberry', v: 'clump', l: 'Amelanchier × grandiflora', c: 'tree', nat: 1, ed: 1, h0: 7, hM: 18, s0: 4, sM: 15, tau: 10, bl: [4], fr: [6], leaf: '#5a8540', bc: '#f4f1ea', fc: '#5b2a52', fall: '#d0602e', buy: '6–8′ clump', note: 'White April bloom, June berries (the birds compete), orange-red fall color.' });
 S('birch', { n: 'River birch', v: 'clump', l: 'Betula nigra', c: 'tree', nat: 1, h0: 9, hM: 45, s0: 5, sM: 30, tau: 12, leaf: '#5c8a44', fall: '#d6b13a', buy: '8–10′ clump', note: 'Peeling cinnamon bark; handles the wet ground by the pond.' });
+S('willow', { n: 'Golden weeping willow', v: "'Niobe'", l: 'Salix × sepulcralis', c: 'tree', h0: 9, hM: 50, s0: 5, sM: 45, tau: 7, bl: [4], leaf: '#8fb24a', bc: '#d9d27a', fall: '#d7c457', reach: 100, buy: '1.5″ caliper or 8–10′ whip', note: 'The classic weeper; the hardiest one for zone 6a, with golden winter twigs. Grows 3–4′ a year and loves wet ground: the spot is down by the pond.', roots: 'Aggressive, water-seeking roots that find septic laterals, footing drains and well lines; keep ≥100′ away.' });
+S('pussywillow', { n: 'Pussy willow', l: 'Salix discolor', c: 'shrub', nat: 1, h0: 3, hM: 14, s0: 2, sM: 10, tau: 5, bl: [3, 4], leaf: '#6f8f52', bc: '#dcd9cf', fall: '#c8b45a', reach: 50, buy: '#5 container', note: 'Native; silver catkins in March are the first sign of spring. Cut back hard every few years to keep it a dense shrub.', roots: 'Willow roots chase water; keep ≥50′ from septic lines and the well.' });
+S('dwillow', { n: 'Dappled willow', v: "'Hakuro Nishiki'", l: 'Salix integra', c: 'shrub', h0: 2, hM: 7, s0: 2, sM: 6, tau: 3, leaf: '#b7c69c', fall: '#d6c25c', reach: 30, buy: '#3 container', note: 'Pink-and-white new growth all season; shear in early summer for a fresh flush. Good screening hedge or standard.', roots: 'Willow roots: keep ≥30′ from septic lines and the well.' });
 S('crab', { n: 'Crabapple', v: "'Prairifire'", l: 'Malus', c: 'tree', h0: 8, hM: 20, s0: 4, sM: 20, tau: 9, bl: [5], fr: [9, 10, 11, 12], leaf: '#5b5a3a', bc: '#d2477a', fc: '#9c1f3a', fall: '#a55a2c', note: 'Disease-resistant; pink-red bloom and persistent fruit for winter birds.' });
 S('lilactree', { n: 'Japanese tree lilac', v: "'Ivory Silk'", l: 'Syringa reticulata', c: 'tree', h0: 8, hM: 25, s0: 4, sM: 15, tau: 10, bl: [6], leaf: '#557f3c', bc: '#f2ecd6', note: 'Best salt tolerance of the flowering trees; creamy June plumes.' });
 S('lmaple', { n: 'Laceleaf maple', v: "'Tamukeyama'", l: 'Acer palmatum var. dissectum', c: 'tree', h0: 3, hM: 8, s0: 3, sM: 11, tau: 11, leaf: '#6b2232', fall: '#b8202a', note: 'Small weeping red focal tree.' });
@@ -687,6 +690,7 @@ function checks(e, all) {
       const dT = distRect(x, y, TRENCH);
       if (tree && dT < 28 && !inRect(x, y, SEPTIC)) add('err', `Trunk ${dT.toFixed(0)}′ from the septic trenches; trees need ≥28′.`);
       else if (shrubby && dT < 10 && !inRect(x, y, SEPTIC)) add('warn', `${dT.toFixed(0)}′ from the trenches; roots may reach the laterals.`);
+      if (s.reach) { if (dT < s.reach && !inRect(x, y, SEPTIC)) add('err', `Willow roots hunt for water: ${dT.toFixed(0)}′ from the septic trenches, keep ≥${s.reach}′.`); const dw = Math.hypot(x - WELL[0], y - WELL[1]); if (dw < s.reach && dw >= 10) add('err', `Willow roots: ${dw.toFixed(0)}′ from the well, keep ≥${s.reach}′.`); const dh = distPoly(x, y, HOUSE); if (dh < s.reach / 2 && !inPoly(x, y, HOUSE)) add('warn', `Willow roots can reach footing drains and the sewer line (${dh.toFixed(0)}′ from the house).`); }
       if (inRect(x, y, RES)) { if (tree) add('err', 'Septic reserve: no trees.'); else if (s.c === 'berry') add('warn', 'On the septic reserve: berry shrubs need Lapeer County OK (pending).'); else if (shrubby) add('warn', 'On the septic reserve: woody plants need Lapeer County OK.'); else if (['bigblue', 'indian', 'switch'].includes(s.k)) add('warn', 'Deep-rooted prairie grass on the reserve.'); }
       if (inEase(x, y)) { if (tree) add('err', 'Inside the 12′ drainage / utility easement.'); else if (shrubby) add('warn', 'In the 12′ easement: may be removed for swale or utility work.'); }
       if (Math.hypot(x - WELL[0], y - WELL[1]) < 10 && woody) add('err', 'Within 10′ of the well; keep it reachable for a service rig.');
@@ -1635,9 +1639,7 @@ function init3D() {
   const sun = new THREE.DirectionalLight(0xfff3df, 0.82); sun.position.set(-60, 260, 140); sun.target.position.set(118, 0, -110); S.add(sun, sun.target);
   Object.assign(sun.shadow.camera, { left: -190, right: 190, top: 190, bottom: -190, near: 50, far: 700 }); sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048); sun.shadow.bias = -0.0008; sun.castShadow = V3.shadows;
   // terrain: the 2D plan painted onto the graded ground
-  const step = small ? 3 : 2, gw = WB.x1 - WB.x0, gh = WB.y1 - WB.y0, g = new THREE.PlaneGeometry(gw, gh, Math.round(gw / step), Math.round(gh / step));
-  g.rotateX(-Math.PI / 2); g.translate((WB.x0 + WB.x1) / 2, 0, -(WB.y0 + WB.y1) / 2);
-  const P = g.attributes.position; for (let i = 0; i < P.count; i++) P.setY(i, gy(P.getX(i), -P.getZ(i))); g.computeVertexNormals();
+  const gw = WB.x1 - WB.x0, gh = WB.y1 - WB.y0, g = terrainGeo(small ? 3 : 2);
   const px = small ? 4 : 6, TX = document.createElement('canvas'); TX.width = gw * px; TX.height = gh * px;
   const tex = new THREE.CanvasTexture(TX); tex.anisotropy = Math.min(8, R.capabilities.getMaxAnisotropy());
   const terrain = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map: tex })); terrain.receiveShadow = true; S.add(terrain);
@@ -1658,6 +1660,21 @@ function camPreset(k) {
 function camFrom2D() { const O = V3.O, C = V3.C, d = clamp(Math.max(innerWidth, innerHeight) / cam.z * 0.75, 25, 520), x = clamp(cam.x, -20, 260), y = clamp(cam.y, -30, 230); O.target.set(x, gy(x, y) + 1.5, -y); C.position.set(x - d * 0.34, O.target.y + d * 0.72, -y + d * 0.6); O.update(); }
 function focus3D(x, y) { if (!V3.ready) return; const O = V3.O, nt = new THREE.Vector3(x, gy(x, y) + 1.5, -y), d = nt.clone().sub(O.target); O.target.copy(nt); V3.C.position.add(d); O.update(); }
 
+/* terrain: a grid whose lines hug the house's real footprint, so the ground stops at the foundation instead of running through the basement */
+const FOOT = [[0, 0], [20.83, 0], [20.83, 8], [31.83, 8], [31.83, 10], [37, 10], [37, 8], [49.84, 8], [49.84, 44.83], [27.84, 44.83], [27.84, 52.83], [8.17, 52.83], [8.17, 44.83], [0, 44.83]].map(([u, v]) => [94.7 + u, 89.9 + v]);
+function terrainGeo(step) {
+  const lines = (a0, a1, extra) => { const L = []; for (let a = a0; a < a1; a += step) L.push(a); L.push(a1); return [...new Set(L.concat(extra).map(v => +v.toFixed(3)))].sort((p, q) => p - q); };
+  const ex = [], ey = [];
+  for (let i = 0; i < FOOT.length; i++) { const [ax, ay] = FOOT[i], [bx, by] = FOOT[(i + 1) % FOOT.length];
+    if (ax === bx) { const o = inPoly(ax + 0.5, (ay + by) / 2, FOOT) ? -1 : 1; ex.push(ax + o * 0.12, ax - o * 0.45); }
+    else { const o = inPoly((ax + bx) / 2, ay + 0.5, FOOT) ? -1 : 1; ey.push(ay + o * 0.12, ay - o * 0.45); } }
+  const xs = lines(WB.x0, WB.x1, ex), ys = lines(WB.y0, WB.y1, ey), nx = xs.length, ny = ys.length, pos = new Float32Array(nx * ny * 3), uv = new Float32Array(nx * ny * 2), idx = [];
+  const garage = (x, y) => x < 94.7 + 20.83 && y < 89.9 + 26.75;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) { const x = xs[i], y = ys[j], k = j * nx + i, inside = inPoly(x, y, FOOT);
+    pos[k * 3] = x; pos[k * 3 + 1] = (inside ? (garage(x, y) ? 886.4 : 878.9) : terrainH(x, y)) - Z0; pos[k * 3 + 2] = -y; uv[k * 2] = (x - WB.x0) / (WB.x1 - WB.x0); uv[k * 2 + 1] = (y - WB.y0) / (WB.y1 - WB.y0); }
+  for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, b, d, a, d, c); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
 /* ---- materials + shared geometry ---- */
 const M3 = new Map(); let G3 = null;
 function mat3(c, o) { const k = c + (o ? JSON.stringify(o) : ''); let m = M3.get(k); if (!m) { m = new THREE.MeshLambertMaterial({ color: c, ...(o && o.op != null ? { transparent: true, opacity: o.op, depthWrite: o.op > 0.6 } : {}), ...(o && o.ds ? { side: THREE.DoubleSide } : {}) }); M3.set(k, m); } return m; }
@@ -2100,6 +2117,14 @@ function plantGeo(s, h, w, m, v, lite) {
       b.at('cone', 0, h * 0.82, 0, w * 0.14, h * 0.18, w * 0.14, fol, 0.05);
       if (fruit && !lite) dots(0, h * 0.7, 0, w * 0.2, h * 0.12, w * 0.2, 8, fruit, 0.35);
     }
+  } else if (s.k === 'willow') {
+    const th = h * 0.3, tr = Math.max(0.16, w * 0.035), twig = fol ? '#5d4a3a' : '#c9a83a', cy = h * 0.72, rx = w / 2;
+    b.stick(0, 0, 0, 0.2, th, 0.1, tr, '#5d4a3a');
+    const nb = lite ? 5 : 8; for (let i = 0; i < nb; i++) { const a = i / nb * 6.28 + r() * 0.5, ex = Math.cos(a) * rx * 0.45, ez = Math.sin(a) * rx * 0.45; b.stick(0, th * 0.9, 0, ex, h * R(0.78, 0.95), ez, tr * 0.45, '#5d4a3a'); }
+    if (fol) { for (let i = 0; i < (lite ? 4 : 7); i++) { const a = r() * 6.28, q = R(0, 0.45) * rx; b.at('blob', Math.cos(a) * q, cy + R(0, 0.15) * h, Math.sin(a) * q, w * R(0.4, 0.55), h * 0.28, w * R(0.4, 0.55), fol, 0.1); } }
+    const nc = lite ? 26 : 90; for (let i = 0; i < nc; i++) { const a = i / nc * 6.28 + r() * 0.15, d = rx * R(0.55, 1), top = h * R(0.7, 0.9) - (d / rx) * h * 0.12, bot = Math.max(h * 0.06, top - h * R(0.5, 0.75)), mx = Math.cos(a) * d, mz = Math.sin(a) * d;
+      if (fol) b.at('lump', mx, (top + bot) / 2, mz, clamp(w * R(0.035, 0.06), 0.3, 1.3), top - bot, clamp(w * R(0.035, 0.06), 0.3, 1.3), i % 5 === 0 && bloom ? mixC(fol, bloom, 0.5) : mixC(fol, '#bcd36a', R(0, 0.3)), 0.1, 0, a, 0);
+      else b.stick(mx * 0.6, top + h * 0.05, mz * 0.6, mx, bot, mz, 0.04, twig); }
   } else if (s.c === 'tree' || s.c === 'fruit') {
     const low = s.k === 'lmaple', clump = s.v === 'clump', th = h * (low ? 0.2 : s.c === 'fruit' ? 0.32 : 0.42), tr = Math.max(0.14, w * (s.c === 'fruit' ? 0.04 : 0.035)), cy = th + (h - th) * 0.52, ry = (h - th) / 2, rx = w / 2;
     const trunks = clump ? [[-0.5, 0.2], [0.45, 0.35], [0.05, -0.5]] : [[0, 0]];
@@ -2275,7 +2300,7 @@ function drapeLine(P, color, o) {
 function label3D(text, color, x, y, up, size) {
   const c = document.createElement('canvas'), g = c.getContext('2d'), fs = 44; g.font = `700 ${fs}px "IBM Plex Mono", monospace`; const tw = g.measureText(text).width; c.width = Math.ceil(tw + 36); c.height = 68;
   g.font = `700 ${fs}px "IBM Plex Mono", monospace`; g.fillStyle = 'rgba(250,248,242,.92)'; g.fillRect(0, 0, c.width, c.height); g.strokeStyle = color; g.lineWidth = 5; g.strokeRect(2.5, 2.5, c.width - 5, c.height - 5); g.fillStyle = color; g.textBaseline = 'middle'; g.fillText(text, 18, 36);
-  const t = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })), k = (size || 2.6) / 68; sp.scale.set(c.width * k, c.height * k, 1); sp.position.set(x, gy(x, y) + (up || 6), -y); sp.renderOrder = 8; return sp;
+  const t = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true, sizeAttenuation: false })), k = (size || 2.6) / 2.6 * 0.032 / 68; sp.scale.set(c.width * k, c.height * k, 1); sp.position.set(x, gy(x, y) + (up || 6), -y); sp.renderOrder = 8; return sp;
 }
 function buildOverlays3D() {
   for (const k of ['zonesG', 'irrG', 'labG']) { if (V3[k]) { V3.S.remove(V3[k]); V3[k].traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); } V3[k] = new THREE.Group(); V3.S.add(V3[k]); }
