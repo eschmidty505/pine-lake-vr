@@ -479,6 +479,15 @@ const BM = {
   gravel: { n: 'Pea gravel', c: '#b9ac90', s: 'stones', spk: ['#8f8576', '#d4c9b0', '#a39886', '#c7b99c'], u: 'tons', depth: 2, tpy: 1.4, p: 60, hard: 1 },
   river: { n: 'River rock', c: '#8d8a84', s: 'rocks', spk: ['#6e6b66', '#a8a49c', '#7d746a', '#9a958a'], u: 'tons', depth: 3, tpy: 1.4, p: 95, hard: 1 },
   dg: { n: 'Decomposed granite', c: '#c8a77a', s: 'speck', spk: ['#b8956a', '#d8bb92', '#a88458'], u: 'tons', depth: 3, tpy: 1.35, p: 55, hard: 1 },
+  crushed: { n: 'Crushed limestone (21AA)', c: '#aaa69c', s: 'stones', spk: ['#8f8b82', '#c2beb4', '#9d998f', '#b5b1a6'], u: 'tons', depth: 4, tpy: 1.5, p: 38, hard: 1 },
+  pavers: { n: 'Concrete pavers', c: '#a9a49a', s: 'pavers', spk: ['#b6b1a6', '#9c978d', '#aea99e', '#a19c92'], u: 'sf', p: 9, hard: 1, paved: 1, note: 'Includes 6″ compacted base and sand' },
+  brickpav: { n: 'Brick pavers (herringbone)', c: '#9a5a44', s: 'herring', spk: ['#a8624a', '#8e5240', '#b06c52', '#93563f'], u: 'sf', p: 11, hard: 1, paved: 1 },
+  permpav: { n: 'Permeable pavers', c: '#8f8b84', s: 'permeable', spk: ['#9b978f', '#85817a', '#a19d95'], u: 'sf', p: 13, hard: 1, paved: 1 },
+  flagbed: { n: 'Flagstone patio', c: '#8f8a80', s: 'flag', spk: ['#a09a8e', '#857f74', '#9a8f7c', '#7d786f', '#b0a898'], u: 'sf', p: 16, hard: 1, paved: 1 },
+  bluestone: { n: 'Bluestone (cut pattern)', c: '#6f7c84', s: 'ashlar', spk: ['#7a8890', '#66737b', '#83908f', '#6d7a76'], u: 'sf', p: 20, hard: 1, paved: 1 },
+  concpad: { n: 'Poured concrete', c: '#c6c3ba', s: 'slab', spk: ['#bdbab1', '#cfccc3'], u: 'sf', p: 9, hard: 1, paved: 1 },
+  stamped: { n: 'Stamped concrete', c: '#a8998a', s: 'flag', spk: ['#b2a393', '#9e8f80', '#a69685', '#958677'], u: 'sf', p: 14, hard: 1, paved: 1 },
+  deckb: { n: 'Ground-level deck', c: '#9a7650', s: 'boards', spk: ['#a5805a', '#8f6c48', '#9f7a52'], u: 'sf', p: 18, hard: 1, paved: 1 },
   sand: { n: 'Play sand', c: '#e0cc9a', s: 'speck', spk: ['#d4bf8a', '#eadbb0'], u: 'tons', depth: 8, tpy: 1.3, p: 40, hard: 1 },
   meadow: { n: 'Pollinator meadow', c: '#7b9447', s: 'flowers', spk: ['#a28a4c', '#8e5fb0', '#e2b93b', '#d9639b', '#f1ead2', '#5d7a34'], u: 'sf', p: 0.18 },
   prairie: { n: 'Tallgrass prairie', c: '#a69a5c', s: 'blades', spk: ['#9c8f55', '#7a8a45', '#b19a5c', '#6f7f3e'], u: 'sf', p: 0.15 },
@@ -488,7 +497,7 @@ const BM = {
   soil: { n: 'In-ground veggie bed', c: '#4a3a2c', s: 'rowsoil', spk: ['#3a2c20', '#5a4634'], u: 'yd³', depth: 4, p: 40, food: 1 },
   water: { n: 'Water garden', c: '#5f8fa3', s: 'water', spk: ['#7fa7ba', '#4f7f94'], u: 'sf', p: 8, hard: 1 },
 };
-const BM_GROUPS = [['Turf', ['lawn', 'nomow', 'clover']], ['Mulch + straw', ['mulch', 'mulchBlack', 'cedar', 'needle', 'straw']], ['Stone', ['gravel', 'river', 'dg', 'sand']], ['Planted zones', ['meadow', 'prairie', 'moss', 'groundcover', 'rain', 'soil', 'water']]];
+const BM_GROUPS = [['Turf', ['lawn', 'nomow', 'clover']], ['Mulch + straw', ['mulch', 'mulchBlack', 'cedar', 'needle', 'straw']], ['Patios + hardscape', ['pavers', 'brickpav', 'permpav', 'flagbed', 'bluestone', 'concpad', 'stamped', 'deckb']], ['Gravel + stone', ['gravel', 'crushed', 'dg', 'river', 'sand']], ['Planted zones', ['meadow', 'prairie', 'moss', 'groundcover', 'rain', 'soil', 'water']]];
 const EDGES = { none: 'No edging', steel: 'Steel edging', stone: 'Stone border', brick: 'Brick soldier course', spade: 'Spade-cut edge' };
 const EDGE_PRICE = { none: 0, steel: 3, stone: 12, brick: 9, spade: 0 };
 const PM = {
@@ -705,6 +714,7 @@ function checks(e, all) {
       if (!inPoly(x, y, LOT)) { add('err', 'Off the lot.'); continue; }
       const h = siteHardAt(x, y); if (h) add('block', 'On ' + h + '.');
       for (const o of all) if (o.t === 'st' && !PLANTABLE_ST.has(o.k) && hitEnt(o, x, y, 0)) add('block', 'Inside the ' + SD[o.k].n.toLowerCase() + '.');
+      for (const o of all) if (o.t === 'bed' && BM[o.mat] && BM[o.mat].paved && hitEnt(o, x, y, 0)) add('block', 'On the ' + BM[o.mat].n.toLowerCase() + ' (' + (o.name || o.id) + '); use a planter there.');
       if (inRect(x, y, SEPTIC)) add(woody ? 'err' : 'warn', woody ? 'Septic field: turf only, nothing woody.' : 'Over the septic field: the county prefers turf here.');
       if (distRect(x, y, TANK) < 10 && woody) add('err', 'Within 10′ of the septic tank lids.');
       const dT = distRect(x, y, TRENCH);
@@ -739,10 +749,11 @@ function checks(e, all) {
     const m = BM[e.mat];
     for (const [x, y] of pts) {
       if (!inPoly(x, y, LOT)) add('warn', 'Part of this bed is off the lot.');
-      if (inPoly(x, y, HOUSE)) add('warn', 'Part of this bed runs under the house; trim it to the foundation.');
-      else if (inPoly(x, y, DRIVE)) add('warn', 'Part of this bed is on the driveway.');
-      if (inRect(x, y, SEPTIC)) { if (m.hard) add('warn', 'Stone or fill over the septic field: the county may object.'); if (m.food) add('err', 'No food gardens on the septic field.'); }
-      if (inRect(x, y, RES)) { if (m.hard) add('warn', 'No fill on the septic reserve.'); if (m.food) add('err', 'No in-ground vegetable beds on the septic reserve.'); }
+      if (inPoly(x, y, HOUSE)) add('warn', m.paved ? 'Part of this patio runs under the house; trim it to the foundation.' : 'Part of this bed runs under the house; trim it to the foundation.');
+      else if (inPoly(x, y, DRIVE) && !m.paved) add('warn', 'Part of this bed is on the driveway.');
+      if (m.paved && Math.hypot(x - WELL[0], y - WELL[1]) < 10) add('warn', 'Paving within 10′ of the well: keep the cap reachable for service.');
+      if (inRect(x, y, SEPTIC)) { if (m.paved) add('err', 'No patios or paving over the septic field.'); else if (m.hard) add('warn', 'Stone or fill over the septic field: the county may object.'); if (m.food) add('err', 'No food gardens on the septic field.'); }
+      if (inRect(x, y, RES)) { if (m.paved) add('err', 'Septic reserve: no patios or paving (county rule).'); else if (m.hard) add('warn', 'No fill on the septic reserve.'); if (m.food) add('err', 'No in-ground vegetable beds on the septic reserve.'); }
       if (y > LOD && !['meadow', 'prairie', 'moss', 'nomow', 'rain'].includes(e.mat)) add('warn', 'Beyond the limit of disturbance (Pond Easement #1).');
     }
     if (e.mat === 'water') add('warn', 'Water features deeper than 24″ usually need a fence permit.');
@@ -810,6 +821,12 @@ function makeTile(key, base, spk, style) {
   const c = document.createElement('canvas'); c.width = c.height = TILE_PX; const g = c.getContext('2d'), r = rng(hash(key)); g.fillStyle = base; g.fillRect(0, 0, TILE_PX, TILE_PX);
   const dot = (n, sz) => { for (let i = 0; i < n; i++) { g.fillStyle = spk[(r() * spk.length) | 0]; const s = sz * (0.5 + r()); g.fillRect(r() * TILE_PX, r() * TILE_PX, s, s); } };
   if (style === 'speck') dot(900, 2.2);
+  else if (style === 'pavers' || style === 'permeable') { const bw = 12, bh = 6, gap = style === 'permeable' ? 1.6 : 0.8; g.fillStyle = style === 'permeable' ? '#4f4a40' : '#7f7a70'; g.fillRect(0, 0, TILE_PX, TILE_PX); for (let j = 0; j * bh < TILE_PX; j++) for (let i = -1; i * bw < TILE_PX; i++) { g.fillStyle = spk[(r() * spk.length) | 0]; g.fillRect(i * bw + (j % 2 ? bw / 2 : 0) + gap / 2, j * bh + gap / 2, bw - gap, bh - gap); } }
+  else if (style === 'herring') { g.fillStyle = '#c9bfae'; g.fillRect(0, 0, TILE_PX, TILE_PX); const u = 4; for (let k = -24; k < 48; k++) for (let j = -2; j < 26; j++) { const x = k * u * 2 + j * u, y = j * u * 2 - k * u * 2; g.fillStyle = spk[(r() * spk.length) | 0]; if ((k + j) % 2 === 0) g.fillRect(x + 0.4, y + 0.4, u * 2 - 0.8, u - 0.8); else g.fillRect(x + 0.4, y + 0.4, u - 0.8, u * 2 - 0.8); } }
+  else if (style === 'flag') { g.fillStyle = '#6e695f'; g.fillRect(0, 0, TILE_PX, TILE_PX); const n = 7, cs = TILE_PX / n, pts = []; for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) { const e = i === 0 || i === n || j === 0 || j === n; pts.push([i * cs + (e ? 0 : (r() - 0.5) * cs * 0.6), j * cs + (e ? 0 : (r() - 0.5) * cs * 0.6)]); } for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) { const P = [pts[j * (n + 1) + i], pts[j * (n + 1) + i + 1], pts[(j + 1) * (n + 1) + i + 1], pts[(j + 1) * (n + 1) + i]], cx = P.reduce((a, p) => a + p[0], 0) / 4, cy = P.reduce((a, p) => a + p[1], 0) / 4; g.fillStyle = spk[(r() * spk.length) | 0]; g.beginPath(); P.forEach(([x, y], q) => { const px = cx + (x - cx) * 0.9, py = cy + (y - cy) * 0.9; q ? g.lineTo(px, py) : g.moveTo(px, py); }); g.closePath(); g.fill(); } }
+  else if (style === 'ashlar') { g.fillStyle = '#4f5a60'; g.fillRect(0, 0, TILE_PX, TILE_PX); const sizes = [[24, 24], [24, 12], [12, 12], [12, 24]]; const occ = new Set(); for (let y = 0; y < TILE_PX; y += 12) for (let x = 0; x < TILE_PX; x += 12) { if (occ.has(x + ',' + y)) continue; let [w2, h2] = sizes[(r() * 4) | 0]; if (x + w2 > TILE_PX || occ.has((x + 12) + ',' + y)) w2 = 12; if (y + h2 > TILE_PX) h2 = 12; for (let a = 0; a < w2; a += 12) for (let b = 0; b < h2; b += 12) occ.add((x + a) + ',' + (y + b)); g.fillStyle = spk[(r() * spk.length) | 0]; g.fillRect(x + 0.6, y + 0.6, w2 - 1.2, h2 - 1.2); } }
+  else if (style === 'slab') { dot(500, 1.6); g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; g.beginPath(); for (let v = 0; v <= TILE_PX; v += 48) { g.moveTo(v, 0); g.lineTo(v, TILE_PX); g.moveTo(0, v); g.lineTo(TILE_PX, v); } g.stroke(); }
+  else if (style === 'boards') { const bw = 6; for (let j = 0; j * bw < TILE_PX; j++) { let x = -r() * 40; while (x < TILE_PX) { const L = 30 + r() * 40; g.fillStyle = spk[(r() * spk.length) | 0]; g.fillRect(x, j * bw + 0.5, L - 1, bw - 1); x += L; } } g.fillStyle = 'rgba(0,0,0,.25)'; for (let j = 0; j * bw < TILE_PX; j++) g.fillRect(0, j * bw + bw - 0.6, TILE_PX, 0.6); }
   else if (style === 'straw') { dot(200, 2); g.lineWidth = 1.1; for (let i = 0; i < 260; i++) { g.strokeStyle = spk[(r() * spk.length) | 0]; const x = r() * TILE_PX, y = r() * TILE_PX, a = r() * Math.PI, l = 5 + r() * 9; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); } }
   else if (style === 'stones') { for (let i = 0; i < 650; i++) { g.fillStyle = spk[(r() * spk.length) | 0]; g.beginPath(); g.ellipse(r() * TILE_PX, r() * TILE_PX, 1.2 + r() * 1.4, 1 + r() * 1.2, r() * 3, 0, 7); g.fill(); } }
   else if (style === 'rocks') { for (let i = 0; i < 140; i++) { g.fillStyle = spk[(r() * spk.length) | 0]; const x = r() * TILE_PX, y = r() * TILE_PX, rx = 2.5 + r() * 3.5; g.beginPath(); g.ellipse(x, y, rx, rx * (0.6 + r() * 0.3), r() * 3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(x - rx * 0.3, y - rx * 0.25, rx * 0.4, rx * 0.25, 0, 0, 7); g.fill(); } }
@@ -1202,9 +1219,9 @@ function placeRow(a, b) { const k = ST.armed.plant, s = SP[k];
   const sp = Math.max(1, +(ST.rowSpacing || Math.round(s.sM * 0.8 * 2) / 2)), L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.floor(L / sp) + 1), out = [], b0 = snapshot();
   for (let i = 0; i < n; i++) { const t = i / (n - 1), e = { id: newId('plant'), t: 'plant', sp: k, x: +lerp(a[0], b[0], t).toFixed(2), y: +lerp(a[1], b[1], t).toFixed(2) }; if (checks(e, ents()).some(m => m[0] === 'block')) continue; ents().push(e); out.push(e.id); }
   if (!out.length) return toast('No room for that row there.', 'err'); commit(b0); setTool('select'); setSel(out); toast(`Planted ${out.length} ${s.n.toLowerCase()} in a row, ${sp}′ apart. Drag to move them together.`); }
-function addBed(pts, smoothIt) { const mat = ST.armed.bed, e = { id: newId('bed'), t: 'bed', name: '', mat, pts: pts.map(p => [+p[0].toFixed(2), +p[1].toFixed(2)]), comp: [], smooth: !!smoothIt || (ST.bedShape === 'poly' && ST.bedSmooth), edge: ['meadow', 'prairie', 'nomow', 'lawn', 'clover', 'water', 'moss', 'rain'].includes(mat) ? 'none' : ST.edgeDef };
+function addBed(pts, smoothIt) { const mat = ST.armed.bed, e = { id: newId('bed'), t: 'bed', name: '', mat, pts: pts.map(p => [+p[0].toFixed(2), +p[1].toFixed(2)]), comp: [], smooth: !!smoothIt || (ST.bedShape === 'poly' && ST.bedSmooth), edge: ['meadow', 'prairie', 'nomow', 'lawn', 'clover', 'water', 'moss', 'rain'].includes(mat) || (BM[mat] && BM[mat].paved) ? 'none' : ST.edgeDef };
   edit(() => ents().push(e)); setTool('select'); setSel([e.id]); flash(e.id); toast(`${BM[mat].n} bed added · ${Math.round(geo(e).area).toLocaleString()} sf. Drag squares to reshape; drag a + to add a corner.`); }
-function placeSt(x, y) { const k = ST.armed.st, d = SD[k], e = { id: newId('st'), t: 'st', k, x, y, w: d.w, h: d.h, rot: 0, name: '' }; if (k === 'kgarden') e.bed = '4x10'; const c = checks(e, ents()); if (c.some(m => m[0] === 'block')) return toast(c.find(m => m[0] === 'block')[1] + ' Pick another spot.', 'err');
+function placeSt(x, y) { const k = ST.armed.st, d = SD[k], e = { id: newId('st'), t: 'st', k, x, y, w: d.w, h: d.h, rot: d.lock && SD[k].shape === 'ellipse' ? 0 : placeRot, name: '' }; if (k === 'kgarden') e.bed = '4x10'; const c = checks(e, ents()); if (c.some(m => m[0] === 'block')) return toast(c.find(m => m[0] === 'block')[1] + ' Pick another spot.', 'err');
   edit(() => ents().push(e)); flash(e.id); const lv = worst(c); toast(`${d.n} placed${lv !== 'ok' ? ' · ' + c.find(m => m[0] !== 'ok')[1] : '. Switch to Select to move, resize or rotate it.'}`, lv === 'ok' ? '' : lv); }
 function finishDraft(cancel) {
   const d = ST.draft; ST.draft = null; renderHint(); if (!d || cancel) return;
@@ -1238,6 +1255,9 @@ addEventListener('keydown', ev => {
   if (mod) return;
   const toolKeys = { v: 'select', p: 'plant', b: 'bed', l: 'path', u: 'build', x: 'erase', g: 'walk' }; if (toolKeys[k] && !ev.repeat) { setTool(toolKeys[k]); return; }
   if (/^[1-7]$/.test(k)) { setTool(TOOLS[+k - 1][0]); return; }
+  if ((k === '[' || k === ']' || k === '{' || k === '}') && ST.sel.length) { rotateSel((k === '[' || k === '{' ? -1 : 1) * (ev.shiftKey ? 90 : 15)); return; }
+  if ((k === '[' || k === ']' || k === '{' || k === '}') && !ST.sel.length) { rotPlace((k === '[' || k === '{' ? -1 : 1) * (ev.shiftKey ? 90 : 15)); return; }
+  if (k === 'r' && !V3.on && ST.tool === 'build' && !ST.sel.length) { rotPlace(ev.shiftKey ? 90 : 15); return; }
   if (k === 't' && !ev.repeat) { setView(V3.on ? '2d' : '3d'); return; }
   if (V3.on) { if (k === 'h' || k === 'home') { camPreset('home'); return; } if (k === 'r' && ST.sel.length) { rotateSel(ev.shiftKey ? 90 : 15); return; }
     if (CAMKEYS.includes(k) && !(k.startsWith('arrow') && ST.sel.length && ST.tool === 'select')) { KEYS[k] = true; if (k.startsWith('arrow') || k.startsWith('page')) ev.preventDefault(); return; } }
@@ -1345,7 +1365,7 @@ function drawPreview() {
   if (OP && OP.kind === 'row' && OP.moved) { const k = ST.armed.plant, s = SP[k]; if (s.row) drawRow({ id: 'ghost', sp: k, x1: OP.a[0], y1: OP.a[1], x2: OP.b[0], y2: OP.b[1] }); else { const sp = Math.max(1, +(ST.rowSpacing || Math.round(s.sM * 0.8 * 2) / 2)), Lr = Math.hypot(OP.b[0] - OP.a[0], OP.b[1] - OP.a[1]), n = Math.max(2, Math.floor(Lr / sp) + 1); ctx.globalAlpha = 0.7; for (let i = 0; i < n; i++) { const t = i / (n - 1); drawPlant({ id: 'g' + i, sp: k, x: lerp(OP.a[0], OP.b[0], t), y: lerp(OP.a[1], OP.b[1], t) }); } ctx.globalAlpha = 1; } const [sx, sy] = w2s(OP.b[0], OP.b[1]); snapBadge(sx, sy, Math.round(Math.hypot(OP.b[0] - OP.a[0], OP.b[1] - OP.a[1])) + '′'); }
   if (hv && !small && !OP) {
     if (ST.tool === 'plant') { const s = snapPt(hv.x, hv.y, { obj: false }), g = { id: '__g', t: 'plant', sp: ST.armed.plant, x: s.x, y: s.y }; const c = checks(g, ents()), lv = c.some(m => m[0] === 'block') ? 'err' : worst(c), sp2 = SP[ST.armed.plant], [gx2, gy2] = w2s(s.x, s.y); ctx.globalAlpha = 0.65; drawPlant(g, lv); ctx.globalAlpha = 1; ctx.strokeStyle = LVC[lv]; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(gx2, gy2, Math.max(4, sp2.sM / 2 * cam.z), 0, 7); ctx.stroke(); ctx.setLineDash([]); tipShow(`${sp2.n} · ${sp2.sM}′ mature spread · ${c.some(m => m[0] === 'block') ? 'Can’t go here: ' : ''}${checkMsg(c)}`, lv, hv.sx, hv.sy); tipped = true; }
-    else if (ST.tool === 'build') { const s = snapPt(hv.x, hv.y), dd = SD[ST.armed.st], g = { id: '__g', t: 'st', k: ST.armed.st, x: s.x, y: s.y, w: dd.w, h: dd.h, rot: 0, bed: '4x10' }; ctx.globalAlpha = 0.6; drawSt(g); ctx.globalAlpha = 1; const c = checks(g, ents()), lv = c.some(m => m[0] === 'block') ? 'err' : worst(c); polyW(stPoly(g), null, COL[worst(c)], 2, [5, 4]); tipShow(`${dd.n} · ${c.some(m => m[0] === 'block') ? 'Can’t go here: ' : ''}${checkMsg(c)}`, lv, hv.sx, hv.sy); tipped = true; if (s.tag) { const [sx, sy] = w2s(s.x, s.y); snapBadge(sx, sy, s.tag); } }
+    else if (ST.tool === 'build') { const s = snapPt(hv.x, hv.y), dd = SD[ST.armed.st], g = { id: '__g', t: 'st', k: ST.armed.st, x: s.x, y: s.y, w: dd.w, h: dd.h, rot: placeRot, bed: '4x10' }; ctx.globalAlpha = 0.6; drawSt(g); ctx.globalAlpha = 1; const c = checks(g, ents()), lv = c.some(m => m[0] === 'block') ? 'err' : worst(c); polyW(stPoly(g), null, COL[worst(c)], 2, [5, 4]); tipShow(`${dd.n} · ${c.some(m => m[0] === 'block') ? 'Can’t go here: ' : ''}${checkMsg(c)}`, lv, hv.sx, hv.sy); tipped = true; if (s.tag) { const [sx, sy] = w2s(s.x, s.y); snapBadge(sx, sy, s.tag); } }
     else if ((ST.tool === 'path' || (ST.tool === 'bed' && ST.bedShape === 'poly')) && !d) { const s = snapPt(hv.x, hv.y), [sx, sy] = w2s(s.x, s.y); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, s.tag ? 8 : 4, 0, 7); ctx.stroke(); snapBadge(sx, sy, s.tag); }
     else if (ST.tool === 'erase') { const hit = hitAll(hv.x, hv.y, 8); if (hit) { if (hit.t === 'plant') { const [sx, sy] = w2s(hit.x, hit.y); ctx.strokeStyle = COL.err; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, Math.max(8, canopyFt(SP[hit.sp], ST.year) / 2 * cam.z + 4), 0, 7); ctx.stroke(); } else { const P = hit.t === 'row' ? [[hit.x1, hit.y1], [hit.x2, hit.y2]] : geo(hit).pts; pathW(P); if (hit.t !== 'path' && hit.t !== 'row') ctx.closePath(); ctx.strokeStyle = COL.err; ctx.lineWidth = 3; ctx.stroke(); } } }
   }
@@ -1388,15 +1408,17 @@ function renderHint() {
   else if (t === 'plant') { const s = SP[ST.armed.plant]; txt = `${tap} to plant ${s.n.toLowerCase()}${s.row ? ' · drag along the row' : ST.rowMode ? ' · drag to plant a row' : ''}`; if (!s.row) acts = [[ST.rowMode ? 'Row: on' : 'Row: off', 'row', true]]; }
   else if (t === 'bed') txt = ST.bedShape === 'poly' ? `${tap} corners for ${BM[ST.armed.bed].n.toLowerCase()} · ${small ? 'tap the first corner' : 'double-click or Enter'} to close` : `Drag to draw a ${ST.bedShape === 'rect' ? 'rectangle' : 'oval'} of ${BM[ST.armed.bed].n.toLowerCase()}`;
   else if (t === 'path') txt = `${tap} points for ${PM[ST.armed.path].n.toLowerCase()} · ${small ? 'tap the last point again' : 'double-click or Enter'} to finish`;
-  else if (t === 'build') txt = `${tap} to place ${SD[ST.armed.st].n.toLowerCase()}`;
+  else if (t === 'build') { txt = `${tap} to place ${SD[ST.armed.st].n.toLowerCase()} · turned ${placeRot}°${small ? '' : ' · [ ] rotate 15°, Shift 90°'}`; acts = [['⟲ 15°', 'rotl', true], ['⟳ 15°', 'rotr', true], ['90°', 'rot90', true]]; }
   else if (t === 'erase') txt = `${tap} anything to remove it · Undo brings it back`;
   else if (t === 'walk') txt = small ? 'Joystick or tap to walk · Inspect opens what’s nearby' : 'WASD / arrows or click to walk · E inspects what’s nearby';
   if (V3.on && !d) txt = hint3D(t, tap) || txt;
   $('hintText').textContent = txt;
   $('hintActs').innerHTML = acts.map(([n, k, en]) => `<button data-h="${k}" ${en ? '' : 'disabled'}>${n}</button>`).join('');
-  for (const b of $('hintActs').children) b.onclick = () => { const k = b.dataset.h; if (k === 'done') finishDraft(); else if (k === 'cancel') finishDraft(true); else if (k === 'back') { ST.draft.pts.pop(); if (!ST.draft.pts.length) ST.draft = null; renderHint(); } else if (k === 'row') { ST.rowMode = !ST.rowMode; renderHint(); if (ST.tab === 'palette') renderDrawer(); } };
+  for (const b of $('hintActs').children) b.onclick = () => { const k = b.dataset.h; if (k === 'done') finishDraft(); else if (k === 'cancel') finishDraft(true); else if (k === 'back') { ST.draft.pts.pop(); if (!ST.draft.pts.length) ST.draft = null; renderHint(); } else if (k === 'rotl') rotPlace(-15); else if (k === 'rotr') rotPlace(15); else if (k === 'rot90') rotPlace(90); else if (k === 'row') { ST.rowMode = !ST.rowMode; renderHint(); if (ST.tab === 'palette') renderDrawer(); } };
 }
 const HOTPLANTS = ['haskap', 'aronia', 'rasp_fall', 'rasp_summer', 'blueberry', 'strawberry', 'elder', 'pine', 'arbor', 'sweetgum', 'fmaple', 'blackgum', 'service', 'redbud', 'rmaple', 'oak', 'fountain', 'allium', 'appleL', 'viburnum', 'hydrangea', 'coneflower', 'dropseed'];
+let placeRot = 0;
+function rotPlace(d) { placeRot = ((placeRot + d) % 360 + 360) % 360; renderHint(); DIRTY = true; if (ST.tab === 'palette' && ST.tool === 'build') renderDrawer(); if (typeof V3 !== 'undefined') { V3.ghostKey = ''; V3.hovDirty = true; } toast(`Placing at ${placeRot}°`); }
 const STRIPCAT = { plant: 'rec', bed: null, path: null, build: null };
 function stripGroups(t) {
   if (t === 'plant') return [['rec', 'Picks for this lot', HOTPLANTS], ...Object.keys(CATS).map(c => [c, CATS[c], Object.values(SP).filter(s => s.c === c).map(s => s.k)])];
@@ -1465,7 +1487,7 @@ function renderDrawer() { const dr = $('drawer'), top = dr.scrollTop; renderTabs
 function calHTML(s) { let h = '<div class="cal">'; for (let m = 1; m <= 12; m++) { const b = s.bl.includes(m), f = s.fr.includes(m), c = f ? s.fc : b ? s.bc : null; h += `<span class="${m === ST.month ? 'now' : ''}" title="${MONTH_FULL[m - 1]}${b ? ' · bloom' : ''}${f ? ' · fruit' : ''}" style="${c ? 'background:' + c : ''}"></span>`; } return h + '</div>'; }
 function spRow(k, right, sub, pressed) { const s = SP[k]; return `<button class="row" data-sp="${k}" aria-pressed="${!!pressed}"><span class="sw ${s.c === 'perennial' || s.c === 'grass' ? 'sq' : ''}" style="background:${plantColor(s, ST.month)}"></span><span class="nm"><b>${esc(s.n)}${s.warn ? ' <span style="color:var(--warn)">!</span>' : ''}</b><i>${esc(sub ?? (s.v || s.l))}</i>${calHTML(s)}</span><span class="cnt">${right}</span></button>`; }
 function swatchGrid(kind, keys, cur) { const T2 = kind === 'bed' ? BM : kind === 'path' ? PM : SD; return `<div class="swg">${keys.map(k => `<button data-${kind}="${k}" aria-pressed="${k === cur}" title="${esc(T2[k].n)}"><canvas width="120" height="48"></canvas><span>${esc(T2[k].n)}</span></button>`).join('')}</div>`; }
-function paintSwatches(root) { root.querySelectorAll('.swg button').forEach(b => { const kind = b.dataset.bed ? 'bed' : b.dataset.path ? 'path' : 'st', k = b.dataset[kind]; b.querySelector('canvas').getContext('2d').drawImage(swatchCanvas(kind, k), 0, 0); }); }
+function paintSwatches(root) { root.querySelectorAll('.swg button').forEach(b => { const kind = b.dataset.bed ? 'bed' : b.dataset.path ? 'path' : 'st', k = b.dataset[kind]; if (!k) return; b.querySelector('canvas').getContext('2d').drawImage(swatchCanvas(kind, k), 0, 0); }); }
 const tip = t => `<p class="tip">${t}</p>`;
 function objRow(e) { const v = worst(allChecks().get(e) || []); return `<button class="row" data-id="${e.id}" aria-pressed="${ST.sel.includes(e.id)}"><span class="sw sq" style="background:${e.t === 'bed' ? BM[e.mat].c : e.t === 'path' ? PM[e.mat].c : e.t === 'st' ? '#b9ac90' : SP[e.sp].leaf}"></span><span class="nm"><b>${esc(entName(e))}</b><i>${e.id} · ${esc(entKind(e))}</i></span><span class="cnt" style="color:var(--${v === 'ok' ? 'mute' : v})">${v === 'ok' ? '' : '!'}</span></button>`; }
 function renderPalette() {
@@ -1492,7 +1514,9 @@ function renderPalette() {
     const m = PM[ST.armed.path], w = ST.pathW[ST.armed.path] || m.w;
     h += sec('path-set', 'Line settings', (m.fence || m.s === 'thin' ? tip('Fences and walls run straight between the points you place.') : `<div class="field"><label for="pw">Width</label><div class="pair3"><input id="pw" type="range" min="1" max="12" step="0.5" value="${w}"><b class="num" id="pwv">${w}′</b><span></span></div></div><label class="tog"><input type="checkbox" id="pathSmooth" ${ST.pathSmooth ? 'checked' : ''}>Curved (smooth through the points)</label>`) + tip(`Snaps to ${ST.snap.obj ? 'path ends, bed corners, structure edges and the house' : 'nothing (object snap is off)'} · grid ${ST.snap.grid ? ST.snap.grid + '′' : 'off'}. Change it under View.`), true);
     PM_GROUPS.forEach(([n, keys], i) => { h += sec('path-g' + i, n, swatchGrid('path', keys, ST.armed.path), true, keys.length); });
-  } else if (t === 'build') { SD_GROUPS.forEach(g => { const keys = Object.keys(SD).filter(k => SD[k].g === g); h += sec('st-' + g, g, swatchGrid('st', keys, ST.armed.st), true, keys.length); }); }
+  } else if (t === 'build') { h += sec('st-rot', 'Turn before placing', `<div class="seg"><button data-prot="-15">⟲ 15°</button><button data-prot="15">⟳ 15°</button><button data-prot="90">+90°</button><button data-prot="0">0°</button></div>` + tip(`Now ${placeRot}°. Keys: [ and ] turn 15°, with Shift 90°. After placing, select it to rotate by the handle.`), true, placeRot + '°');
+    SD_GROUPS.forEach(g => { const keys = Object.keys(SD).filter(k => SD[k].g === g); h += sec('st-' + g, g, swatchGrid('st', keys, ST.armed.st), true, keys.length); });
+    h += sec('st-surf', 'Surface under it · draw by points', tip('Pavers, flagstone, concrete or gravel under a fire pit, patio set or play area. Pick one, then click corners (or drag a rectangle/oval) like a bed.') + `<div class="swg">${['pavers', 'brickpav', 'permpav', 'flagbed', 'bluestone', 'concpad', 'stamped', 'deckb', 'gravel', 'crushed', 'dg', 'river'].map(k => `<button data-surf="${k}" title="${esc(BM[k].n)}"><canvas width="120" height="48"></canvas><span>${esc(BM[k].n)}</span></button>`).join('')}</div>`, true); }
   dr.innerHTML = h; paintSwatches(dr); paintCards(dr); wireAges(dr);
   dr.querySelectorAll('[data-pv]').forEach(b => b.onclick = () => { palView = b.dataset.pv; try { localStorage.setItem('plb-pal', palView); } catch (e) {} renderDrawer(); });
   dr.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { if (ST.tool !== 'plant') setTool('plant'); ST.armed.plant = b.dataset.sp; renderDrawer(); renderHint(); renderStrip(); if (small) document.body.classList.remove('open'); });
@@ -1500,6 +1524,8 @@ function renderPalette() {
   dr.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { catFilter = b.dataset.f; renderDrawer(); });
   dr.querySelectorAll('[data-row]').forEach(b => b.onclick = () => { ST.rowMode = b.dataset.row === '1'; renderDrawer(); renderHint(); });
   dr.querySelectorAll('[data-shape]').forEach(b => b.onclick = () => { ST.bedShape = b.dataset.shape; finishDraft(true); renderDrawer(); renderHint(); renderStrip(); });
+  dr.querySelectorAll('[data-prot]').forEach(b => b.onclick = () => { const v = +b.dataset.prot; if (v === 0) rotPlace(-placeRot); else rotPlace(v); renderDrawer(); });
+  dr.querySelectorAll('[data-surf]').forEach(b => { b.querySelector('canvas').getContext('2d').drawImage(swatchCanvas('bed', b.dataset.surf), 0, 0); b.onclick = () => { setTool('bed'); ST.armed.bed = b.dataset.surf; renderDrawer(); renderHint(); renderStrip(); toast(`${BM[b.dataset.surf].n}: ${ST.bedShape === 'poly' ? (small ? 'tap' : 'click') + ' the corners, then the first corner to close' : 'drag out the shape'}.`); }; });
   for (const kind of ['bed', 'path', 'st']) dr.querySelectorAll(`[data-${kind}]`).forEach(b => b.onclick = () => { ST.armed[kind] = b.dataset[kind]; renderDrawer(); renderHint(); renderStrip(); if (small) document.body.classList.remove('open'); });
   if ($('q')) $('q').oninput = ev => { catQuery = ev.target.value; const pos = ev.target.selectionStart; renderDrawer(); $('q').focus(); $('q').setSelectionRange(pos, pos); };
   if ($('rowsp')) $('rowsp').onchange = ev => { ST.rowSpacing = clamp(+ev.target.value || 2, 1, 60); };
@@ -2443,11 +2469,11 @@ function hover3D() {
   const gx = h.x ?? h.p.x, gyy = h.y ?? -h.p.z, p = t === 'plant' ? snapPt(gx, gyy, { obj: false }) : snapPt(gx, gyy);
   let ent, model, ringPts;
   if (t === 'plant') { const s = SP[ST.armed.plant]; ent = { id: '__g', t: 'plant', sp: s.k, x: p.x, y: p.y }; ringPts = circlePts(p.x, p.y, Math.max(1, s.sM / 2)); }
-  else { const d = SD[ST.armed.st]; ent = { id: '__g', t: 'st', k: ST.armed.st, x: p.x, y: p.y, w: d.w, h: d.h, rot: 0, bed: '4x10' }; ringPts = stPoly(ent); }
+  else { const d = SD[ST.armed.st]; ent = { id: '__g', t: 'st', k: ST.armed.st, x: p.x, y: p.y, w: d.w, h: d.h, rot: placeRot, bed: '4x10' }; ringPts = stPoly(ent); }
   const c = checks(ent, ents()), lv = c.some(m => m[0] === 'block') ? 'err' : worst(c);
-  const key = [t, t === 'plant' ? ST.armed.plant : ST.armed.st, ST.year, ST.month].join('|');
+  const key = [t, t === 'plant' ? ST.armed.plant : ST.armed.st, ST.year, ST.month, placeRot].join('|');
   if (key !== V3.ghostKey || !V3.ghost) { if (V3.ghost) V3.S.remove(V3.ghost); V3.ghost = new THREE.Group(); V3.ghostKey = key;
-    model = t === 'plant' ? plantMesh(SP[ST.armed.plant], 0, 0, 7, true) : st3D({ ...ent, x: 0, y: 0 }); if (model) { ghostify(model); model.position.set(0, 0, 0); model.name = 'model'; V3.ghost.add(model); } V3.S.add(V3.ghost); }
+    model = t === 'plant' ? plantMesh(SP[ST.armed.plant], 0, 0, 7, true) : st3D({ ...ent, x: 0, y: 0, rot: 0 }); if (model && t === 'build') model.rotation.y = rad(placeRot); if (model) { ghostify(model); model.position.set(0, 0, 0); model.name = 'model'; V3.ghost.add(model); } V3.S.add(V3.ghost); }
   const m2 = V3.ghost.getObjectByName('model'); if (m2) m2.position.set(p.x, gy(p.x, p.y) - 0.05, -p.y);
   const old = V3.ghost.getObjectByName('ring'); if (old) { V3.ghost.remove(old); old.geometry.dispose(); old.material.dispose(); }
   const ring = ringLine(ringPts, lv); ring.name = 'ring'; V3.ghost.add(ring);
@@ -2545,7 +2571,7 @@ function hint3D(t, tap) {
   const orbit = small ? 'drag to orbit · two fingers pan + zoom' : 'drag or Q/E orbits · WASD or right-drag moves · scroll or Z/C zooms';
   if (t === 'select') return ST.sel.length ? `Drag it across the ground to move · ${small ? '' : 'Del removes · '}${orbit}` : `${tap} anything to select it · ${orbit}`;
   if (t === 'plant') { const s = SP[ST.armed.plant]; return `${tap} the ground to plant ${s.n.toLowerCase()}${s.row ? ' (a 12′ row; drag rows in 2D)' : ''} · ${orbit}`; }
-  if (t === 'build') return `${tap} the ground to place ${SD[ST.armed.st].n.toLowerCase()} · ${orbit}`;
+  if (t === 'build') return `${tap} the ground to place ${SD[ST.armed.st].n.toLowerCase()} · turned ${placeRot}°${small ? '' : ' ([ ] rotates)'} · ${orbit}`;
   if (t === 'erase') return `${tap} anything to remove it · ${orbit}`;
   if (t === 'path') return `${tap} points on the ground for ${PM[ST.armed.path].n.toLowerCase()} · ${small ? 'tap the last point again' : 'double-click or Enter'} to finish · ${orbit}`;
   if (t === 'bed') return ST.bedShape === 'poly' ? `${tap} corners for ${BM[ST.armed.bed].n.toLowerCase()} · ${small ? 'tap the first corner' : 'click the first corner or Enter'} to close · ${small ? 'two fingers' : 'right-drag, WASD'} to move the view` : `Drag on the ground to draw a ${ST.bedShape === 'rect' ? 'rectangle' : 'oval'} · ${small ? 'two fingers' : 'right-drag, Q/E, WASD'} to move the view`;
