@@ -321,7 +321,8 @@ function walkLine(P, step, start, fn) { let carry = start; for (let i = 0; i < P
 /* ================= fixed site (lot grid in feet; origin SW lot corner, +x east, +y north) ================= */
 const LOT = [[0, 0], [236, 0], [236, 76.1], [184.05, 220], [0, 220]];
 const LOT_AREA = polyArea(LOT);
-const HOUSE = [[94.7, 89.9], [144.54, 89.9], [144.54, 134.73], [122.54, 134.73], [122.54, 142.73], [102.87, 142.73], [102.87, 134.73], [94.7, 134.73]];
+// the house's real outer walls (garage forward, main front set back 8′ with the porch recess, rear nook), from the plan
+const HOUSE = [[0, 0], [20.83, 0], [20.83, 8], [31.83, 8], [31.83, 10], [37, 10], [37, 8], [49.84, 8], [49.84, 44.83], [27.84, 44.83], [27.84, 52.83], [8.17, 52.83], [8.17, 44.83], [0, 44.83]].map(([u, v]) => [+(94.7 + u).toFixed(2), +(89.9 + v).toFixed(2)]);
 const DRIVE = [[65.1, 0], [59, -21], [91, -21], [85.1, 0], [85.1, 84.5], [131, 84.5], [131, 87.5], [129.8, 87.5], [129.8, 93.9], [126.8, 93.9], [126.8, 87.5], [85.1, 87.5], [85.1, 89.9], [94.7, 89.9], [94.7, 116.65], [65.1, 116.65]];
 const PATIO = R(122.54, 144.54, 134.73, 150.73), PORCH = R(123.8, 132.8, 93.9, 97.9), DECK = R(122.54, 142.54, 134.83, 142.73);
 const SITE_HARD = [['the house', HOUSE], ['the driveway', DRIVE], ['the walkout patio', PATIO], ['the front porch', PORCH]];
@@ -714,7 +715,10 @@ function checks(e, all) {
       if (inEase(x, y)) { if (tree) add('err', 'Inside the 12′ drainage / utility easement.'); else if (shrubby) add('warn', 'In the 12′ easement: may be removed for swale or utility work.'); }
       if (Math.hypot(x - WELL[0], y - WELL[1]) < 10 && woody) add('err', 'Within 10′ of the well; keep it reachable for a service rig.');
       if (tree && inPoly(x, y, RIG)) add('warn', 'In the well-rig access path from the drive pad.');
-      if (tree && distPoly(x, y, HOUSE) < 20 && !inPoly(x, y, HOUSE)) add('warn', `${distPoly(x, y, HOUSE).toFixed(0)}′ from the house; trees should be ≥20′.`);
+      const dH = distPoly(x, y, HOUSE);
+      if (tree && dH < 20 && !inPoly(x, y, HOUSE)) add('warn', `${dH.toFixed(0)}′ from the house; trees should be ≥20′.`);
+      else if (woody && !tree && e.t === 'plant' && dH < Math.min(s.sM / 2, 4) - 0.2 && !inPoly(x, y, HOUSE)) add('warn', `${dH.toFixed(1)}′ from the wall; at ${s.sM}′ wide it will rub the house. Set it ${Math.min(s.sM / 2, 4).toFixed(0)}′ out.`);
+      if (tree && s.hM >= 30 && distPoly(x, y, DRIVE) < 6 && !inPoly(x, y, DRIVE)) add('warn', `${distPoly(x, y, DRIVE).toFixed(0)}′ from the driveway; big-tree roots can lift the slab (6′+ is safer).`);
       if (y > LOD) add('warn', 'Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed.');
     }
     if (s.warn) add('warn', s.warn);
@@ -735,6 +739,8 @@ function checks(e, all) {
     const m = BM[e.mat];
     for (const [x, y] of pts) {
       if (!inPoly(x, y, LOT)) add('warn', 'Part of this bed is off the lot.');
+      if (inPoly(x, y, HOUSE)) add('warn', 'Part of this bed runs under the house; trim it to the foundation.');
+      else if (inPoly(x, y, DRIVE)) add('warn', 'Part of this bed is on the driveway.');
       if (inRect(x, y, SEPTIC)) { if (m.hard) add('warn', 'Stone or fill over the septic field: the county may object.'); if (m.food) add('err', 'No food gardens on the septic field.'); }
       if (inRect(x, y, RES)) { if (m.hard) add('warn', 'No fill on the septic reserve.'); if (m.food) add('err', 'No in-ground vegetable beds on the septic reserve.'); }
       if (y > LOD && !['meadow', 'prairie', 'moss', 'nomow', 'rain'].includes(e.mat)) add('warn', 'Beyond the limit of disturbance (Pond Easement #1).');
@@ -745,6 +751,7 @@ function checks(e, all) {
     const m = PM[e.mat];
     for (const [x, y] of pts) {
       if (!inPoly(x, y, LOT)) add('warn', 'Runs off the lot.');
+      if (inPoly(x, y, HOUSE)) add(m.fence ? 'err' : 'warn', m.fence ? 'This fence runs into the house.' : 'This path runs into the house; end it at the porch, patio or drive.');
       if (inRect(x, y, SEPTIC) && (m.hard || m.fence)) add('warn', m.fence ? 'Fence posts on the septic field: stay clear of the trenches.' : 'Paving over the septic field: keep to stepping stones or mown paths.');
       if (inRect(x, y, RES) && (m.hard || m.fence)) add('warn', m.fence ? 'Fence posts on the septic reserve count as structures.' : 'Hard paving on the reserve counts as a structure.');
       if (m.fence && inEase(x, y)) add('warn', 'Fence in the 12′ drainage easement: check with the HOA and township.');
@@ -1000,11 +1007,14 @@ function ringLv(sx, sy, r, lv) { ctx.strokeStyle = COL[lv] || COL.ok; ctx.lineWi
 function drawSiteHard() {
   polyW(DRIVE, COL.conc); ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1; ctx.beginPath(); for (let y = -10; y < 116; y += 10) { const [a, b] = w2s(65.1, y), [c] = w2s(85.1, y); ctx.moveTo(a, b); ctx.lineTo(c, b); } ctx.stroke();
   polyW(PATIO, COL.conc); polyW(PORCH, COL.conc); polyW(DECK, '#8c6a4c');
-  const x0 = 94.7 - 1.2, x1 = 144.54 + 1.2, y0 = 89.9 - 1.2, y1 = 134.73 + 1.2, ym = (y0 + y1) / 2, inset = (y1 - y0) / 2, rf = COL.roof;
-  polyW([[x0, y0], [x1, y0], [x1 - inset, ym], [x0 + inset, ym]], shade(rf, 0.12)); polyW([[x0, y1], [x1, y1], [x1 - inset, ym], [x0 + inset, ym]], shade(rf, -0.12));
-  polyW([[x0, y0], [x0 + inset, ym], [x0, y1]], shade(rf, 0.02)); polyW([[x1, y0], [x1 - inset, ym], [x1, y1]], shade(rf, -0.06));
-  polyW([[101.9, 134.73], [123.5, 134.73], [123.5, 143.5], [101.9, 143.5]], shade(rf, -0.06)); polyW(R(123.3, 133.3, 93.4, 98.4), shade(rf, 0.08));
-  lineW([[x0, y0], [x0 + inset, ym], [x1 - inset, ym], [x1, y0]], 'rgba(255,255,255,.18)', 1); lineW([[x0, y1], [x0 + inset, ym]], 'rgba(255,255,255,.18)', 1); lineW([[x1 - inset, ym], [x1, y1]], 'rgba(255,255,255,.18)', 1);
+  const rf = COL.roof, hl = 'rgba(255,255,255,.18)';
+  const hip = (x0, x1, y0, y1) => { const ym = (y0 + y1) / 2, i = (y1 - y0) / 2; polyW([[x0, y0], [x1, y0], [x1 - i, ym], [x0 + i, ym]], shade(rf, 0.12)); polyW([[x0, y1], [x1, y1], [x1 - i, ym], [x0 + i, ym]], shade(rf, -0.12)); polyW([[x0, y0], [x0 + i, ym], [x0, y1]], shade(rf, 0.02)); polyW([[x1, y0], [x1 - i, ym], [x1, y1]], shade(rf, -0.06)); lineW([[x0, y0], [x0 + i, ym], [x1 - i, ym], [x1, y0]], hl, 1); lineW([[x0, y1], [x0 + i, ym]], hl, 1); lineW([[x1 - i, ym], [x1, y1]], hl, 1); };
+  const gab = (x0, x1, y0, y1) => { const xm = (x0 + x1) / 2; polyW(R(x0, xm, y0, y1), shade(rf, 0.08)); polyW(R(xm, x1, y0, y1), shade(rf, -0.1)); lineW([[xm, y0], [xm, y1]], hl, 1); };
+  hip(93.4, 145.84, 96.6, 136.03);                       // main hip roof
+  gab(113.6, 127.3, 96.3, 113.9);                        // front entry gable
+  gab(93.4, 116.83, 88.6, 101.4);                        // garage gable (faces the street)
+  gab(122.6, 135.6, 92.8, 97.9);                         // porch gable
+  { const x0 = 101.7, x1 = 123.7, y0 = 134.85, y1 = 143.9, d = y1 - y0; polyW([[x0, y1], [x1, y1], [x1 - d, y0], [x0 + d, y0]], shade(rf, -0.08)); polyW([[x0, y1], [x0 + d, y0], [x0, y0]], shade(rf, 0.02)); polyW([[x1, y1], [x1 - d, y0], [x1, y0]], shade(rf, -0.12)); }   // rear nook
   const [wx, wy] = w2s(WELL[0], WELL[1]); ctx.fillStyle = COL.blue; ctx.beginPath(); ctx.arc(wx, wy, Math.max(3, cam.z * 0.6), 0, 7); ctx.fill();
 }
 function drawSetbacks() {
@@ -1167,8 +1177,8 @@ function tapAt(p, o) {
   if (tool === 'walk') { const hit = hitAll(p.x, p.y, 16); if (hit) { setTool('select'); setSel([hit.id]); return; } av.walk = [p.x, p.y]; ST.follow = true; return; }
   if (tool === 'path' || (tool === 'bed' && ST.bedShape === 'poly')) {
     const d = ST.draft, prev = d && d.pts.length ? d.pts[d.pts.length - 1] : null, min = tool === 'bed' ? 3 : 2;
-    if (d && d.pts.length >= 3 && d.t === 'bed') { const [fx, fy] = w2s(d.pts[0][0], d.pts[0][1]); if (Math.hypot(fx - p.sx, fy - p.sy) < (o.touch ? 22 : 12)) { finishDraft(); return; } }
-    if (d && prev) { const [lx, ly] = w2s(prev[0], prev[1]); if (Math.hypot(lx - p.sx, ly - p.sy) < (o.touch ? 18 : 6)) { if (d.pts.length >= min) finishDraft(); return; } }
+    if (d && d.pts.length >= 3 && d.t === 'bed') { const [fx, fy] = toScreen(d.pts[0][0], d.pts[0][1]); if (Math.hypot(fx - p.sx, fy - p.sy) < (o.touch ? 22 : 12)) { finishDraft(); return; } }
+    if (d && prev) { const [lx, ly] = toScreen(prev[0], prev[1]); if (Math.hypot(lx - p.sx, ly - p.sy) < (o.touch ? 18 : 6)) { if (d.pts.length >= min) finishDraft(); return; } }
     const s = snapPt(p.x, p.y, { prev, shift: o.shift });
     if (!d) { ST.draft = { t: tool === 'path' ? 'path' : 'bed', pts: [[s.x, s.y]] }; renderHint(); return; }
     if (prev && Math.hypot(prev[0] - s.x, prev[1] - s.y) < 0.2) { if (d.pts.length >= min) finishDraft(); return; }
@@ -1671,7 +1681,7 @@ function ensure3D() {
       .finally(() => { $('v3load').hidden = true; }); }
   return V3.loading;
 }
-const NO3D = { bed: 'Beds are drawn in the 2D plan', path: 'Paths and fences are drawn in the 2D plan', walk: 'Walk mode is in the 2D plan' };
+const NO3D = { walk: 'Walk mode is in the 2D plan' };
 async function setView(v) {
   if (v === '3d' && !V3.on) { if (!await ensure3D()) return; if (NO3D[ST.tool]) setTool('select'); V3.on = true; document.body.classList.add('v3'); size3D(); camFrom2D(); V3.built = V3.texKey = V3.selKey = ''; }
   else if (v === '2d' && V3.on) { ghostClear(); V3.on = false; document.body.classList.remove('v3'); const t = V3.O.target; cam.x = t.x; cam.y = -t.z; ST.follow = false; DIRTY = true; endDrag3D(false); }
@@ -1689,7 +1699,7 @@ function init3D() {
   const S = new THREE.Scene(), C = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 1, 4000);
   // our pointer handlers go first so a drag on an object can switch orbiting off
   cvs.addEventListener('pointerdown', down3D); cvs.addEventListener('pointermove', move3D); cvs.addEventListener('pointermove', ev => { if (ev.pointerType === 'touch' || ev.buttons) { if (V3.hov) { V3.hov = null; V3.hovDirty = true; } return; } V3.hov = { clientX: ev.clientX, clientY: ev.clientY }; V3.hovDirty = true; }); cvs.addEventListener('pointerleave', () => { V3.hov = null; V3.hovDirty = true; }); addEventListener('pointerup', up3D); addEventListener('pointercancel', up3D);
-  cvs.addEventListener('contextmenu', ev => ev.preventDefault());
+  cvs.addEventListener('contextmenu', ev => ev.preventDefault()); cvs.addEventListener('dblclick', ev => { if (ST.draft) { finishDraft(); V3.draftKey = ''; ev.preventDefault(); } });
   const O = new THREE.OrbitControls(C, cvs);
   Object.assign(O, { enableDamping: true, dampingFactor: 0.12, screenSpacePanning: false, maxPolarAngle: Math.PI / 2 - 0.05, minDistance: 6, maxDistance: 700, zoomSpeed: 1.1, keyPanSpeed: 20 });
   O.addEventListener('change', () => { V3.dirty = true; });
@@ -1719,7 +1729,7 @@ function camFrom2D() { const O = V3.O, C = V3.C, d = clamp(Math.max(innerWidth, 
 function focus3D(x, y) { if (!V3.ready) return; const O = V3.O, nt = new THREE.Vector3(x, gy(x, y) + 1.5, -y), d = nt.clone().sub(O.target); O.target.copy(nt); V3.C.position.add(d); O.update(); }
 
 /* terrain: a grid whose lines hug the house's real footprint, so the ground stops at the foundation instead of running through the basement */
-const FOOT = [[0, 0], [20.83, 0], [20.83, 8], [31.83, 8], [31.83, 10], [37, 10], [37, 8], [49.84, 8], [49.84, 44.83], [27.84, 44.83], [27.84, 52.83], [8.17, 52.83], [8.17, 44.83], [0, 44.83]].map(([u, v]) => [94.7 + u, 89.9 + v]);
+const FOOT = HOUSE;
 function terrainGeo(step) {
   const lines = (a0, a1, extra) => { const L = []; for (let a = a0; a < a1; a += step) L.push(a); L.push(a1); return [...new Set(L.concat(extra).map(v => +v.toFixed(3)))].sort((p, q) => p - q); };
   const ex = [], ey = [];
@@ -2335,6 +2345,7 @@ function render3D() {
   if (!V3.drag) { if (V3.built !== keyObjs()) rebuildObjs(); if (V3.texKey !== keyTex()) paintTex(); }
   if (V3.selKey !== ST.sel.join(',') + '|' + V3.built) rebuildSel();
   if (V3.ovKey !== plan().base + '|' + COL['map-bg']) buildOverlays3D();
+  draft3D();
   if (V3.hovDirty || (V3.hov && V3.toolSeen !== ST.tool + ST.armed.plant + ST.armed.st)) { V3.toolSeen = ST.tool + ST.armed.plant + ST.armed.st; hover3D(); }
   if (V3.sun.castShadow !== V3.shadows) { V3.sun.castShadow = V3.shadows; V3.R.shadowMap.needsUpdate = true; M3.forEach(m => { m.needsUpdate = true; }); V3.dirty = true; }
   if (!V3.dirty && !DIRTY) return; V3.dirty = false; DIRTY = false; V3.R.render(V3.S, V3.C);
@@ -2426,6 +2437,8 @@ function hover3D() {
     } else tipHide();
     V3.dirty = true; return;
   }
+  if (drawTool()) { if (V3.ghost) { V3.S.remove(V3.ghost); V3.ghost = null; } if (V3.hoverBox) { V3.S.remove(V3.hoverBox); V3.hoverBox = null; } const g = groundAt(ev); if (!g) { V3.hp = null; tipHide(); return; } const d = ST.draft, prev = d && d.pts.length ? d.pts[d.pts.length - 1] : null, sp2 = snapPt(g[0], g[1], { prev }); V3.hp = [sp2.x, sp2.y]; cvs.style.cursor = 'crosshair'; const P = d ? d.pts.concat([V3.hp]) : [V3.hp]; tipShow(t === 'path' ? `${PM[ST.armed.path].n}${d ? ` · ${d.pts.length} point${d.pts.length > 1 ? 's' : ''} · ${Math.round(polyLen(P))}′` : ''}${sp2.tag ? ' · snap ' + sp2.tag : ''}` : `${BM[ST.armed.bed].n}${ST.bedShape !== 'poly' ? ' · drag to draw' : d ? ` · ${d.pts.length} corner${d.pts.length > 1 ? 's' : ''}` : ''}${sp2.tag ? ' · snap ' + sp2.tag : ''}`, 'ok', ev.clientX, ev.clientY); V3.dirty = true; return; }
+  V3.hp = null;
   if ((t !== 'plant' && t !== 'build') || !h || h.house) { ghostClear(); return; }
   const gx = h.x ?? h.p.x, gyy = h.y ?? -h.p.z, p = t === 'plant' ? snapPt(gx, gyy, { obj: false }) : snapPt(gx, gyy);
   let ent, model, ringPts;
@@ -2465,18 +2478,36 @@ function pick3D(ev) {
     return { id: null, p: h.point, x: h.point.x, y: -h.point.z, house: true }; }
   return null;
 }
+function toScreen(x, y) { if (!(V3.on && V3.ready)) return w2s(x, y); const v = new THREE.Vector3(x, gy(x, y) + 0.3, -y).project(V3.C), r = $('gl3').getBoundingClientRect(); return [(v.x + 1) / 2 * r.width + r.left, (1 - v.y) / 2 * r.height + r.top]; }
+function groundAt(ev) { const h = ray3D(ev).intersectObject(V3.terrain)[0]; return h ? [h.point.x, -h.point.z] : null; }
+const drawTool = () => ST.tool === 'path' || ST.tool === 'bed';
+function draft3D() {
+  const key = JSON.stringify([ST.draft && ST.draft.pts, V3.hp, V3.shape, ST.tool, ST.armed.bed, ST.armed.path, ST.bedShape]); if (key === V3.draftKey) return; V3.draftKey = key;
+  if (V3.draftG) { V3.S.remove(V3.draftG); V3.draftG.traverse(o => { if (o.geometry && o.geometry !== geo3().box) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); }); V3.draftG = null; }
+  if (!drawTool()) { V3.dirty = true; return; }
+  const G = new THREE.Group(), acc = COL.accent || '#c8562b', d = ST.draft;
+  let P = d ? d.pts.slice() : []; if (V3.hp && !V3.shape) P.push(V3.hp);
+  if (V3.shape && V3.shape.b) { const [ax, ay] = V3.shape.a, [bx, by] = V3.shape.b; P = ST.bedShape === 'rect' ? R(Math.min(ax, bx), Math.max(ax, bx), Math.min(ay, by), Math.max(ay, by)) : smooth(ELL((ax + bx) / 2, (ay + by) / 2, Math.abs(bx - ax) / 2, Math.abs(by - ay) / 2, 8), true, 8); }
+  const isBed = ST.tool === 'bed', closed = isBed && P.length >= 3;
+  if (closed) { const S2 = ST.bedSmooth && ST.bedShape === 'poly' && P.length >= 3 ? smooth(P, true, 8) : P, bb = bbox(S2); G.add(drapeMesh((x, y) => inPoly(x, y, S2), bb, Math.max(0.75, Math.max(bb.x1 - bb.x0, bb.y1 - bb.y0) / 40), 0.32, (BM[ST.armed.bed] || {}).c || acc, 0.55)); G.add(drapeLine(S2, acc, { closed: true, lift: 0.4, dash: [1, 0.6] })); }
+  else if (P.length >= 2) { const m = PM[ST.armed.path], w = ST.pathW[ST.armed.path] || m.w; G.add(drapeLine(P, acc, { lift: 0.4 })); if (!m.fence && m.s !== 'thin') { const L = [], Rr = []; for (let i = 0; i < P.length; i++) { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * w / 2, ny = dx / l * w / 2; L.push([P[i][0] + nx, P[i][1] + ny]); Rr.push([P[i][0] - nx, P[i][1] - ny]); } G.add(drapeLine(L.concat(Rr.reverse()), m.c || acc, { closed: true, lift: 0.35, op: 0.8 })); } }
+  for (const [x, y] of d ? d.pts : []) { const mk = new THREE.Mesh(geo3().box, new THREE.MeshBasicMaterial({ color: acc, depthTest: false })); mk.scale.set(0.7, 0.7, 0.7); mk.position.set(x, gy(x, y) + 0.2, -y); mk.renderOrder = 7; G.add(mk); }
+  V3.draftG = G; V3.S.add(G); V3.dirty = true;
+}
 function down3D(ev) {
   V3.ptrs.add(ev.pointerId); V3.hov = null; ghostClear();
   if (V3.drag && V3.ptrs.size > 1) { endDrag3D(true); return; }
   if (ev.button !== 0 || V3.ptrs.size > 1) { V3.down = null; return; }
   V3.down = { x: ev.clientX, y: ev.clientY, t: ev.timeStamp, id: ev.pointerId, shift: ev.shiftKey, touch: ev.pointerType === 'touch' };
+  if (ST.tool === 'bed' && ST.bedShape !== 'poly') { const g = groundAt(ev); if (g) { const s0 = snapPt(g[0], g[1]); V3.shape = { a: [s0.x, s0.y], b: null, id: ev.pointerId }; V3.O.enabled = false; } return; }
   if (ST.tool !== 'select') return;
-  const h = pick3D(ev); if (!h || !h.id || h.ground && !V3.objs.has(h.id)) return;
+  const h = pick3D(ev); if (!h || !h.id) return; const he = byId(h.id); if (h.ground && !V3.objs.has(h.id) && !(he && ST.sel.includes(h.id) && (he.t === 'bed' || he.t === 'path' || he.t === 'st'))) return;
   const was = ST.sel.includes(h.id); if (!was) { if (ev.shiftKey) setSel([...ST.sel, h.id]); else setSel([h.id]); }
   const lead = byId(h.id); if (!lead) return;
   V3.O.enabled = false; V3.drag = { was, hit: h.id, ids: ST.sel.slice(), before: snapshot(), plane: new THREE.Plane(new THREE.Vector3(0, 1, 0), -h.p.y), start: h.p.clone(), a0: center(lead), last: [0, 0], moved: false, id: ev.pointerId };
 }
 function move3D(ev) {
+  if (V3.shape && ev.pointerId === V3.shape.id) { const g = groundAt(ev); if (g) { const s2 = snapPt(g[0], g[1]); V3.shape.b = [s2.x, s2.y]; V3.dirty = true; } return; }
   const D = V3.drag; if (!D || ev.pointerId !== D.id) return;
   const p = new THREE.Vector3(); if (!ray3D(ev).ray.intersectPlane(D.plane, p)) return;
   let dx = p.x - D.start.x, dy = -(p.z - D.start.z); const gs = +ST.snap.grid; if (gs) { dx = Math.round((D.a0[0] + dx) / gs) * gs - D.a0[0]; dy = Math.round((D.a0[1] + dy) / gs) * gs - D.a0[1]; }
@@ -2494,6 +2525,7 @@ function endDrag3D(commitIt) {
 }
 function up3D(ev) {
   V3.ptrs.delete(ev.pointerId);
+  if (V3.shape && ev.pointerId === V3.shape.id) { const sh = V3.shape; V3.shape = null; if (V3.O) V3.O.enabled = true; V3.down = null; if (ev.type !== 'pointercancel' && sh.b) { const [ax, ay] = sh.a, [bx, by] = sh.b; if (Math.abs(bx - ax) < 1 || Math.abs(by - ay) < 1) toast('Too small: drag a bigger shape.'); else addBed(ST.bedShape === 'rect' ? R(Math.min(ax, bx), Math.max(ax, bx), Math.min(ay, by), Math.max(ay, by)) : ELL((ax + bx) / 2, (ay + by) / 2, Math.abs(bx - ax) / 2, Math.abs(by - ay) / 2, 8), ST.bedShape === 'ellipse'); } else if (ev.type !== 'pointercancel') toast(`Drag on the ground to draw a ${ST.bedShape === 'rect' ? 'rectangle' : 'oval'}.`); V3.draftKey = ''; return; }
   if (V3.drag && ev.pointerId === V3.drag.id) { const D = V3.drag; endDrag3D(true); const d0 = V3.down; V3.down = null; if (!D.moved && d0 && d0.shift && D.was && Math.hypot(ev.clientX - d0.x, ev.clientY - d0.y) < 6) setSel(ST.sel.filter(i => i !== D.hit)); return; }
   const d = V3.down; V3.down = null; if (!d || ev.pointerId !== d.id || !V3.on || ev.type === 'pointercancel') return;
   if (Math.hypot(ev.clientX - d.x, ev.clientY - d.y) > (d.touch ? 10 : 5) || ev.timeStamp - d.t > 900) return;
@@ -2504,6 +2536,7 @@ function click3D(ev, d) {
   const gx = h.x ?? h.p.x, gy2 = h.y ?? -h.p.z;
   if (t === 'select') { if (h.id) { if (d.shift) setSel(ST.sel.includes(h.id) ? ST.sel.filter(i => i !== h.id) : [...ST.sel, h.id]); else setSel([h.id]); } else if (!d.shift) setSel([]); return; }
   if (t === 'erase') { const e = h.id && byId(h.id); if (e) edit(() => { plan().ents = ents().filter(x => x !== e); }, `Removed ${entName(e)}. Undo brings it back.`); else toast('Nothing there to remove.'); return; }
+  if (t === 'path' || t === 'bed') { const g = groundAt(ev); if (!g) return; tapAt({ x: g[0], y: g[1], sx: ev.clientX, sy: ev.clientY }, { touch: d.touch, shift: d.shift }); V3.draftKey = ''; return; }
   if (h.house) return toast('That’s the house.');
   if (t === 'plant') { const s = SP[ST.armed.plant]; if (s.row) { placeRow([+gx.toFixed(1), +(gy2 - 6).toFixed(1)], [+gx.toFixed(1), +(gy2 + 6).toFixed(1)]); return; } const p = snapPt(gx, gy2, { obj: false }); placePlant(p.x, p.y); return; }
   if (t === 'build') { const p = snapPt(gx, gy2); placeSt(p.x, p.y); }
@@ -2514,6 +2547,8 @@ function hint3D(t, tap) {
   if (t === 'plant') { const s = SP[ST.armed.plant]; return `${tap} the ground to plant ${s.n.toLowerCase()}${s.row ? ' (a 12′ row; drag rows in 2D)' : ''} · ${orbit}`; }
   if (t === 'build') return `${tap} the ground to place ${SD[ST.armed.st].n.toLowerCase()} · ${orbit}`;
   if (t === 'erase') return `${tap} anything to remove it · ${orbit}`;
+  if (t === 'path') return `${tap} points on the ground for ${PM[ST.armed.path].n.toLowerCase()} · ${small ? 'tap the last point again' : 'double-click or Enter'} to finish · ${orbit}`;
+  if (t === 'bed') return ST.bedShape === 'poly' ? `${tap} corners for ${BM[ST.armed.bed].n.toLowerCase()} · ${small ? 'tap the first corner' : 'click the first corner or Enter'} to close · ${small ? 'two fingers' : 'right-drag, WASD'} to move the view` : `Drag on the ground to draw a ${ST.bedShape === 'rect' ? 'rectangle' : 'oval'} · ${small ? 'two fingers' : 'right-drag, Q/E, WASD'} to move the view`;
   return '';
 }
 function centerOn(x, y, z) { ST.follow = false; cam.x = x; cam.y = y; cam.tz = Math.max(cam.tz, z || cam.tz); if (V3.on) focus3D(x, y); }
