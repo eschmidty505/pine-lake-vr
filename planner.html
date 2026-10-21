@@ -76,6 +76,10 @@ details.sec>summary>span:first-of-type{flex:1;min-width:0;overflow:hidden;text-o
 body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){#tools .vbtn{display:none}}body.v3 #map,body.v3 #mini,body.v3 #joy,body.v3 #walkacts{display:none!important}
 #viewBtn{font:700 11px var(--display);letter-spacing:.08em}
 #tools button.vbtn{border-top:1.5px solid var(--line);color:var(--accent)}
+#ovbar{display:none}body.v3 #ovbar{display:flex;position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;gap:4px;align-items:center;padding:5px 6px;flex-wrap:wrap;max-width:calc(100% - 24px)}
+#ovbar .k{margin:0 4px}#ovbar button{font-size:9.5px;padding:4px 8px;min-height:28px}
+@media (max-width:1180px){body.v3 #timebar{bottom:62px}}
+@media (max-width:820px){body.v3 #ovbar{left:max(8px,env(safe-area-inset-left,0px));right:auto;top:calc(52px + env(safe-area-inset-top,0px));bottom:auto;padding:3px 4px}body.v3 #ovbar .k{display:none}body.v3 #ovbar button{font-size:9px;min-height:26px;padding:3px 6px}body.v3 #hud{top:calc(90px + env(safe-area-inset-top,0px))}}
 #gtip{position:fixed;z-index:9;pointer-events:none;max-width:340px;padding:4px 8px;font-size:11px;line-height:1.35;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-left:4px solid #2e9e57;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 #v3load{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;padding:10px 14px;font-size:12px}
 .row{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 4px;border:0;border-bottom:1px dashed color-mix(in srgb,var(--line) 35%,transparent);cursor:pointer;width:100%;text-align:left;background:none;text-transform:none;letter-spacing:0;font-size:11.5px;min-height:0}
@@ -260,6 +264,7 @@ body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){
 <div id="joy" aria-label="Move joystick"><i></i></div>
 <div id="walkacts"><button id="actInspect">Inspect</button><button id="actCenter">Center</button></div>
 <div id="gtip" hidden></div>
+<div id="ovbar" class="sheet" aria-label="3D overlays"></div>
 <div id="v3load" class="sheet" hidden>Loading the 3D view…</div>
 <div id="toast" class="sheet" hidden></div>
 <div id="scrim" hidden></div>
@@ -1492,7 +1497,7 @@ function renderView() {
   if ($('v3beds')) $('v3beds').onchange = ev => { V3.beds = ev.target.checked; V3.dirty = true; savePrefs(); };
   if ($('v3home')) $('v3home').onclick = () => camPreset('home'); if ($('v3top')) $('v3top').onclick = () => camPreset('top'); if ($('v3street')) $('v3street').onclick = () => camPreset('street');
   $('gridSel').onchange = ev => { ST.snap.grid = +ev.target.value; savePrefs(); }; $('snapObj').onchange = ev => { ST.snap.obj = ev.target.checked; savePrefs(); }; $('snapAng').onchange = ev => { ST.snap.angle = ev.target.checked; savePrefs(); };
-  for (const [k] of L) $('ly-' + k).onchange = ev => { ST.layers[k] = ev.target.checked; savePrefs(); if (V3.ready) V3.texKey = ''; };
+  for (const [k] of L) $('ly-' + k).onchange = ev => { ST.layers[k] = ev.target.checked; savePrefs(); if (V3.ready) syncOverlays3D(); };
   $('vHelp').onclick = () => $('helpBtn').click();
   wireShots($('drawer'));
 }
@@ -1611,7 +1616,9 @@ async function setView(v) {
   else return;
   $('viewBtn').textContent = V3.on ? '2D' : '3D'; renderTools(); renderHint(); if (ST.tab === 'view') renderDrawer(); savePrefs();
 }
-const terrainH = (x, y) => { const h = grade(x, y), d = pondSdf(x, y); return d < 3 ? Math.min(h, Math.max(858, WATER + d * 0.25)) : h; };
+const terrainH = (x, y) => { let h = grade(x, y); const d = pondSdf(x, y); if (d < 3) h = Math.min(h, Math.max(858, WATER + d * 0.25));
+  const px = Math.max(122.54 - x, 0, x - 144.54), py = Math.max(134.73 - y, 0, y - 150.73), pd = Math.hypot(px, py); if (pd < 6) { const t = pd / 6, k = t * t * (3 - 2 * t); h = lerp(879.45, h, k); }   // walkout patio pad, flat under the deck
+  return h; };
 const gy = (x, y) => terrainH(x, y) - Z0;
 function init3D() {
   const cvs = $('gl3'), R = new THREE.WebGLRenderer({ canvas: cvs, antialias: !small, preserveDrawingBuffer: false });
@@ -1676,6 +1683,7 @@ function buildSite3D() {
     const base = Math.min(...HOUSE.map(([x, y]) => terrainH(x, y))) - 0.6, top = 908, wg = new THREE.ExtrudeGeometry(new THREE.Shape(HOUSE.map(([x, y]) => new THREE.Vector2(x, y))), { depth: top - base, bevelEnabled: false }); wg.rotateX(-Math.PI / 2); wg.translate(0, base - Z0, 0);
     const walls = new THREE.Mesh(wg, mat3('#d8d0bf')); walls.castShadow = walls.receiveShadow = true; G.add(walls);
     for (const [x0, x1, y0, y1] of [[93.5, 145.74, 88.7, 135.93], [101.9, 123.5, 133.5, 143.9]]) { const r = new THREE.Mesh(hipGeo(x0, x1, y0, y1, top, 0.5), mat3('#55504c', { ds: 1 })); r.castShadow = true; G.add(r); } }
+  { const pb = Math.min(...[[122.54, 134.73], [144.54, 134.73], [144.54, 150.73], [122.54, 150.73]].map(([x, y]) => terrainH(x, y))) - 0.6, pt = new THREE.Group(); pt.position.set(133.54, 0, -142.73); put(pt, 'box', '#b9b6ad', 22, 879.55 - pb, 16, 0, pb - Z0, 0); V3.S.add(pt); }
   const wl = new THREE.Group(); wl.position.set(WELL[0], gy(...WELL), -WELL[1]); put(wl, 'cyl', '#6f7478', 0.7, 1.6, 0.7); put(wl, 'cyl', '#4d5256', 0.9, 0.15, 0.9, 0, 1.6, 0); G.add(wl);
 }
 /* ---- the house, ported from the 3D model page (index.html); its own E0 = 880 ---- */
@@ -2214,13 +2222,15 @@ function rebuildObjs() {
 const keyObjs = () => ST.cur + '|' + editVer + '|' + ST.month + '|' + ST.year + '|' + V3.beds + ST.layers.drifts;
 let flatVer = -1, flatS = '';
 function flatSig() { if (flatVer !== editVer) { flatVer = editVer; flatS = JSON.stringify(ents().filter(e => e.t === 'bed' || (e.t === 'path' && PM[e.mat] && !PM[e.mat].fence) || (e.t === 'st' && !TALL.has(e.k))).map(strip)); } return flatS; }
-const keyTex = () => ST.cur + '|' + flatSig() + '|' + ST.month + '|' + JSON.stringify(ST.layers) + '|' + COL['map-bg'] + V3.beds;
+const keyTex = () => ST.cur + '|' + flatSig() + '|' + ST.month + '|' + ST.layers.contours + '|' + COL['map-bg'] + V3.beds;
 function paintTex() {
   const TX = V3.tex.image, sv = { c: ctx, W, H, x: cam.x, y: cam.y, z: cam.z };
   ctx = TX.getContext('2d'); W = TX.width; H = TX.height; cam.x = (WB.x0 + WB.x1) / 2; cam.y = (WB.y0 + WB.y1) / 2; cam.z = V3.px;
   try { ctx.setTransform(1, 0, 0, 1, 0, 0); lockPatterns(); ctx.fillStyle = COL['map-bg']; ctx.fillRect(0, 0, W, H); if (ground) ctx.drawImage(ground, 0, 0, W, H);
+    { const sp2 = R(SEPTIC.x0, SEPTIC.x1, SEPTIC.y0, SEPTIC.y1), r2 = rng(7), wint = season(ST.month) === 'winter'; ctx.save(); pathW(sp2); ctx.closePath(); ctx.clip(); ctx.fillStyle = wint ? '#8c8c62' : COL.lawn; ctx.fillRect(0, 0, W, H); const [a0, b0] = w2s(SEPTIC.x0, SEPTIC.y1), [a1, b1] = w2s(SEPTIC.x1, SEPTIC.y0), cs = ['rgba(255,255,255,.06)', 'rgba(0,0,0,.07)', wint ? '#9a9a70' : COL.lawn2]; for (let i = 0; i < 26000; i++) { ctx.fillStyle = cs[i % 3]; const z2 = V3.px * (0.3 + r2() * 0.35); ctx.fillRect(lerp(a0, a1, r2()), lerp(b0, b1, r2()), z2, z2); } ctx.restore(); }   // lawn over the septic field; the zone itself is a 3D overlay
     const L = renderOrder(), dr = ST.layers.drifts; if (V3.beds) ST.layers.drifts = false; try { for (const e of L) if (e.t === 'bed') drawBed(e); } finally { ST.layers.drifts = dr; } for (const e of L) if (e.t === 'path' && !PM[e.mat].fence) drawPath(e); for (const e of L) if (e.t === 'st' && !TALL.has(e.k)) drawSt(e);
-    drawSiteHard(); if (ST.layers.contours && contour) ctx.drawImage(contour, 0, 0, W, H); if (ST.layers.setbacks) drawSetbacks(); if (ST.layers.irrigation) drawIrrigation(); }
+    polyW(DRIVE, COL.conc); ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.lineWidth = 1; ctx.beginPath(); for (let y = -10; y < 116; y += 10) { const [a, b] = w2s(65.1, y), [c] = w2s(85.1, y); ctx.moveTo(a, b); ctx.lineTo(c, b); } ctx.stroke(); polyW(PATIO, COL.conc);
+    if (ST.layers.contours && contour) ctx.drawImage(contour, 0, 0, W, H); }
   catch (err) { console.warn('3D texture', err); }
   finally { ctx = sv.c; W = sv.W; H = sv.H; cam.x = sv.x; cam.y = sv.y; cam.z = sv.z; lockPatterns(); }
   V3.tex.needsUpdate = true; V3.texKey = keyTex(); V3.dirty = true;
@@ -2240,10 +2250,70 @@ function render3D() {
   V3.O.update();
   if (!V3.drag) { if (V3.built !== keyObjs()) rebuildObjs(); if (V3.texKey !== keyTex()) paintTex(); }
   if (V3.selKey !== ST.sel.join(',') + '|' + V3.built) rebuildSel();
+  if (V3.ovKey !== plan().base + '|' + COL['map-bg']) buildOverlays3D();
   if (V3.hovDirty || (V3.hov && V3.toolSeen !== ST.tool + ST.armed.plant + ST.armed.st)) { V3.toolSeen = ST.tool + ST.armed.plant + ST.armed.st; hover3D(); }
   if (V3.sun.castShadow !== V3.shadows) { V3.sun.castShadow = V3.shadows; V3.R.shadowMap.needsUpdate = true; M3.forEach(m => { m.needsUpdate = true; }); V3.dirty = true; }
   if (!V3.dirty && !DIRTY) return; V3.dirty = false; DIRTY = false; V3.R.render(V3.S, V3.C);
 }
+
+/* ---- 3D site overlays: septic / well / easement zones and sprinklers float just above the ground and toggle on and off ---- */
+const PATIO_E = 879.5;
+function drapeMesh(inside, bb, step, lift, color, opacity) {
+  const xs = [], ys = [], pos = []; for (let x = bb.x0; x < bb.x1; x += step) xs.push(x); xs.push(bb.x1); for (let y = bb.y0; y < bb.y1; y += step) ys.push(y); ys.push(bb.y1);
+  const V = (x, y) => [x, gy(x, y) + lift, -y];
+  for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < ys.length - 1; j++) { const a = xs[i], b = xs[i + 1], c = ys[j], d = ys[j + 1]; if (!inside((a + b) / 2, (c + d) / 2)) continue; pos.push(...V(a, c), ...V(b, c), ...V(b, d), ...V(a, c), ...V(b, d), ...V(a, d)); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false, side: THREE.DoubleSide })); m.renderOrder = 2; return m;
+}
+function drapeLine(P, color, o) {
+  o = o || {}; const pts = [], lift = o.lift ?? 0.35, step = o.step || 2;
+  for (let i = 0; i < P.length - (o.closed ? 0 : 1); i++) { const a = P[i], b = P[(i + 1) % P.length], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step)); for (let j = 0; j < n; j++) { const x = lerp(a[0], b[0], j / n), y = lerp(a[1], b[1], j / n); pts.push(new THREE.Vector3(x, gy(x, y) + lift, -y)); } }
+  const last = o.closed ? P[0] : P[P.length - 1]; pts.push(new THREE.Vector3(last[0], gy(last[0], last[1]) + lift, -last[1]));
+  const mat = o.dash ? new THREE.LineDashedMaterial({ color, dashSize: o.dash[0], gapSize: o.dash[1], transparent: true, opacity: o.op ?? 0.95 }) : new THREE.LineBasicMaterial({ color, transparent: true, opacity: o.op ?? 0.95 });
+  const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat); if (o.dash) ln.computeLineDistances(); ln.renderOrder = 3; return ln;
+}
+function label3D(text, color, x, y, up, size) {
+  const c = document.createElement('canvas'), g = c.getContext('2d'), fs = 44; g.font = `700 ${fs}px "IBM Plex Mono", monospace`; const tw = g.measureText(text).width; c.width = Math.ceil(tw + 36); c.height = 68;
+  g.font = `700 ${fs}px "IBM Plex Mono", monospace`; g.fillStyle = 'rgba(250,248,242,.92)'; g.fillRect(0, 0, c.width, c.height); g.strokeStyle = color; g.lineWidth = 5; g.strokeRect(2.5, 2.5, c.width - 5, c.height - 5); g.fillStyle = color; g.textBaseline = 'middle'; g.fillText(text, 18, 36);
+  const t = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })), k = (size || 2.6) / 68; sp.scale.set(c.width * k, c.height * k, 1); sp.position.set(x, gy(x, y) + (up || 6), -y); sp.renderOrder = 8; return sp;
+}
+function buildOverlays3D() {
+  for (const k of ['zonesG', 'irrG', 'labG']) { if (V3[k]) { V3.S.remove(V3[k]); V3[k].traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); } V3[k] = new THREE.Group(); V3.S.add(V3[k]); }
+  const Z = V3.zonesG, L = V3.labG, GR = 0x2e9e57, inR = (r2, pad) => (x, y) => x >= r2.x0 - (pad || 0) && x <= r2.x1 + (pad || 0) && y >= r2.y0 - (pad || 0) && y <= r2.y1 + (pad || 0);
+  // septic field, trenches, tank, reserve
+  Z.add(drapeMesh(inR(SEPTIC), SEPTIC, 3, 0.25, GR, 0.2)); Z.add(drapeLine(R(SEPTIC.x0, SEPTIC.x1, SEPTIC.y0, SEPTIC.y1), GR, { closed: true, dash: [2.2, 1.2] }));
+  for (const [xa, xb] of [[97.1, 148.1], [170.1, 221.1]]) for (let i = 0; i < 7; i++) { const y = 11.8 + i * (64 / 6); Z.add(drapeLine([[xa, y], [xb, y]], 0x1f7a43, { lift: 0.3, op: 0.75 })); }
+  Z.add(drapeMesh(inR(TANK), TANK, 1, 0.3, 0x55595c, 0.55));
+  Z.add(drapeMesh(inR(RES), RES, 3, 0.25, GR, 0.12)); Z.add(drapeLine(R(RES.x0, RES.x1, RES.y0, RES.y1), GR, { closed: true, dash: [1.2, 1.2] }));
+  // 12' easements along the west, south and east lines
+  const ESE = [[[0, 0], [12, 12], [12, 220], [0, 220]], [[0, 0], [236, 0], [224, 12], [12, 12]], [[236, 0], [236, 76.1], [184.05, 220], [171.3, 220], [224, 74], [224, 12]]];
+  for (const P of ESE) { Z.add(drapeMesh((x, y) => inPoly(x, y, P), bbox(P), 2, 0.22, 0xc2402a, 0.13)); Z.add(drapeLine(P, 0xc2402a, { closed: true, op: 0.45, lift: 0.28 })); }
+  // well: 10' woody/structure setback + 50' septic isolation radius
+  Z.add(drapeMesh((x, y) => Math.hypot(x - WELL[0], y - WELL[1]) <= 10, { x0: WELL[0] - 10, x1: WELL[0] + 10, y0: WELL[1] - 10, y1: WELL[1] + 10 }, 1, 0.3, 0x1f5f9e, 0.2));
+  Z.add(drapeLine(circlePts(WELL[0], WELL[1], 10, 40), 0x1f5f9e, { closed: true })); Z.add(drapeLine(circlePts(WELL[0], WELL[1], 50, 96), 0x1f5f9e, { closed: true, dash: [2, 1.6], op: 0.8 }));
+  Z.add(drapeLine([[0, LOD], [195.1, LOD]], 0x8c5a28, { dash: [3, 1.4] }));
+  for (const [t, c, x, y] of [['SEPTIC FIELD · TURF ONLY', '#1f7a43', 160, 44], ['SEPTIC RESERVE', '#1f7a43', 30, 110], ['WELL · 10′ / 50′', '#1f5f9e', WELL[0], WELL[1] + 2], ['LIMIT OF DISTURBANCE', '#8c5a28', 110, LOD], ['12′ EASEMENT', '#c2402a', 6, 60]]) Z.add(label3D(t, c, x, y, 5));
+  // sprinklers for this plan
+  const I = V3.irrG, ir = (BUILTIN[plan().base] || BUILTIN.A).irr, ZC = { 1: 0x2a78c2, 2: 0x7b4fb5, 3: 0xd2691e };
+  if (ir && ir.heads) {
+    for (const [zn, x, y, a0, a1] of ir.heads) {
+      const col = ZC[zn] || 0x2a78c2, r0 = 26, A0 = a0 * Math.PI / 180, A1 = (a1 <= a0 ? a1 + 360 : a1) * Math.PI / 180, na = Math.max(6, Math.round((A1 - A0) / 0.12)), nr = 5, pos = [];
+      const P = (k, i) => { const rr = r0 * k / nr, a = A0 + (A1 - A0) * i / na, px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr; return [px, gy(px, py) + 0.18 + k * 0.01, -py]; };
+      for (let k = 0; k < nr; k++) for (let i = 0; i < na; i++) pos.push(...P(k, i), ...P(k + 1, i), ...P(k + 1, i + 1), ...P(k, i), ...P(k + 1, i + 1), ...P(k, i + 1));
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); const fan = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.13, depthWrite: false, side: THREE.DoubleSide })); fan.renderOrder = 2; I.add(fan);
+      const arc = []; for (let i = 0; i <= na; i++) { const a = A0 + (A1 - A0) * i / na; arc.push([x + Math.cos(a) * r0, y + Math.sin(a) * r0]); } I.add(drapeLine(arc, col, { op: 0.7, lift: 0.22 }));
+      const hd = new THREE.Group(); hd.position.set(x, gy(x, y), -y); put(hd, 'cyl', '#2f3336', 0.32, 0.35, 0.32); put(hd, 'cyl', '#' + new THREE.Color(col).getHexString(), 0.16, 0.25, 0.16, 0, 0.35, 0); I.add(hd);
+    }
+    for (const m of ir.main || []) I.add(drapeLine(m, 0x174a7c, { lift: 0.2 }));
+    if (ir.vb) { const vb = ir.vb; I.add(drapeLine([vb, [53.5, vb[1]], [53.5, 92], [25, 92]], 0x14a08c, { lift: 0.2 })); for (const x of [25, 34, 43]) I.add(drapeLine([[x, 92], [x, 46]], 0x14a08c, { lift: 0.2, dash: [1.4, 0.9] }));
+      const vbx = new THREE.Group(); vbx.position.set(vb[0], gy(vb[0], vb[1]), -vb[1]); put(vbx, 'box', '#174a7c', 1.6, 0.9, 1.1); I.add(vbx); I.add(label3D('VALVE BOX', '#174a7c', vb[0], vb[1], 3.5, 2)); }
+    I.add(label3D('Z7 BERRY DRIP', '#14a08c', 34, 70, 4, 2.2));
+  }
+  V3.ovKey = plan().base + '|' + COL['map-bg']; syncOverlays3D();
+}
+function syncOverlays3D() { if (!V3.zonesG) return; V3.zonesG.visible = !!ST.layers.setbacks; V3.irrG.visible = !!ST.layers.irrigation; for (const G of [V3.zonesG, V3.irrG]) for (const s of G.children) if (s.isSprite) s.visible = !!ST.layers.labels; V3.dirty = true; renderOvbar(); }
+const OVS = [['setbacks', 'Septic · well · easements'], ['irrigation', 'Sprinklers'], ['contours', 'Contours'], ['labels', 'Labels']];
+function renderOvbar() { const b = $('ovbar'); if (!b) return; b.innerHTML = `<span class="k">Show</span>` + OVS.map(([k, n]) => `<button data-ov="${k}" aria-pressed="${!!ST.layers[k]}">${n}</button>`).join(''); for (const x of b.querySelectorAll('[data-ov]')) x.onclick = () => { const k = x.dataset.ov; ST.layers[k] = !ST.layers[k]; savePrefs(); syncOverlays3D(); DIRTY = true; if (ST.tab === 'view') renderDrawer(); }; }
 
 /* ---- placement ghost, hover hints + keyboard camera (3D) ---- */
 const LVC = { ok: '#2e9e57', warn: '#c8901f', err: '#c2402a' };
@@ -2315,7 +2385,7 @@ function down3D(ev) {
   V3.ptrs.add(ev.pointerId); V3.hov = null; ghostClear();
   if (V3.drag && V3.ptrs.size > 1) { endDrag3D(true); return; }
   if (ev.button !== 0 || V3.ptrs.size > 1) { V3.down = null; return; }
-  V3.down = { x: ev.clientX, y: ev.clientY, t: performance.now(), id: ev.pointerId, shift: ev.shiftKey, touch: ev.pointerType === 'touch' };
+  V3.down = { x: ev.clientX, y: ev.clientY, t: ev.timeStamp, id: ev.pointerId, shift: ev.shiftKey, touch: ev.pointerType === 'touch' };
   if (ST.tool !== 'select') return;
   const h = pick3D(ev); if (!h || !h.id || h.ground && !V3.objs.has(h.id)) return;
   const was = ST.sel.includes(h.id); if (!was) { if (ev.shiftKey) setSel([...ST.sel, h.id]); else setSel([h.id]); }
@@ -2342,7 +2412,7 @@ function up3D(ev) {
   V3.ptrs.delete(ev.pointerId);
   if (V3.drag && ev.pointerId === V3.drag.id) { const D = V3.drag; endDrag3D(true); const d0 = V3.down; V3.down = null; if (!D.moved && d0 && d0.shift && D.was && Math.hypot(ev.clientX - d0.x, ev.clientY - d0.y) < 6) setSel(ST.sel.filter(i => i !== D.hit)); return; }
   const d = V3.down; V3.down = null; if (!d || ev.pointerId !== d.id || !V3.on || ev.type === 'pointercancel') return;
-  if (Math.hypot(ev.clientX - d.x, ev.clientY - d.y) > (d.touch ? 10 : 5) || performance.now() - d.t > 700) return;
+  if (Math.hypot(ev.clientX - d.x, ev.clientY - d.y) > (d.touch ? 10 : 5) || ev.timeStamp - d.t > 900) return;
   click3D(ev, d);
 }
 function click3D(ev, d) {
