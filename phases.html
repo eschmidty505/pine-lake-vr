@@ -1,0 +1,335 @@
+<title>Pine Lake Install Phases</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a working ledger. Controls band on top, money/harvest chart, then one column of phase "work orders"; reference tables last. */
+:root{
+  --bg:#eef1ea; --panel:#f8faf5; --ink:#1c2a22; --mute:#5c6a61; --line:#c8d2c6; --soft:#e2e8de;
+  --accent:#6a2c5a; --accent-ink:#fff; --gold:#b9800c; --green:#2f6b45; --warn:#b26a00; --err:#b3361f;
+  --g-found:#4c5b66; --g-fruit:#6a2c5a; --g-trees:#2f6b45; --g-peren:#7f8f3a; --g-beds:#7a5537; --g-hard:#7c7a72; --g-live:#2d6a8e;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif; --body:"Public Sans",ui-sans-serif,system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a16;--panel:#1b231e;--ink:#e4ebe2;--mute:#9aa89e;--line:#34413a;--soft:#222c25;--accent:#c27bb0;--accent-ink:#1b1218;--gold:#e0b04a;--green:#69b487;--warn:#e0a03c;--err:#e8735a;--g-found:#8fa3b3;--g-fruit:#c27bb0;--g-trees:#69b487;--g-peren:#b4c46a;--g-beds:#c49a76;--g-hard:#b0ada4;--g-live:#6fb3dc;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a16;--panel:#1b231e;--ink:#e4ebe2;--mute:#9aa89e;--line:#34413a;--soft:#222c25;--accent:#c27bb0;--accent-ink:#1b1218;--gold:#e0b04a;--green:#69b487;--warn:#e0a03c;--err:#e8735a;--g-found:#8fa3b3;--g-fruit:#c27bb0;--g-trees:#69b487;--g-peren:#b4c46a;--g-beds:#c49a76;--g-hard:#b0ada4;--g-live:#6fb3dc;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:22px}
+.wrap>*{min-width:0}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(28px,5vw,42px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+h3{font-size:17px;font-weight:700}
+.k{font:600 11px/1.2 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+p{margin:0}
+.lede{color:var(--mute);max-width:68ch}
+header{display:grid;gap:8px}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+/* controls */
+.controls{display:grid;grid-template-columns:1.25fr 1fr;gap:18px}
+@media (max-width:760px){.controls{grid-template-columns:1fr}}
+.presets{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.presets button{border:0;border-right:1px solid var(--line);background:transparent;padding:9px 6px;font-weight:600;font-size:13px;line-height:1.2}
+.presets button:last-child{border-right:0}
+.presets button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+@media (max-width:520px){.presets{grid-template-columns:1fr 1fr}.presets button:nth-child(2){border-right:0}.presets button:nth-child(-n+2){border-bottom:1px solid var(--line)}}
+.sliders{display:grid;gap:10px;margin-top:14px}
+.sl{display:grid;grid-template-columns:150px 1fr 28px;gap:10px;align-items:center}
+.sl label{font-weight:600;font-size:13.5px;display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.sl input{width:100%;accent-color:var(--accent)}
+@media (max-width:420px){.sl{grid-template-columns:118px 1fr 24px}}
+.opts{display:grid;gap:10px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:grid;gap:4px}
+.field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:4px;padding:7px 8px;width:100%}
+.checks{display:grid;gap:4px}
+.checks label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px}
+.checks input{accent-color:var(--accent);margin-top:3px}
+/* kpis */
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.kpi{padding:12px 12px 12px 0;display:grid;gap:4px;min-width:0}
+.kpi+.kpi{padding-left:12px;border-left:1px solid var(--line)}
+.kpi b{font:700 24px/1.05 var(--display);font-variant-numeric:tabular-nums}
+.kpi small{color:var(--mute);font-size:12px}
+@media (max-width:900px){.kpis{grid-template-columns:repeat(3,1fr)}.kpi:nth-child(4){border-left:0;padding-left:0}.kpi:nth-child(n+4){border-top:1px solid var(--line)}}
+@media (max-width:480px){.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(odd){border-left:0;padding-left:0}.kpi:nth-child(even){padding-left:12px;border-left:1px solid var(--line)}.kpi:nth-child(n+3){border-top:1px solid var(--line)}}
+/* chart */
+.chartbox{overflow-x:auto}
+#chart{display:block;width:100%;min-width:620px;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--mute)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:18px;height:3px;border-radius:2px}
+/* phases */
+.phases{display:grid;gap:14px}
+.phase{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.ph-head{display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:baseline;padding:12px 14px;border-bottom:1px solid var(--line)}
+.ph-n{font:800 30px/1 var(--display);color:var(--accent)}
+.ph-t{display:grid;gap:2px;min-width:0}
+.ph-t h3 small{font:500 13px var(--body);color:var(--mute);margin-left:6px}
+.ph-cost{text-align:right}
+.ph-cost b{font:700 20px/1 var(--display)}
+.bar{grid-column:1/-1;height:6px;background:var(--soft);border-radius:3px;overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+.unlock{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.pill{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.pill.h{border-color:var(--gold);color:var(--gold)}
+.pill.t{border-color:var(--green);color:var(--green)}
+.pill.over{border-color:var(--err);color:var(--err)}
+.items{display:grid}
+.it{display:grid;grid-template-columns:4px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 14px 9px 0;border-top:1px solid var(--soft)}
+.it:first-child{border-top:0}
+.it .g{align-self:stretch}
+.it .nm{min-width:0;display:grid;gap:2px}
+.it .nm b{font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.it .nm span{font-size:12.5px;color:var(--mute)}
+.it .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.it .tag{font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--soft)}
+.it .tag.h{color:var(--gold)}.it .tag.t{color:var(--green)}.it .tag.f{color:var(--warn)}.it .tag.dep{color:var(--mute)}
+.it .c{font-family:var(--mono);font-size:13.5px;text-align:right}
+.it select{border:1px solid var(--line);background:var(--bg);border-radius:4px;padding:4px 6px;font-size:12.5px;max-width:118px}
+.it select.pinned{border-color:var(--accent);color:var(--accent);font-weight:600}
+@media (max-width:560px){.it{grid-template-columns:4px minmax(0,1fr) auto;padding-right:10px}.it select{grid-column:2/-1;justify-self:start}}
+.flagnote{font-size:12px;color:var(--warn)}
+details.ref summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:18px}
+.tbl{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--mute);font-weight:600}
+td.r,th.r{text-align:right}
+td input{width:70px;border:1px solid var(--line);background:var(--bg);border-radius:3px;padding:3px 5px;text-align:right;font-family:var(--mono);font-size:12.5px}
+.src{font-size:12px;color:var(--mute)}
+.skipped{opacity:.75}
+.note{font-size:13px;color:var(--mute);max-width:75ch}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--ink);background:transparent;border-radius:4px;padding:6px 12px;font-weight:600;font-size:13px}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:4px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="k">7305 Pine Lake Blvd · Yard Builder plan “LEGIT MANAUL SAVE” · 217 items</span>
+    <h1>Install phases</h1>
+    <p class="lede">The whole yard split into planting seasons you can afford, ordered by what you care about most: getting fruit and nuts sooner, getting slow trees in the ground early, or the patio and play areas. Drag the weights, set a budget per season, and pin anything to a different phase.</p>
+  </header>
+
+  <section class="panel controls" aria-label="Priorities and budget">
+    <div>
+      <span class="k">What goes first</span>
+      <div class="presets" id="presets" style="margin-top:6px">
+        <button data-p="harvest">Harvest first</button><button data-p="trees">Trees first</button><button data-p="balanced">Balanced</button><button data-p="living">Outdoor living</button>
+      </div>
+      <div class="sliders">
+        <div class="sl"><label for="wH"><span class="dot" style="background:var(--gold)"></span>Fruit + nuts</label><input id="wH" type="range" min="0" max="10" step="1"><span class="num" id="wHv"></span></div>
+        <div class="sl"><label for="wT"><span class="dot" style="background:var(--green)"></span>Trees + privacy</label><input id="wT" type="range" min="0" max="10" step="1"><span class="num" id="wTv"></span></div>
+        <div class="sl"><label for="wL"><span class="dot" style="background:var(--g-live)"></span>Outdoor living</label><input id="wL" type="range" min="0" max="10" step="1"><span class="num" id="wLv"></span></div>
+      </div>
+      <p class="note" style="margin-top:10px">Fruit + nuts ranks each crop by its first ten years of harvest per dollar, so fast, cheap producers (raspberries, haskap, the veggie beds) jump ahead. Trees + privacy ranks by how long a tree takes to reach ¾ of its full size, so slow giants like the bur oak and white pines go in early.</p>
+    </div>
+    <div class="opts">
+      <div class="row2">
+        <div class="field"><label class="k" for="cap">Budget per season</label><input id="cap" type="number" min="500" step="250" inputmode="numeric"></div>
+        <div class="field"><label class="k" for="start">First season</label><select id="start"><option value="2027F">Fall 2027 (after move-in)</option><option value="2028S">Spring 2028</option></select></div>
+      </div>
+      <div class="checks">
+        <span class="k">Include</span>
+        <label><input type="checkbox" id="cLock">Lawn + sprinklers always go in the first fall</label>
+        <label><input type="checkbox" id="cHard">Patios, paths and outdoor-living pieces</label>
+        <label><input type="checkbox" id="cRow">Street-edge buffer in the road right-of-way (needs county OK)</label>
+        <label><input type="checkbox" id="cLawn">Hydroseed (skip if the builder seeds)</label>
+      </div>
+      <div class="actions"><button class="btn" id="reset">Reset pins + settings</button><button class="btn" id="copy">Copy phase list</button></div>
+    </div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <section class="panel" aria-label="Spending and harvest over time">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h2>Money out, harvest in</h2>
+      <div class="legend"><span><i class="sw" style="background:var(--ink)"></i>Total spent so far</span><span><i class="sw" style="background:var(--gold)"></i>Harvest value per year</span><span><i class="sw" style="background:var(--gold);opacity:.35;height:8px"></i>Harvest value so far</span><span><i class="sw" style="background:var(--green)"></i>Trees, % of full size</span></div>
+    </div>
+    <div class="chartbox"><svg id="chart" viewBox="0 0 1000 340" role="img" aria-label="Cumulative spending, harvest value and tree size by year"></svg></div>
+  </section>
+
+  <section aria-label="Phases">
+    <h2 style="margin-bottom:10px">Phases</h2>
+    <div class="phases" id="phases"></div>
+  </section>
+
+  <section class="panel">
+    <details class="ref" id="cropref">
+      <summary>Harvest assumptions you can edit</summary>
+      <p class="note" style="margin-top:8px">Yields are for healthy, mature plants with decent care. Values are rough grocery-store equivalents, so a pound of haskap counts more than a pound of apples. Change any number and the order and chart update.</p>
+      <div class="tbl"><table id="croptbl"></table></div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <details class="ref">
+      <summary>Every item, cost and what it gives back</summary>
+      <div class="tbl"><table id="alltbl"></table></div>
+    </details>
+  </section>
+
+  <p class="note">Costs are the Yard Builder's 2027 DIY material prices (bare-root and container plants, bulk mulch, pavers with base, kits), no labor. Edit a price in the builder's Budget tab and ask Claude to refresh this page. Irrigation uses the plan's $1,650–$2,650 DIY range. Patio areas that overlap the house footprint in the drawing are priced as drawn, so trimming them to the foundation will lower the paver numbers.</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DATA = {"pk":[{"id":"lawn","name":"Hydroseed the lawn","group":"Foundation","cost":3939,"detail":"About 32,800 sf of lawn at $0.12/sf (DIY-rented hydroseeder or a low quote; pro range $0.07\u2013$0.26/sf). Late Aug\u2013mid Sept.","season":"fall","must":true,"deps":[],"flags":[],"H":0,"T":0,"L":0,"crop":null,"short":"hydroseed the lawn"},{"id":"irr","name":"Irrigation: spray zones 1\u20133 and 5","group":"Foundation","cost":1350,"detail":"Mainline, valves and rotors/sprays for the lawn and front beds, DIY materials. Zones 4, 6 and 7 get stubbed.","season":"any","must":true,"deps":[],"flags":[],"H":0,"T":0,"L":0,"crop":null,"short":"irrigation: spray zones 1\u20133 and 5"},{"id":"drip","name":"Irrigation: drip zones 4, 6 and 7","group":"Beds + prep","cost":800,"detail":"Drip for the berry patch, foundation beds and garden. Goes in with the first berries or beds.","season":"any","deps":[],"flags":[],"H":0,"T":0,"L":0,"must":false,"crop":null,"short":"drip irrigation"},{"id":"bed-Z1","name":"Black mulch bed \u00b7 Serviceberry (1,141 sf)","group":"Beds + prep","cost":1392,"detail":"10.6 yd\u00b3 black mulch + 295 LF steel edging","L":0,"flags":["Part of this bed is off the lot.","Part of this bed is on the driveway."],"season":"any","bed":"Z1","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"black mulch bed (1,141 sf)"},{"id":"bed-Z2","name":"Black mulch bed \u00b7 Aronia, Arborvitae (321 sf)","group":"Beds + prep","cost":377,"detail":"3.0 yd\u00b3 black mulch + 78 LF steel edging","L":0,"flags":[],"season":"any","bed":"Z2","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"black mulch bed (321 sf)"},{"id":"bed-Z3","name":"Black mulch bed \u00b7 Arborvitae, Apple (253 sf)","group":"Beds + prep","cost":292,"detail":"2.3 yd\u00b3 black mulch + 60 LF steel edging","L":0,"flags":[],"season":"any","bed":"Z3","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"black mulch bed (253 sf)"},{"id":"bed-Z4","name":"Paver patio (215 sf)","group":"Patios + hardscape","cost":1937,"detail":"215 sf concrete pavers","L":1,"flags":[],"season":"any","bed":"Z4","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"paver patio (215 sf)"},{"id":"bed-Z6","name":"Black mulch bed (256 sf)","group":"Beds + prep","cost":292,"detail":"2.4 yd\u00b3 black mulch + 60 LF steel edging","L":0,"flags":["Part of this bed is on the driveway.","Part of this bed runs under the house; trim it to the foundation."],"season":"any","bed":"Z6","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"black mulch bed (256 sf)"},{"id":"bed-Z7","name":"Black mulch bed \u00b7 Red maple (291 sf)","group":"Beds + prep","cost":315,"detail":"2.7 yd\u00b3 black mulch + 62 LF steel edging","L":0,"flags":["Part of this bed is on the driveway."],"season":"any","bed":"Z7","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"black mulch bed (291 sf)"},{"id":"bed-Z5","name":"Permeable-paver patio (302 sf)","group":"Patios + hardscape","cost":3921,"detail":"302 sf permeable pavers","L":1,"flags":["Part of this patio runs under the house; trim it to the foundation.","Paving within 10\u2032 of the well: keep the cap reachable for service."],"season":"any","bed":"Z5","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"permeable-paver patio (302 sf)"},{"id":"bed-Z8","name":"Permeable-paver patio (278 sf)","group":"Patios + hardscape","cost":3614,"detail":"278 sf permeable pavers","L":1,"flags":["Part of this patio runs under the house; trim it to the foundation.","Paving within 10\u2032 of the well: keep the cap reachable for service."],"season":"any","bed":"Z8","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"permeable-paver patio (278 sf)"},{"id":"bed-Z9","name":"Paver patio (671 sf)","group":"Patios + hardscape","cost":6038,"detail":"671 sf concrete pavers","L":1,"flags":["Paving within 10\u2032 of the well: keep the cap reachable for service."],"season":"any","bed":"Z9","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"paver patio (671 sf)"},{"id":"bed-Z10","name":"River-rock garden court (748 sf)","group":"Patios + hardscape","cost":1223,"detail":"9.7 tons river rock + 101 LF steel edging","L":1,"flags":["Part of this bed runs under the house; trim it to the foundation."],"season":"any","bed":"Z10","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"river-rock garden court (748 sf)"},{"id":"bed-Z11","name":"Straw berry bed \u00b7 Highbush blueberry (168 sf)","group":"Beds + prep","cost":238,"detail":"3 bales straw + 71 LF steel edging","L":0,"flags":["On the septic reserve: county OK needed for berries/beds."],"season":"any","bed":"Z11","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"straw berry bed (168 sf)"},{"id":"bed-Z12","name":"Straw berry bed \u00b7 Haskap (190 sf)","group":"Beds + prep","cost":252,"detail":"4 bales straw + 74 LF steel edging","L":0,"flags":["On the septic reserve: county OK needed for berries/beds."],"season":"any","bed":"Z12","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"straw berry bed (190 sf)"},{"id":"bed-Z13","name":"Straw berry bed \u00b7 Red raspberry rows (211 sf)","group":"Beds + prep","cost":194,"detail":"4 bales straw + 54 LF steel edging","L":0,"flags":["On the septic reserve: county OK needed for berries/beds."],"season":"any","bed":"Z13","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"straw berry bed (211 sf)"},{"id":"bed-Z14","name":"Straw berry bed \u00b7 Red raspberry, fall rows (214 sf)","group":"Beds + prep","cost":193,"detail":"4 bales straw + 54 LF steel edging","L":0,"flags":["On the septic reserve: county OK needed for berries/beds."],"season":"any","bed":"Z14","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"straw berry bed (214 sf)"},{"id":"bed-Z15","name":"Permeable-paver patio (695 sf)","group":"Patios + hardscape","cost":9035,"detail":"695 sf permeable pavers","L":1,"flags":["Paving within 10\u2032 of the well: keep the cap reachable for service."],"season":"any","bed":"Z15","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"permeable-paver patio (695 sf)"},{"id":"bed-Z16","name":"Pine-straw bed \u00b7 American hazelnut (299 sf)","group":"Beds + prep","cost":336,"detail":"7 bales pine straw + 91 LF steel edging","L":0,"flags":[],"season":"any","bed":"Z16","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"pine-straw bed (299 sf)"},{"id":"bed-Z17","name":"Pine-straw bed \u00b7 Eastern white pine, Norway spruce (1,248 sf)","group":"Beds + prep","cost":914,"detail":"28 bales pine straw + 221 LF steel edging","L":0,"flags":[],"season":"any","bed":"Z17","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"pine-straw bed (1,248 sf)"},{"id":"bed-Z18","name":"Meadow \u00b7 Little bluestem, Indiangrass (1,711 sf)","group":"Beds + prep","cost":308,"detail":"1,711 sf pollinator seed mix","L":0,"flags":["On the septic reserve: county OK needed for berries/beds."],"season":"fall","bed":"Z18","note":"Seed in late fall: the native mix needs winter cold to sprout.","deps":[],"H":0,"T":0,"must":false,"crop":null,"short":"meadow (1,711 sf)"},{"id":"sp-willow","name":"Golden weeping willow 'Niobe' \u00d7 2","group":"Trees + screening","cost":370,"deps":[],"flags":["Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed. (2)","Willow roots: 84\u2032 from the well, keep \u2265100\u2032."],"season":"any","sp":"willow","count":2,"detail":"2 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":50,"w":45,"t75":8.3},"ev":false,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"golden weeping willow 'niobe' \u00d7 2"},{"id":"sp-service","name":"Serviceberry clump \u00d7 11","group":"Fruit + nuts","cost":2035,"deps":["bed-Z1","drip"],"flags":["Inside the 12\u2032 drainage / utility easement."],"season":"any","sp":"service","count":11,"detail":"11 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":18,"w":15,"t75":8.9},"ev":false,"crop":{"first":3,"full":7,"lb":5,"price":6,"unit":"plant","src":"Estimate; birds take a share","key":"service","name":"Serviceberries","qty":11},"T":1,"H":0,"L":0,"must":false,"short":"serviceberry clump \u00d7 11"},{"id":"sp-sweetgum","name":"Columnar sweetgum 'Slender Silhouette' \u00d7 2","group":"Trees + screening","cost":370,"deps":[],"flags":["Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed. (2)"],"season":"any","sp":"sweetgum","count":2,"detail":"2 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":50,"w":8,"t75":12.8},"ev":false,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"columnar sweetgum 'slender silhouette' \u00d7 2"},{"id":"sp-arbor","name":"Arborvitae 'Green Giant' \u00d7 4","group":"Trees + screening","cost":660,"deps":["bed-Z2","bed-Z3"],"flags":[],"season":"any","sp":"arbor","count":4,"detail":"4 \u00d7 $165 (conifer, B&B or container)","mature":{"h":40,"w":14,"t75":12.5},"ev":true,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"arborvitae 'green giant' \u00d7 4"},{"id":"sp-haskap","name":"Haskap \u00d7 8","group":"Fruit + nuts","cost":144,"deps":["bed-Z12","bed-Z2","drip"],"flags":["On the septic reserve: berry shrubs need Lapeer County OK (pending). (5)"],"season":"spring","sp":"haskap","count":8,"detail":"8 \u00d7 $18","mature":{"h":5,"w":5,"t75":3.1},"ev":false,"crop":{"first":2,"full":6,"lb":7,"price":10,"unit":"plant","src":"USU Extension: 5\u201315 lb per mature bush; picks up in years 3\u20134","key":"haskap","name":"Haskap","qty":8},"H":0,"T":0,"L":0,"must":false,"short":"haskap \u00d7 8"},{"id":"sp-aronia","name":"Aronia 'Viking' \u00d7 6","group":"Fruit + nuts","cost":108,"deps":["bed-Z2","drip"],"flags":[],"season":"spring","sp":"aronia","count":6,"detail":"6 \u00d7 $18","mature":{"h":6,"w":6,"t75":4.4},"ev":false,"crop":{"first":3,"full":5,"lb":15,"price":4,"unit":"plant","src":"UW\u2013Madison: 15\u201320 lb per mature plant; big yields in years 4\u20135","key":"aronia","name":"Aronia","qty":6},"H":0,"T":0,"L":0,"must":false,"short":"aronia 'viking' \u00d7 6"},{"id":"sp-rmaple","name":"Red maple 'Redpointe' \u00d7 2","group":"Trees + screening","cost":370,"deps":["bed-Z7"],"flags":["Trunk 27\u2032 from the septic trenches; trees need \u226528\u2032."],"season":"any","sp":"rmaple","count":2,"detail":"2 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":45,"w":30,"t75":17.0},"ev":false,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"red maple 'redpointe' \u00d7 2"},{"id":"sp-appleL","name":"Apple 'Liberty' semi-dwarf \u00d7 2","group":"Fruit + nuts","cost":90,"deps":["bed-Z2","bed-Z3","drip"],"flags":[],"season":"any","sp":"appleL","count":2,"detail":"2 \u00d7 $45 (fruit, B&B or container)","mature":{"h":16,"w":15,"t75":6.5},"ev":false,"crop":{"first":3,"full":8,"lb":170,"price":1.75,"unit":"plant","src":"Stark Bros: 5\u201310 bushels per semi-dwarf; estimate assumes ~4 bu home yield","key":"appleL","name":"Apples","qty":2},"H":0,"T":0,"L":0,"must":false,"short":"apple 'liberty' semi-dwarf \u00d7 2"},{"id":"sp-pine","name":"Eastern white pine \u00d7 3","group":"Trees + screening","cost":495,"deps":["bed-Z17"],"flags":["Inside the 12\u2032 drainage / utility easement. (2)"],"season":"any","sp":"pine","count":3,"detail":"3 \u00d7 $165 (conifer, B&B or container)","mature":{"h":70,"w":30,"t75":23.5},"ev":true,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"eastern white pine \u00d7 3"},{"id":"sp-spruce","name":"Norway spruce \u00d7 2","group":"Trees + screening","cost":330,"deps":["bed-Z17"],"flags":["Inside the 12\u2032 drainage / utility easement. (2)"],"season":"any","sp":"spruce","count":2,"detail":"2 \u00d7 $165 (conifer, B&B or container)","mature":{"h":52,"w":25,"t75":22.9},"ev":true,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"norway spruce \u00d7 2"},{"id":"sp-bur","name":"Bur oak \u00d7 1","group":"Trees + screening","cost":185,"deps":[],"flags":[],"season":"any","sp":"bur","count":1,"detail":"1 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":70,"w":70,"t75":32.0},"ev":false,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"bur oak \u00d7 1"},{"id":"sp-birch","name":"River birch clump \u00d7 2","group":"Trees + screening","cost":370,"deps":[],"flags":[],"season":"any","sp":"birch","count":2,"detail":"2 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":45,"w":30,"t75":14.0},"ev":false,"T":1,"H":0,"L":0,"must":false,"crop":null,"short":"river birch clump \u00d7 2"},{"id":"sp-hazel","name":"American hazelnut \u00d7 3","group":"Fruit + nuts","cost":105,"deps":["bed-Z16","drip"],"flags":[],"season":"any","sp":"hazel","count":3,"detail":"3 \u00d7 $35","mature":{"h":10,"w":10,"t75":5.1},"ev":false,"crop":{"first":4,"full":8,"lb":4,"price":6,"unit":"plant","src":"Estimate for American hazel, in-shell nuts","key":"hazel","name":"Hazelnuts","qty":3},"T":1,"H":0,"L":0,"must":false,"short":"american hazelnut \u00d7 3"},{"id":"sp-hickory","name":"Shagbark hickory \u00d7 1","group":"Fruit + nuts","cost":185,"deps":[],"flags":[],"season":"any","sp":"hickory","count":1,"detail":"1 \u00d7 $185 (shade tree, B&B or container)","mature":{"h":70,"w":40,"t75":32.5},"ev":false,"crop":{"first":12,"full":30,"lb":40,"price":4,"unit":"plant","src":"Shagbark often takes 10\u201340 years to bear; legacy tree","key":"hickory","name":"Hickory nuts","qty":1},"T":1,"H":0,"L":0,"must":false,"short":"shagbark hickory \u00d7 1"},{"id":"sp-bluestem","name":"Little bluestem \u00d7 52","group":"Perennials + grasses","cost":468,"deps":["bed-Z18"],"flags":["Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed. (8)","Off the lot."],"season":"any","sp":"bluestem","count":52,"detail":"52 \u00d7 $9","mature":{"h":3,"w":2,"t75":2.0},"ev":false,"L":0.35,"H":0,"T":0,"must":false,"crop":null,"short":"little bluestem \u00d7 52"},{"id":"sp-indian","name":"Indiangrass \u00d7 18","group":"Perennials + grasses","cost":162,"deps":["bed-Z18"],"flags":["Off the lot."],"season":"any","sp":"indian","count":18,"detail":"18 \u00d7 $9","mature":{"h":6,"w":2,"t75":2.4},"ev":false,"L":0.35,"H":0,"T":0,"must":false,"crop":null,"short":"indiangrass \u00d7 18"},{"id":"sp-elder","name":"American elderberry \u00d7 2","group":"Fruit + nuts","cost":36,"deps":[],"flags":[],"season":"spring","sp":"elder","count":2,"detail":"2 \u00d7 $18","mature":{"h":10,"w":8,"t75":3.1},"ev":false,"crop":{"first":2,"full":4,"lb":8,"price":6,"unit":"plant","src":"OSU: light crop year 2, full crop years 3\u20134 (trial plants ran 1\u20133 lb early)","key":"elder","name":"Elderberries","qty":2},"H":0,"T":0,"L":0,"must":false,"short":"american elderberry \u00d7 2"},{"id":"sp-blueberry","name":"Highbush blueberry 'Bluecrop' + 'Patriot' \u00d7 7","group":"Fruit + nuts","cost":126,"deps":["bed-Z11","drip"],"flags":["On the septic reserve: berry shrubs need Lapeer County OK (pending). (7)","Needs pH 4.5\u20135.5. On this clay, grow it in a raised bed of pine bark and peat, not in the native soil. (7)"],"season":"spring","sp":"blueberry","count":7,"detail":"7 \u00d7 $18","mature":{"h":5,"w":4,"t75":4.1},"ev":false,"crop":{"first":3,"full":7,"lb":7,"price":5,"unit":"plant","src":"Typical 5\u201310 lb per mature highbush plant; needs acid soil","key":"blueberry","name":"Blueberries","qty":7},"H":0,"T":0,"L":0,"must":false,"short":"highbush blueberry 'bluecrop' + 'patriot' \u00d7 7"},{"id":"row-rasp_fall","name":"Red raspberry, fall 'Caroline': 3 rows, 36 ft","group":"Fruit + nuts","cost":126,"detail":"21 bare-root canes \u00d7 $6","deps":["bed-Z14","bed-Z2","drip"],"flags":["On the septic reserve: berry shrubs need Lapeer County OK (pending). (2)"],"season":"spring","sp":"rasp_fall","crop":{"first":1,"full":3,"lb":0.7,"price":8,"unit":"ft","src":"CSU Extension: 15\u201320 lb per 25 ft row by year 3; fall types fruit the first fall","key":"rasp_fall","name":"Fall raspberries","qty":36},"mature":{"h":5,"w":3,"t75":1.8},"H":0,"T":0,"L":0,"must":false,"short":"red raspberry, fall 'caroline': 3 rows, 36 ft"},{"id":"row-rasp_d","name":"Red raspberry trellised: 2 rows, 24 ft","group":"Fruit + nuts","cost":174,"detail":"14 bare-root canes \u00d7 $6 + T-trellis posts and wire (~$45/row)","deps":["bed-Z13","drip"],"flags":["On the septic reserve: berry shrubs need Lapeer County OK (pending). (2)"],"season":"spring","sp":"rasp_d","crop":{"first":2,"full":3,"lb":0.7,"price":8,"unit":"ft","src":"CSU Extension: same row yield; summer crop starts year 2","key":"rasp_d","name":"Summer raspberries","qty":24},"mature":{"h":5.5,"w":3,"t75":1.9},"H":0,"T":0,"L":0,"must":false,"short":"red raspberry trellised: 2 rows, 24 ft"},{"id":"rowbuffer","name":"Street-edge buffer (road right-of-way)","group":"Trees + screening","cost":2183,"detail":"14 purple coneflower \u00b7 13 fountain grass \u00b7 13 arrowwood viburnum \u00b7 9 arborvitae","T":0.7,"L":0.4,"flags":["All of these sit between the lot line and the road, in the county right-of-way: get Lapeer County Road Commission approval first (sight lines at the drive, plowing, salt spray, utilities)."],"mature":{"h":40,"w":14,"t75":12.5},"ev":true,"sp":"arbor","deps":[],"H":0,"season":"any","must":false,"crop":null,"count":9,"short":"street-edge buffer (road right-of-way)"},{"id":"veg","name":"Vegetable garden: 5 raised beds + potting bench","group":"Fruit + nuts","cost":1050,"detail":"176 sf of 4\u2032 beds, cedar kits + soil fill, plus the potting bench","deps":["bed-Z10"],"season":"spring","crop":{"first":1,"full":1,"lb":0.6,"price":2.5,"unit":"sf","src":"Estimate: ~0.5\u20131 lb per sf of raised bed per season","key":"veg","name":"Vegetables","qty":176},"flags":[],"H":0,"T":0,"L":0,"must":false,"short":"vegetable garden: 5 raised beds + potting bench"},{"id":"hoop","name":"Hoop house 12\u00d724","group":"Fruit + nuts","cost":1800,"detail":"Kit, ground posts and plastic; 288 sf growing space","season":"any","flags":["Accessory building: check Pine Crest HOA rules and Almont Township setbacks before building."],"crop":{"first":1,"full":2,"lb":1.0,"price":3,"unit":"sf","src":"Estimate: longer season under plastic, ~1 lb per sf","key":"hoop","name":"Hoop-house vegetables","qty":288},"deps":[],"H":0,"T":0,"L":0,"must":false,"short":"hoop house 12\u00d724"},{"id":"st-pergola","name":"Pergola 12\u00d712 over the garden court","group":"Outdoor living","cost":3200,"detail":"DIY kit or materials","L":1,"deps":["bed-Z10"],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"pergola 12\u00d712 over the garden court"},{"id":"st-swing","name":"Swing set","group":"Outdoor living","cost":900,"detail":"DIY kit or materials","L":1,"deps":[],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"swing set"},{"id":"st-fountain","name":"Bubbler fountain on the patio","group":"Outdoor living","cost":450,"detail":"DIY kit or materials","L":1,"deps":["bed-Z5"],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"bubbler fountain on the patio"},{"id":"st-arbor","name":"Garden arbor","group":"Outdoor living","cost":260,"detail":"DIY kit or materials","L":1,"deps":[],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"garden arbor"},{"id":"flag","name":"Flagstone walk (46 ft)","group":"Patios + hardscape","cost":2562,"detail":"183 sf flagstone on a gravel base","L":0.9,"deps":[],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"flagstone walk (46 ft)"},{"id":"fence","name":"Split-rail fence (84 LF)","group":"Patios + hardscape","cost":756,"detail":"Two runs, DIY posts and rails","L":0.5,"deps":[],"flags":[],"H":0,"T":0,"season":"any","must":false,"crop":null,"short":"split-rail fence (84 lf)"}],"plan":"LEGIT MANAUL SAVE","items":217,"read":"2026-10-21","sp":{"willow":{"h0":9,"hM":50,"tau":7},"service":{"h0":7,"hM":18,"tau":10},"sweetgum":{"h0":10,"hM":50,"tau":11},"arbor":{"h0":5,"hM":40,"tau":10},"rasp_fall":{"h0":2,"hM":5,"tau":2},"haskap":{"h0":1.5,"hM":5,"tau":3},"aronia":{"h0":1.5,"hM":6,"tau":4},"rmaple":{"h0":10,"hM":45,"tau":15},"appleL":{"h0":7,"hM":16,"tau":8},"fountain":{"h0":1,"hM":3.5,"tau":2},"viburnum":{"h0":2.5,"hM":9,"tau":5},"coneflower":{"h0":1,"hM":3,"tau":2},"pine":{"h0":5.5,"hM":70,"tau":18},"spruce":{"h0":5.5,"hM":52,"tau":18},"bur":{"h0":10,"hM":70,"tau":26},"birch":{"h0":9,"hM":45,"tau":12},"hazel":{"h0":3,"hM":10,"tau":5},"hickory":{"h0":9,"hM":70,"tau":26},"bluestem":{"h0":1,"hM":3,"tau":2},"indian":{"h0":1,"hM":6,"tau":2},"elder":{"h0":3,"hM":10,"tau":3},"blueberry":{"h0":1.5,"hM":5,"tau":4},"rasp_d":{"h0":2,"hM":5.5,"tau":2}}};
+const SEASON = { F: 'Fall', S: 'Spring' }, WIN = { F: 'late Aug–Oct · hydroseed by mid-Sept, evergreens by mid-Oct', S: 'Apr–May · bare-root berries in April' };
+const PRESETS = { harvest: [10, 3, 1], trees: [3, 10, 1], balanced: [6, 6, 3], living: [2, 3, 10] };
+const GCOL = { 'Foundation': '--g-found', 'Fruit + nuts': '--g-fruit', 'Trees + screening': '--g-trees', 'Perennials + grasses': '--g-peren', 'Beds + prep': '--g-beds', 'Patios + hardscape': '--g-hard', 'Outdoor living': '--g-live' };
+const DEF = { w: [6, 6, 3], preset: 'balanced', cap: 5000, start: '2027F', lock: true, hard: true, row: true, lawn: true, pins: {}, crops: {} };
+let S; try { S = Object.assign(structuredClone(DEF), JSON.parse(localStorage.getItem('plp-state') || '{}')); } catch (e) { S = structuredClone(DEF); }
+const save = () => { try { localStorage.setItem('plp-state', JSON.stringify(S)); } catch (e) {} };
+const $ = id => document.getElementById(id), money = v => '$' + Math.round(v).toLocaleString(), k$ = v => v >= 9950 ? '$' + (v / 1000).toFixed(0) + 'k' : v >= 1000 ? '$' + (v / 1000).toFixed(1) + 'k' : '$' + Math.round(v);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const PK = DATA.pk, byId = Object.fromEntries(PK.map(p => [p.id, p]));
+const crop = p => p.crop ? Object.assign({}, p.crop, S.crops[p.crop.key] || {}) : null;
+const yieldFrac = (c, a) => a < c.first ? 0 : c.full <= c.first ? 1 : Math.min(1, 0.15 + 0.85 * (a - c.first) / (c.full - c.first));
+const fullVal = c => c.qty * c.lb * c.price;
+function phaseInfo(i) { const sy = +S.start.slice(0, 4), sf = S.start[4] === 'F'; const n = i + (sf ? 0 : 1); return { s: n % 2 === 0 ? 'F' : 'S', y: sf ? 2027 + Math.ceil(i / 2) : 2028 + Math.floor(i / 2) }; }
+function firstGrow(i) { const ph = phaseInfo(i); return ph.s === 'S' ? ph.y : ph.y + 1; }
+function included(p) { if (p.id === 'lawn' && !S.lawn) return false; if (p.id === 'rowbuffer' && !S.row) return false; if (!S.hard && (p.group === 'Patios + hardscape' || p.group === 'Outdoor living')) { if (p.id === 'bed-Z10' && S.pins[p.id] !== 'skip') return null; return false; } return S.pins[p.id] !== 'skip'; }
+function scores() {
+  const raw = {}; let mH = 0, mT = 0;
+  for (const p of PK) { let H = 0, T = 0; const c = crop(p);
+    if (c && p.cost) { let v = 0; for (let a = 1; a <= 10; a++) v += fullVal(c) * yieldFrac(c, a); H = v / p.cost; }
+    if (p.T && p.mature) T = p.T * (p.mature.t75 + 2) * Math.min(p.mature.h, 60) / 60 * (p.ev ? 1.15 : 1);
+    raw[p.id] = { H, T }; mH = Math.max(mH, H); mT = Math.max(mT, T); }
+  const [wH, wT, wL] = S.w, out = {};
+  for (const p of PK) { const r = raw[p.id], h = mH ? Math.sqrt(r.H / mH) : 0, t = mT ? r.T / mT : 0; out[p.id] = { h, t, s: wH * h + wT * t + wL * (p.L || 0) + 0.05 + (p.must ? 2 : 0) }; }
+  return out;
+}
+function seasonOK(p, i) { const s = phaseInfo(i).s; return p.season === 'any' || (p.season === 'fall' ? s === 'F' : s === 'S'); }
+function schedule() {
+  const sc = scores(), cap = Math.max(250, +S.cap || 5000), N = 24, spent = new Array(N).fill(0), at = {}, over = new Set();
+  const inc = PK.filter(p => included(p) !== false);
+  const put = (p, i) => { at[p.id] = i; spent[i] += p.cost; };
+  const depsOf = p => (p.deps || []).map(d => byId[d]).filter(d => d && included(d) !== false && at[d.id] === undefined);
+  // 1. foundation
+  if (S.lock) for (const p of inc.filter(p => p.must)) { let i = 0; while (!seasonOK(p, i)) i++; put(p, i); }
+  // 2. pins
+  for (const p of inc) { const pin = S.pins[p.id]; if (pin === undefined || pin === 'skip' || at[p.id] !== undefined) continue; for (const d of depsOf(p)) if (at[d.id] === undefined) put(d, +pin); put(p, +pin); }
+  // 3. greedy by score; anything a placed item depends on comes along in the same season
+  const order = inc.filter(p => included(p) === true && at[p.id] === undefined).sort((a, b) => sc[b.id].s - sc[a.id].s || a.cost - b.cost);
+  for (const p of order) {
+    if (at[p.id] !== undefined) continue;
+    const ds = depsOf(p);
+    let placed = false;
+    for (let i = 0; i < N && !placed; i++) { if (!seasonOK(p, i)) continue; const need = p.cost + ds.reduce((a, d) => a + d.cost, 0); const ok = ds.every(d => seasonOK(d, i) || [...Array(i).keys()].some(q => seasonOK(d, q)));
+      if (ok && spent[i] + need <= cap) { for (const d of ds) { let q = i; while (!seasonOK(d, q)) q--; put(d, q); } put(p, i); placed = true; } }
+    if (!placed) { let i = 0; while (i < N && (!seasonOK(p, i) || spent[i] > 0 && spent[i] + p.cost > cap)) i++; if (i >= N) i = N - 1; for (const d of ds) { let q = i; while (q > 0 && !seasonOK(d, q)) q--; put(d, q); } put(p, i); if (p.cost > cap) over.add(p.id); }
+  }
+  // leftovers pulled only as deps that were never needed (e.g. garden court with hardscape off)
+  for (const p of inc) if (at[p.id] === undefined && included(p) === null) { /* not needed */ }
+  let last = 0; for (const id in at) last = Math.max(last, at[id]);
+  return { at, spent, cap, last, over, sc };
+}
+function simulate(R) {
+  const Y0 = 2027, Y1 = 2045, yrs = []; for (let y = Y0; y <= Y1; y++) yrs.push(y);
+  const spendY = {}, harvY = {}, lbY = {}, tree = {}; let tw = 0;
+  for (const id in R.at) { const p = byId[id], i = R.at[id], ph = phaseInfo(i); spendY[ph.y] = (spendY[ph.y] || 0) + p.cost; const c = crop(p), g = firstGrow(i);
+    for (const y of yrs) { const a = y - g + 1; if (c && a >= 1) { const f = yieldFrac(c, a); harvY[y] = (harvY[y] || 0) + fullVal(c) * f; lbY[y] = (lbY[y] || 0) + c.qty * c.lb * f; } }
+    if (p.mature && (p.T || p.group === 'Trees + screening')) { const n = p.count || (p.id === 'rowbuffer' ? 9 : 1), w = n * Math.min(p.mature.h, 60); tw += w;
+      const s = DATA.sp && DATA.sp[p.sp]; for (const y of yrs) { const a = y - g + 1; if (a < 0) continue; const h = s ? s.h0 + (s.hM - s.h0) * (1 - Math.exp(-Math.max(0, a) / s.tau)) : 0; tree[y] = (tree[y] || 0) + w * (s ? h / s.hM : 0); } } }
+  let cs = 0, ch = 0; const rows = yrs.map(y => { cs += spendY[y] || 0; ch += harvY[y] || 0; return { y, spend: spendY[y] || 0, cumS: cs, harv: harvY[y] || 0, cumH: ch, lb: lbY[y] || 0, tree: tw ? (tree[y] || 0) / tw : 0 }; });
+  return rows;
+}
+function render() {
+  $('wH').value = S.w[0]; $('wT').value = S.w[1]; $('wL').value = S.w[2]; $('wHv').textContent = S.w[0]; $('wTv').textContent = S.w[1]; $('wLv').textContent = S.w[2];
+  for (const b of $('presets').children) b.setAttribute('aria-pressed', b.dataset.p === S.preset);
+  $('cap').value = S.cap; $('start').value = S.start; $('cLock').checked = S.lock; $('cHard').checked = S.hard; $('cRow').checked = S.row; $('cLawn').checked = S.lawn;
+  const R = schedule(), sim = simulate(R); window.__R = R;
+  // KPIs
+  const total = Object.keys(R.at).reduce((a, id) => a + byId[id].cost, 0), lastPh = phaseInfo(R.last);
+  const firstH = sim.find(r => r.harv > 0), maxH = Math.max(...sim.map(r => r.harv)), fullYr = sim.find(r => r.harv >= maxH * 0.95), ten = sim.filter(r => r.y >= 2028 && r.y <= 2037).reduce((a, r) => a + r.harv, 0), half = sim.find(r => r.tree >= 0.5), pay = sim.find(r => r.cumH >= r.cumS && r.cumS > 0);
+  const lbs = Math.max(...sim.map(r => r.lb));
+  $('kpis').innerHTML = [
+    ['Total, all phases', money(total), `${Object.keys(R.at).length} items`],
+    ['Seasons', R.last + 1, `done ${SEASON[lastPh.s].toLowerCase()} ${lastPh.y}`],
+    ['First harvest', firstH ? firstH.y : '—', firstH ? money(firstH.harv) + ' that year' : 'no crops included'],
+    ['Harvest at full swing', money(maxH) + '/yr', fullYr ? `about ${Math.round(lbs).toLocaleString()} lb/yr by ${fullYr.y}` : ''],
+    ['10-year harvest', money(ten), '2028–2037, grocery value'],
+    ['Trees at half size', half ? half.y : 'after 2045', 'weighted by mature height'],
+  ].map(([k, b, s]) => `<div class="kpi"><span class="k">${k}</span><b>${b}</b><small>${s}</small></div>`).join('');
+  drawChart(sim, pay);
+  // phases
+  const sc = R.sc, ph = [];
+  for (let i = 0; i <= R.last; i++) ph.push([]);
+  for (const id in R.at) ph[R.at[id]].push(byId[id]);
+  const opts = n => `<option value="auto">Auto</option>` + Array.from({ length: Math.max(R.last + 2, 4) }, (_, i) => { const q = phaseInfo(i); return `<option value="${i}">${i + 1} · ${SEASON[q.s]} ${q.y}</option>`; }).join('') + '<option value="skip">Leave out</option>';
+  let html = '';
+  ph.forEach((list, i) => {
+    const q = phaseInfo(i), sum = list.reduce((a, p) => a + p.cost, 0); list.sort((a, b) => (b.must - a.must) || (sc[b.id].s - sc[a.id].s));
+    const g = firstGrow(i), unlock = [];
+    for (const p of list) { const c = crop(p); if (c) unlock.push(`<span class="pill h">${esc(c.name)} from ${g + c.first - 1}</span>`); }
+    const trees = list.filter(p => p.mature && p.T && p.mature.t75 >= 8); if (trees.length) unlock.push(`<span class="pill t">${trees.length} slow grower${trees.length > 1 ? 's' : ''} started</span>`);
+    if (sum > R.cap) unlock.push(`<span class="pill over">${money(sum - R.cap)} over the season budget</span>`);
+    const bars = Object.entries(list.reduce((a, p) => (a[p.group] = (a[p.group] || 0) + p.cost, a), {})).map(([gname, v]) => `<i style="width:${v / Math.max(sum, R.cap) * 100}%;background:var(${GCOL[gname]})" title="${esc(gname)} ${money(v)}"></i>`).join('');
+    html += `<article class="phase"><div class="ph-head"><span class="ph-n num">${i + 1}</span><div class="ph-t"><h3>${SEASON[q.s]} ${q.y}<small>${WIN[q.s]}</small></h3></div><div class="ph-cost"><b class="num">${money(sum)}</b><div class="k">of ${k$(R.cap)}</div></div><div class="bar">${bars}</div><div class="unlock">${unlock.join('')}</div></div><div class="items">${list.map(p => itemRow(p, i, sc, opts)).join('')}</div></article>`;
+  });
+  const skipped = PK.filter(p => included(p) === false);
+  if (skipped.length) html += `<article class="phase skipped"><div class="ph-head"><span class="ph-n num">—</span><div class="ph-t"><h3>Left out<small>turned off above or set to “Leave out”</small></h3></div><div class="ph-cost"><b class="num">${money(skipped.reduce((a, p) => a + p.cost, 0))}</b></div></div><div class="items">${skipped.map(p => itemRow(p, -1, sc, opts)).join('')}</div></article>`;
+  $('phases').innerHTML = html;
+  for (const s of $('phases').querySelectorAll('select[data-id]')) { const v = S.pins[s.dataset.id]; s.value = v === undefined ? 'auto' : String(v); if (v !== undefined) s.classList.add('pinned');
+    s.onchange = () => { if (s.value === 'auto') delete S.pins[s.dataset.id]; else S.pins[s.dataset.id] = s.value === 'skip' ? 'skip' : +s.value; save(); render(); toast(s.value === 'auto' ? 'Back on auto' : s.value === 'skip' ? 'Left out' : 'Pinned to phase ' + (+s.value + 1)); }; }
+  renderTables(R);
+}
+function itemRow(p, i, sc, opts) {
+  const c = crop(p), tags = [];
+  if (p.must && S.lock) tags.push('<span class="tag">foundation</span>');
+  if (c && i >= 0) { const g = firstGrow(i); tags.push(`<span class="tag h">${esc(c.name)}: first ${g + c.first - 1}, full ${g + c.full - 1} · ~${money(fullVal(c))}/yr</span>`); }
+  else if (c) tags.push(`<span class="tag h">~${money(fullVal(c))}/yr at full crop</span>`);
+  if (p.mature && p.T) tags.push(`<span class="tag t">${p.mature.h}′ tall · ¾ size in ~${Math.round(p.mature.t75)} yr</span>`);
+  if (p.season !== 'any') tags.push(`<span class="tag">${p.season} only</span>`);
+  const deps = (p.deps || []).filter(d => byId[d]).map(d => byId[d]); if (deps.length) tags.push(`<span class="tag dep">comes with: ${deps.map(d => esc(d.short || d.name)).join(', ')}</span>`);
+  const fl = p.flags && p.flags.length ? `<span class="flagnote">⚠ ${esc(p.flags.slice(0, 2).join(' · '))}</span>` : '';
+  return `<div class="it"><i class="g" style="background:var(${GCOL[p.group]})" title="${esc(p.group)}"></i><div class="nm"><b>${esc(p.name)}</b><span>${esc(p.detail || '')}</span>${fl}<div class="tags">${tags.join('')}</div></div><span class="c">${money(p.cost)}</span><select data-id="${p.id}" aria-label="Phase for ${esc(p.name)}">${opts()}</select></div>`;
+}
+function renderTables(R) {
+  const crops = PK.filter(p => p.crop).map(p => [p, crop(p)]);
+  $('croptbl').innerHTML = `<thead><tr><th>Crop</th><th class="r">Plants / size</th><th class="r">Lb per unit / yr</th><th class="r">$ / lb</th><th class="r">First / full crop</th><th class="r">Full crop value</th><th>Source</th></tr></thead><tbody>` + crops.map(([p, c]) => `<tr><td><b>${esc(c.name)}</b></td><td class="r num">${c.qty.toLocaleString()} ${c.unit === 'plant' ? (c.qty > 1 ? 'plants' : 'plant') : c.unit === 'ft' ? 'ft of row' : 'sf'}</td><td class="r"><input type="number" step="0.1" min="0" data-c="${c.key}" data-f="lb" value="${c.lb}" aria-label="${esc(c.name)} pounds"></td><td class="r"><input type="number" step="0.25" min="0" data-c="${c.key}" data-f="price" value="${c.price}" aria-label="${esc(c.name)} dollars per pound"></td><td class="r num">yr ${c.first} / yr ${c.full}</td><td class="r num">${money(fullVal(c))}/yr</td><td class="src">${esc(c.src)}</td></tr>`).join('') + '</tbody>';
+  for (const inp of $('croptbl').querySelectorAll('input')) inp.onchange = () => { const v = +inp.value; if (!isFinite(v) || v < 0) return; (S.crops[inp.dataset.c] ||= {})[inp.dataset.f] = v; save(); render(); $('cropref').open = true; };
+  const sc = R.sc;
+  $('alltbl').innerHTML = `<thead><tr><th>Item</th><th>Group</th><th class="r">Cost</th><th class="r">Phase</th><th class="r">Harvest score</th><th class="r">Tree score</th></tr></thead><tbody>` + PK.slice().sort((a, b) => b.cost - a.cost).map(p => { const i = R.at[p.id], q = i === undefined ? null : phaseInfo(i); return `<tr><td>${esc(p.name)}</td><td>${esc(p.group)}</td><td class="r num">${money(p.cost)}</td><td class="r num">${q ? `${i + 1} · ${SEASON[q.s]} ${q.y}` : '—'}</td><td class="r num">${sc[p.id].h ? (sc[p.id].h * 100).toFixed(0) : ''}</td><td class="r num">${sc[p.id].t ? (sc[p.id].t * 100).toFixed(0) : ''}</td></tr>`; }).join('') + '</tbody>';
+}
+function drawChart(sim, pay) {
+  const svg = $('chart'), W = 1000, H = 340, L = 62, Rr = 52, T = 18, B = 34, cs = getComputedStyle(document.documentElement), col = n => cs.getPropertyValue(n).trim();
+  const rows = sim.filter(r => r.y <= 2042), n = rows.length, x = i => L + (W - L - Rr) * (i + 0.5) / n;
+  const maxV = Math.max(...rows.map(r => Math.max(r.cumS, r.cumH)), 1), step = maxV > 60000 ? 20000 : maxV > 30000 ? 10000 : 5000, top = Math.ceil(maxV / step) * step, yv = v => H - B - (H - T - B) * v / top, yp = f => H - B - (H - T - B) * f;
+  const maxA = Math.max(...rows.map(r => r.harv), 1);
+  let s = '';
+  for (let v = 0; v <= top; v += step) s += `<line x1="${L}" x2="${W - Rr}" y1="${yv(v)}" y2="${yv(v)}" stroke="${col('--line')}" stroke-width="1"/><text x="${L - 8}" y="${yv(v) + 4}" text-anchor="end" font-size="12" fill="${col('--mute')}" font-family="IBM Plex Mono, monospace">${k$(v)}</text>`;
+  for (const f of [0.5, 1]) s += `<text x="${W - Rr + 8}" y="${yp(f) + 4}" font-size="12" fill="${col('--green')}" font-family="IBM Plex Mono, monospace">${f * 100}%</text>`;
+  rows.forEach((r, i) => { if (i % (n > 12 ? 2 : 1) === 0 || i === n - 1) s += `<text x="${x(i)}" y="${H - B + 20}" text-anchor="middle" font-size="12" fill="${col('--mute')}" font-family="IBM Plex Mono, monospace">${r.y}</text>`; });
+  const area = rows.map((r, i) => `${x(i)},${yv(r.cumH)}`).join(' '); s += `<polygon points="${x(0)},${yv(0)} ${area} ${x(n - 1)},${yv(0)}" fill="${col('--gold')}" fill-opacity=".18"/>`;
+  const bw = (W - L - Rr) / n * 0.42; rows.forEach((r, i) => { if (r.harv > 0) s += `<rect x="${x(i) - bw / 2}" y="${yv(r.harv)}" width="${bw}" height="${yv(0) - yv(r.harv)}" fill="${col('--gold')}" rx="1.5"><title>${r.y}: ${money(r.harv)} of produce (~${Math.round(r.lb)} lb)</title></rect>`; });
+  let d = ''; rows.forEach((r, i) => { const px = x(i) - (W - L - Rr) / n / 2, nx = x(i) + (W - L - Rr) / n / 2; d += (i ? ` L${px},${yv(r.cumS)}` : `M${px},${yv(r.cumS)}`) + ` L${nx},${yv(r.cumS)}`; }); s += `<path d="${d}" fill="none" stroke="${col('--ink')}" stroke-width="2.5"/>`;
+  s += `<polyline points="${rows.map((r, i) => `${x(i)},${yp(r.tree)}`).join(' ')}" fill="none" stroke="${col('--green')}" stroke-width="2" stroke-dasharray="6 4"/>`;
+  const li = n - 1; s += `<circle cx="${x(li)}" cy="${yv(rows[li].cumS)}" r="4" fill="${col('--ink')}"/><text x="${x(li) - 8}" y="${yv(rows[li].cumS) - 10}" text-anchor="end" font-size="12.5" font-weight="600" fill="${col('--ink')}">${money(rows[li].cumS)} spent</text>`;
+  s += `<text x="${x(li) - 8}" y="${Math.min(yv(rows[li].cumH) - 10, H - B - 26)}" text-anchor="end" font-size="12.5" font-weight="600" fill="${col('--gold')}">${money(rows[li].cumH)} of produce</text>`;
+  if (pay) { const i = rows.findIndex(r => r.y === pay.y); if (i >= 0) s += `<line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${H - B}" stroke="${col('--gold')}" stroke-dasharray="3 3"/><text x="${x(i) + 6}" y="${T + 12}" font-size="12" font-weight="600" fill="${col('--gold')}">harvest passes spending · ${pay.y}</text>`; }
+  svg.innerHTML = s;
+}
+let tt; function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 1600); }
+// wiring
+for (const b of $('presets').children) b.onclick = () => { S.preset = b.dataset.p; S.w = PRESETS[S.preset].slice(); save(); render(); };
+for (const [id, i] of [['wH', 0], ['wT', 1], ['wL', 2]]) $(id).oninput = e => { S.w[i] = +e.target.value; S.preset = Object.keys(PRESETS).find(k => PRESETS[k].join() === S.w.join()) || ''; save(); render(); };
+$('cap').onchange = e => { const v = +e.target.value; if (isFinite(v) && v >= 250) { S.cap = v; save(); render(); } };
+$('start').onchange = e => { S.start = e.target.value; S.pins = {}; save(); render(); toast('Pins cleared for the new start season'); };
+for (const [id, k] of [['cLock', 'lock'], ['cHard', 'hard'], ['cRow', 'row'], ['cLawn', 'lawn']]) $(id).onchange = e => { S[k] = e.target.checked; save(); render(); };
+$('reset').onclick = () => { S = structuredClone(DEF); save(); render(); toast('Reset'); };
+$('copy').onclick = () => { const R = window.__R, out = []; for (let i = 0; i <= R.last; i++) { const q = phaseInfo(i), list = Object.keys(R.at).filter(id => R.at[id] === i).map(id => byId[id]); out.push(`Phase ${i + 1} · ${SEASON[q.s]} ${q.y} · ${money(list.reduce((a, p) => a + p.cost, 0))}`); for (const p of list) out.push(`  - ${p.name}: ${money(p.cost)}`); }
+  const txt = out.join('\n'); navigator.clipboard.writeText(txt).then(() => toast('Phase list copied'), () => toast('Copy was blocked by this view')); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+render();
+</script>
