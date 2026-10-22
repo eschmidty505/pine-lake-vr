@@ -48,21 +48,11 @@ for bid, b in beds.items():
     add(id='bed-' + bid, name=name, group='Patios + hardscape' if hard else 'Beds + prep', cost=c, detail=q, L=1 if hard else 0, flags=sorted(set(flags)), season='fall' if b['mat'] == 'meadow' else 'any',
         bed=bid, **({'note': 'Seed in late fall: the native mix needs winter cold to sprout.'} if b['mat'] == 'meadow' else {}))
 # --- produce: yields per plant (lb/yr at full), years to first crop / full crop, $/lb grocery-equivalent
-CROPS = {
- 'haskap': dict(first=2, full=6, lb=7, price=10, unit='plant', src='USU Extension: 5–15 lb per mature bush; picks up in years 3–4'),
- 'aronia': dict(first=3, full=5, lb=15, price=4, unit='plant', src='UW–Madison: 15–20 lb per mature plant; big yields in years 4–5'),
- 'blueberry': dict(first=3, full=7, lb=7, price=5, unit='plant', src='Typical 5–10 lb per mature highbush plant; needs acid soil'),
- 'elder': dict(first=2, full=4, lb=8, price=6, unit='plant', src='OSU: light crop year 2, full crop years 3–4 (trial plants ran 1–3 lb early)'),
- 'service': dict(first=3, full=7, lb=5, price=6, unit='plant', src='Estimate; birds take a share'),
- 'appleL': dict(first=3, full=8, lb=170, price=1.75, unit='plant', src='Stark Bros: 5–10 bushels per semi-dwarf; estimate assumes ~4 bu home yield'),
- 'hazel': dict(first=4, full=8, lb=4, price=6, unit='plant', src='Estimate for American hazel, in-shell nuts'),
- 'hickory': dict(first=12, full=30, lb=40, price=4, unit='plant', src='Shagbark often takes 10–40 years to bear; legacy tree'),
- 'rasp_fall': dict(first=1, full=3, lb=0.7, price=8, unit='ft', src='CSU Extension: 15–20 lb per 25 ft row by year 3; fall types fruit the first fall'),
- 'rasp_d': dict(first=2, full=3, lb=0.7, price=8, unit='ft', src='CSU Extension: same row yield; summer crop starts year 2'),
- 'veg': dict(first=1, full=1, lb=0.6, price=2.5, unit='sf', src='Estimate: ~0.5–1 lb per sf of raised bed per season'),
- 'hoop': dict(first=1, full=2, lb=1.0, price=3, unit='sf', src='Estimate: longer season under plastic, ~1 lb per sf'),
-}
-CROPNAME = {'haskap': 'Haskap', 'aronia': 'Aronia', 'blueberry': 'Blueberries', 'elder': 'Elderberries', 'service': 'Serviceberries', 'appleL': 'Apples', 'hazel': 'Hazelnuts', 'hickory': 'Hickory nuts', 'rasp_fall': 'Fall raspberries', 'rasp_d': 'Summer raspberries', 'veg': 'Vegetables', 'hoop': 'Hoop-house vegetables'}
+# yields, calories and picking months live in one place: the FOOD table in planner.html (tools/food_data.py reads it too)
+_src = open('planner.html').read()
+FOOD = json.loads(_src[_src.index('/*FOOD*/') + 8:_src.index('/*END*/')])
+CROPS = {k: dict(first=f['first'], full=f['full'], lb=f['lb'], price=f['price'], unit=f['unit'], kcal=f['kcal'], src=f['src']) for k, f in FOOD.items()}
+CROPNAME = {k: f['name'] for k, f in FOOD.items()}
 def t75(s):
     h0, hM, tau = s['h0'], s['hM'], s['tau']; tgt = 0.75 * hM
     if h0 >= tgt: return 0
@@ -79,11 +69,11 @@ row_plants = [p for p in plants if offlot(p) and p['y'] < 0]
 onlot = [p for p in plants if p not in row_plants]
 by = collections.defaultdict(list)
 for p in onlot: by[p['sp']].append(p)
-GROUP = {'conifer': 'Trees + screening', 'tree': 'Trees + screening', 'fruit': 'Fruit + nuts', 'berry': 'Fruit + nuts', 'shrub': 'Trees + screening', 'perennial': 'Perennials + grasses', 'grass': 'Perennials + grasses'}
+GROUP = {'conifer': 'Trees + screening', 'tree': 'Trees + screening', 'fruit': 'Fruit, nuts + staples', 'berry': 'Fruit, nuts + staples', 'shrub': 'Trees + screening', 'perennial': 'Perennials + grasses', 'grass': 'Perennials + grasses'}
 for sp, lst in by.items():
     s = SPD[sp]; n = len(lst); cost = n * PRICE[s['c']]
     crop = sp if sp in CROPS else None
-    g = 'Fruit + nuts' if crop else GROUP[s['c']]
+    g = 'Fruit, nuts + staples' if crop else GROUP[s['c']]
     nm = f"{s['n']}{' ' + s['v'] if s['v'] and len(s['v']) < 24 else ''} × {n}"
     season = 'spring' if s['c'] == 'berry' else 'any'
     k = dict(id='sp-' + sp, name=nm, group=g, cost=cost, deps=bedsof(lst), flags=flagsof(lst), season=season, sp=sp, count=n,
@@ -99,7 +89,7 @@ rb = collections.defaultdict(list)
 for r in rows: rb[r['sp']].append(r)
 for sp, lst in rb.items():
     s = SPD[sp]; ft = sum(r['len'] for r in lst); canes = sum(r['count'] for r in lst)
-    add(id='row-' + sp, name=f"{s['n']}{' ' + s['v'] if s['v'] else ''}: {len(lst)} rows, {ft:.0f} ft", group='Fruit + nuts', cost=canes * ROW_PRICE + (len(lst) * 45 if sp == 'rasp_d' else 0),
+    add(id='row-' + sp, name=f"{s['n']}{' ' + s['v'] if s['v'] else ''}: {len(lst)} rows, {ft:.0f} ft", group='Fruit, nuts + staples', cost=canes * ROW_PRICE + (len(lst) * 45 if sp == 'rasp_d' else 0),
         detail=f"{canes} bare-root canes × ${ROW_PRICE}" + (f" + T-trellis posts and wire (~$45/row)" if sp == 'rasp_d' else ''), deps=sorted(set(bedsof(lst) + ['drip'])), flags=flagsof(lst), season='spring', sp=sp,
         crop=dict(CROPS[sp], key=sp, name=CROPNAME[sp], qty=ft), mature=dict(h=s['hM'], w=s['sM'], t75=t75(s)))
 # street-edge buffer
@@ -112,12 +102,13 @@ add(id='rowbuffer', name='Street-edge buffer (road right-of-way)', group='Trees 
 st = [e for e in E if e['t'] == 'st']
 veg_sf = sum(e['w'] * e['h'] for e in st if e['k'] in ('raised', 'raised8'))
 nr = sum(1 for e in st if e['k'] in ('raised', 'raised8'))
-add(id='veg', name=f"Vegetable garden: {nr} raised beds + potting bench", group='Fruit + nuts', cost=3 * 150 + 2 * 190 + 220, detail=f"{veg_sf:.0f} sf of 4′ beds, cedar kits + soil fill, plus the potting bench", deps=['bed-Z10'], season='spring', crop=dict(CROPS['veg'], key='veg', name=CROPNAME['veg'], qty=veg_sf))
-add(id='hoop', name='Hoop house 12×24', group='Fruit + nuts', cost=1800, detail='Kit, ground posts and plastic; 288 sf growing space', season='any', flags=['Accessory building: check Pine Crest HOA rules and Almont Township setbacks before building.'], crop=dict(CROPS['hoop'], key='hoop', name=CROPNAME['hoop'], qty=288))
+add(id='veg', name=f"Vegetable garden: {nr} raised beds + potting bench", group='Fruit, nuts + staples', cost=3 * 150 + 2 * 190 + 220, detail=f"{veg_sf:.0f} sf of 4′ beds, cedar kits + soil fill, plus the potting bench", deps=['bed-Z10'], season='spring', crop=dict(CROPS['veg'], key='veg', name=CROPNAME['veg'], qty=veg_sf))
+add(id='hoop', name='Hoop house 12×24', group='Fruit, nuts + staples', cost=1800, detail='Kit, ground posts and plastic; 288 sf growing space', season='any', flags=['Accessory building: check Pine Crest HOA rules and Almont Township setbacks before building.'], crop=dict(CROPS['hoop'], key='hoop', name=CROPNAME['hoop'], qty=288))
 for k, nm, c in [('pergola', 'Pergola 12×12 over the garden court', 3200), ('swing', 'Swing set', 900), ('fountain', 'Bubbler fountain on the patio', 450), ('arbor', 'Garden arbor', 260)]:
     add(id='st-' + k, name=nm, group='Outdoor living', cost=c, detail='DIY kit or materials', L=1, deps=['bed-Z10'] if k == 'pergola' else (['bed-Z5'] if k == 'fountain' else []))
 add(id='flag', name='Flagstone walk (46 ft)', group='Patios + hardscape', cost=183 * 14, detail='183 sf flagstone on a gravel base', L=0.9)
 add(id='fence', name='Split-rail fence (84 LF)', group='Patios + hardscape', cost=84 * 9, detail='Two runs, DIY posts and rails', L=0.5)
+# then run tools/food_data.py to add the food-expansion add-ons, calories and storage
 json.dump(dict(pk=pk, plan='LEGIT MANAUL SAVE', items=217, read='2026-10-21'), open('phase_pk.json', 'w'), indent=1)
 print(len(pk), sum(p['cost'] for p in pk))
 for p in pk: print(p['id'], p['group'], p['cost'], p['deps'], p.get('crop', {}) and p['crop']['key'] if p.get('crop') else '', p['flags'][:1])

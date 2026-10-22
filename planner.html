@@ -117,6 +117,8 @@ body.v3 #gl3{display:block}body.v3 #where{display:none}@media (max-width:820px){
 .swg button{display:grid;grid-template-rows:38px auto;padding:0;text-transform:none;letter-spacing:0;font-size:10px;line-height:1.2;text-align:left;min-height:0;overflow:hidden}
 .swg button canvas{width:100%;height:38px;display:block;border-bottom:1px solid var(--line)}
 .swg button span{padding:3px 5px 4px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.swg button.tbd{opacity:.55}
+.swg button .tbdb{font-style:normal;font-weight:700;color:var(--warn)}
 .swg button[aria-pressed="true"]{background:var(--paper);outline:2.5px solid var(--accent);outline-offset:-2px;color:var(--ink)}
 .field{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;margin-bottom:6px}
 .field label{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
@@ -373,15 +375,18 @@ S('smaple', { n: 'Sugar maple', l: 'Acer saccharum', c: 'tree', nat: 1, h0: 10, 
 S('rmaple', { n: 'Red maple', v: "'Redpointe'", l: 'Acer rubrum', c: 'tree', nat: 1, h0: 10, hM: 45, s0: 5, sM: 30, tau: 15, bl: [3, 4], leaf: '#557f3a', bc: '#b8323a', fall: '#c0282f', buy: '1.5–2″ caliper', note: 'Fast, tidy pyramid; reliable red fall color; handles wet clay.' });
 S('service', { n: 'Serviceberry', v: 'clump', l: 'Amelanchier × grandiflora', c: 'tree', nat: 1, ed: 1, h0: 7, hM: 18, s0: 4, sM: 15, tau: 10, bl: [4], fr: [6], leaf: '#5a8540', bc: '#f4f1ea', fc: '#5b2a52', fall: '#d0602e', buy: '6–8′ clump', note: 'White April bloom, June berries (the birds compete), orange-red fall color.' });
 S('birch', { n: 'River birch', v: 'clump', l: 'Betula nigra', c: 'tree', nat: 1, h0: 9, hM: 45, s0: 5, sM: 30, tau: 12, leaf: '#5c8a44', fall: '#d6b13a', buy: '8–10′ clump', note: 'Peeling cinnamon bark; handles the wet ground by the pond.' });
-S('willow', { n: 'Golden weeping willow', v: "'Niobe'", l: 'Salix × sepulcralis', c: 'tree', h0: 9, hM: 50, s0: 5, sM: 45, tau: 7, bl: [4], leaf: '#8fb24a', bc: '#d9d27a', fall: '#d7c457', reach: 100, buy: '1.5″ caliper or 8–10′ whip', note: 'The classic weeper; the hardiest one for zone 6a, with golden winter twigs. Grows 3–4′ a year and loves wet ground: the spot is down by the pond.', roots: 'Aggressive, water-seeking roots that find septic laterals, footing drains and well lines; keep ≥100′ away.' });
-S('pussywillow', { n: 'Pussy willow', l: 'Salix discolor', c: 'shrub', nat: 1, h0: 3, hM: 14, s0: 2, sM: 10, tau: 5, bl: [3, 4], leaf: '#6f8f52', bc: '#dcd9cf', fall: '#c8b45a', reach: 50, buy: '#5 container', note: 'Native; silver catkins in March are the first sign of spring. Cut back hard every few years to keep it a dense shrub.', roots: 'Willow roots chase water; keep ≥50′ from septic lines and the well.' });
-S('dwillow', { n: 'Dappled willow', v: "'Hakuro Nishiki'", l: 'Salix integra', c: 'shrub', h0: 2, hM: 7, s0: 2, sM: 6, tau: 3, leaf: '#b7c69c', fall: '#d6c25c', reach: 30, buy: '#3 container', note: 'Pink-and-white new growth all season; shear in early summer for a fresh flush. Good screening hedge or standard.', roots: 'Willow roots: keep ≥30′ from septic lines and the well.' });
+S('willow', { thirsty: 1, n: 'Golden weeping willow', v: "'Niobe'", l: 'Salix × sepulcralis', c: 'tree', h0: 9, hM: 50, s0: 5, sM: 45, tau: 7, bl: [4], leaf: '#8fb24a', bc: '#d9d27a', fall: '#d7c457', reach: 100, buy: '1.5″ caliper or 8–10′ whip', note: 'The classic weeper; the hardiest one for zone 6a, with golden winter twigs. Grows 3–4′ a year and loves wet ground: the spot is down by the pond.', roots: 'Aggressive, water-seeking roots that find septic laterals, footing drains and well lines; keep ≥100′ away.' });
+S('pussywillow', { thirsty: 1, n: 'Pussy willow', l: 'Salix discolor', c: 'shrub', nat: 1, h0: 3, hM: 14, s0: 2, sM: 10, tau: 5, bl: [3, 4], leaf: '#6f8f52', bc: '#dcd9cf', fall: '#c8b45a', reach: 50, buy: '#5 container', note: 'Native; silver catkins in March are the first sign of spring. Cut back hard every few years to keep it a dense shrub.', roots: 'Willow roots chase water; keep ≥50′ from septic lines and the well.' });
+S('dwillow', { thirsty: 1, n: 'Dappled willow', v: "'Hakuro Nishiki'", l: 'Salix integra', c: 'shrub', h0: 2, hM: 7, s0: 2, sM: 6, tau: 3, leaf: '#b7c69c', fall: '#d6c25c', reach: 30, buy: '#3 container', note: 'Pink-and-white new growth all season; shear in early summer for a fresh flush. Good screening hedge or standard.', roots: 'Willow roots: keep ≥30′ from septic lines and the well.' });
 S('crab', { n: 'Crabapple', v: "'Prairifire'", l: 'Malus', c: 'tree', h0: 8, hM: 20, s0: 4, sM: 20, tau: 9, bl: [5], fr: [9, 10, 11, 12], leaf: '#5b5a3a', bc: '#d2477a', fc: '#9c1f3a', fall: '#a55a2c', note: 'Disease-resistant; pink-red bloom and persistent fruit for winter birds.' });
 S('lilactree', { n: 'Japanese tree lilac', v: "'Ivory Silk'", l: 'Syringa reticulata', c: 'tree', h0: 8, hM: 25, s0: 4, sM: 15, tau: 10, bl: [6], leaf: '#557f3c', bc: '#f2ecd6', note: 'Best salt tolerance of the flowering trees; creamy June plumes.' });
 S('sweetgum', { n: 'Columnar sweetgum', v: "'Slender Silhouette'", l: 'Liquidambar styraciflua', c: 'tree', form: 'column', h0: 10, hM: 50, s0: 2, sM: 8, tau: 11, leaf: '#4f7a3a', fall: '#9c2f3c', fall2: '#d0832c', buy: '2″ caliper or 10–12′ B&B', note: 'A 50-foot exclamation point only 6–8′ wide: star-shaped leaves that go burgundy, orange and gold in late October. Few gumballs. Fits tight spots and frames an entry or a view.' });
 S('fmaple', { n: 'Freeman maple', v: "'Autumn Blaze'", l: 'Acer × freemanii', c: 'tree', form: 'oval', h0: 10, hM: 50, s0: 5, sM: 40, tau: 9, leaf: '#4b7735', fall: '#c42e1e', fall2: '#e0702a', buy: '2″ caliper', note: 'Fast, dense oval crown with blazing red-orange fall color that comes in from the outside, like the one on the walk. Wants room: 40′ wide. Prune young for a strong central leader.' });
 S('blackgum', { n: 'Black gum', v: "'Wildfire'", l: 'Nyssa sylvatica', c: 'tree', nat: 1, form: 'oval', h0: 8, hM: 40, s0: 4, sM: 25, tau: 12, leaf: '#3f6e34', fall: '#c22f22', fall2: '#e3842e', buy: '1.5–2″ caliper', note: 'Michigan native with glossy oval leaves and some of the best scarlet-orange fall color of any tree. Handles wet clay. The native pick if you like the look of a Callery pear.' });
 S('callery', { n: 'Callery pear', v: "'Cleveland Select'", l: 'Pyrus calleryana', c: 'tree', form: 'oval', h0: 10, hM: 35, s0: 4, sM: 18, tau: 8, bl: [4], leaf: '#4e7436', bc: '#f6f3ea', fall: '#a8423a', fall2: '#c8803a', warn: 'Invasive: Michigan restricted Callery pear in May 2026 (sale and planting banned from Jan 1, 2028). Plant black gum, serviceberry or a crabapple instead.', note: 'Flagged: see the warning. Glossy leaves, white April bloom, late rusty-red fall color.' });
+S('chestnut', { n: 'Chinese chestnut', v: "'Qing' / 'Peach' or seedling", l: 'Castanea mollissima', c: 'tree', ed: 1, form: 'oval', h0: 4, hM: 40, s0: 2, sM: 40, tau: 12, bl: [6], fr: [9, 10], leaf: '#4f7a33', bc: '#efe6b0', fc: '#a9b84a', fall: '#c9a03a', reach: 40, price: 80, buy: 'Grafted or seedling, 3–5 ft', roots: 'Deep and wide; keep 40′ from the septic trenches.', warn: 'Needs 2 trees for pollination. Spiny burs drop in fall, so keep it away from paths and play areas.', note: 'The highest-calorie tree for Michigan, without the spraying apples need. Grafted trees bear in 3–5 years; 50+ lb of nuts per tree at maturity. Wants well-drained soil, so plant on a low mound in this clay.' });
+S('persimmon', { n: 'American persimmon', v: "'Prok'", l: 'Diospyros virginiana', c: 'fruit', nat: 1, ed: 1, form: 'oval', h0: 4, hM: 30, s0: 2, sM: 18, tau: 12, bl: [6], fr: [9, 10, 11], leaf: '#3f6a33', bc: '#e8e2b8', fc: '#e07a24', fall: '#d0602a', reach: 25, price: 65, buy: 'Grafted 3–4 ft', roots: 'Taproot: plant young and don’t move it. Suckers a bit.', note: 'Native, nearly pest-free and fine in clay. Fruit sweetens after frost. Most varieties need a second persimmon nearby; ’Meader’ fruits on its own.' });
+S('persimmonM', { n: 'American persimmon', v: "'Meader' (self-fertile)", l: 'Diospyros virginiana', c: 'fruit', nat: 1, ed: 1, form: 'oval', h0: 4, hM: 28, s0: 2, sM: 16, tau: 12, bl: [6], fr: [10, 11], leaf: '#3f6a33', bc: '#e8e2b8', fc: '#e8862a', fall: '#d0602a', reach: 25, price: 65, buy: 'Grafted 3–4 ft', roots: 'Taproot: plant young and don’t move it.', note: 'Self-fertile, so one tree fruits on its own. Very hardy; fruit sweetens after frost.' });
 S('lmaple', { n: 'Laceleaf maple', v: "'Tamukeyama'", l: 'Acer palmatum var. dissectum', c: 'tree', h0: 3, hM: 8, s0: 3, sM: 11, tau: 11, leaf: '#6b2232', fall: '#b8202a', note: 'Small weeping red focal tree.' });
 S('apple', { n: 'Dwarf apple', v: "'Honeycrisp'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9], leaf: '#5c8a44', bc: '#f6e3ea', fc: '#c8302c', note: 'Needs a second apple variety nearby for pollination.' });
 S('apple2', { n: 'Dwarf apple', v: "'Liberty'", l: 'Malus domestica', c: 'fruit', ed: 1, h0: 6, hM: 12, s0: 3, sM: 12, tau: 7, bl: [5], fr: [9, 10], leaf: '#5a8642', bc: '#f6e3ea', fc: '#a51f2a', note: 'Scab-immune; one of MSU Extension’s disease-resistant picks.' });
@@ -393,7 +398,7 @@ S('pear', { n: 'Pear', v: "'Harrow Sweet'", l: 'Pyrus communis', c: 'fruit', ed:
 S('pear2', { n: 'Pear', v: "'Seckel'", l: 'Pyrus communis', c: 'fruit', ed: 1, h0: 7, hM: 17, s0: 3, sM: 11, tau: 9, bl: [4, 5], fr: [9], leaf: '#557f3c', bc: '#f7f4ee', fc: '#9a6b35', note: 'Small, very sweet “sugar pear”; pollinates Harrow Sweet.' });
 S('plum', { n: 'Plum', v: "'Stanley'", l: 'Prunus domestica', c: 'fruit', ed: 1, h0: 7, hM: 15, s0: 3, sM: 14, tau: 8, bl: [5], fr: [8, 9], leaf: '#527a3a', bc: '#f6f2ea', fc: '#4a2a6a', note: 'Self-fertile European plum.' });
 S('cherry', { n: 'Tart cherry', v: "'Montmorency'", l: 'Prunus cerasus', c: 'fruit', ed: 1, h0: 6, hM: 14, s0: 3, sM: 13, tau: 7, bl: [5], fr: [7], leaf: '#55803d', bc: '#f6f2ea', fc: '#e0142a', note: 'Self-fertile; the Michigan pie cherry.' });
-S('pawpaw', { n: 'Pawpaw', l: 'Asimina triloba', c: 'fruit', nat: 1, ed: 1, h0: 5, hM: 20, s0: 3, sM: 14, tau: 11, bl: [5], fr: [9], leaf: '#4f7d35', bc: '#6b2a2a', fc: '#9aa84a', note: 'Native fruit with a custard-tropical flavor. Needs two genetically different trees.' });
+S('pawpaw', { n: 'Pawpaw', l: 'Asimina triloba', c: 'fruit', nat: 1, ed: 1, h0: 5, hM: 20, s0: 3, sM: 14, tau: 11, bl: [5], fr: [9], leaf: '#4f7d35', bc: '#6b2a2a', fc: '#9aa84a', price: 45, buy: 'Plant with a tree shelter or on the north side of something: pawpaws want shade for their first 1–2 years', note: 'Native fruit with a custard-tropical flavor, 25–50 lb per mature tree. Needs two genetically different trees.' });
 S('haskap', { n: 'Haskap', v: "'Boreal Beauty' + 'Boreal Beast'", l: 'Lonicera caerulea', c: 'berry', ed: 1, h0: 1.5, hM: 5, s0: 1.2, sM: 5, tau: 3, bl: [4], fr: [6], leaf: '#5d7a5a', bc: '#f2ecb8', fc: '#3a3f8f', buy: 'Bare-root or #1 pot', roots: 'Shallow and fibrous; most roots in the top 12–18″.', note: 'The first fruit of the year, early to mid June. Plant two compatible varieties. Net the row: birds take it the day it ripens. First berries in year 2–3, full crop by year 5.' });
 S('aronia', { n: 'Aronia', v: "'Viking'", l: 'Aronia melanocarpa', c: 'berry', nat: 1, ed: 1, h0: 1.5, hM: 6, s0: 1.2, sM: 6, tau: 4, bl: [5], fr: [8, 9], leaf: '#3f6b2c', bc: '#f4f1ea', fc: '#1c1a24', fall: '#a3262a', buy: 'Bare-root or #2 pot', roots: 'Shallow and fibrous; suckers slowly.', note: 'Black chokeberry. Astringent fresh, excellent in juice, jam and smoothies. Brilliant red fall color. First crop year 3, full crop year 5.' });
 S('rasp_fall', { n: 'Red raspberry, fall', v: "'Caroline'", l: 'Rubus idaeus', c: 'berry', ed: 1, row: 1, sp: 2, h0: 2, hM: 5, s0: 1.5, sM: 3, tau: 2, bl: [6, 7], fr: [8, 9, 10], leaf: '#557d33', bc: '#f2efe2', fc: '#c21f3a', buy: 'Bare-root canes, 2′ apart', roots: 'Most roots in the top 10–12″; spreads by suckers.', note: 'Crops the first fall. Mow every cane to the ground each March: no pruning decisions. Hates wet feet.' });
@@ -409,6 +414,7 @@ S('viburnum', { n: 'Arrowwood viburnum', l: 'Viburnum dentatum', nat: 1, h0: 2.5
 S('dogwood', { n: 'Red-twig dogwood', l: 'Cornus sericea', nat: 1, h0: 2.5, hM: 7, s0: 2, sM: 8, tau: 4, bl: [6], fr: [8], leaf: '#53803b', bc: '#f2f0e4', fc: '#e8ecf0', fall: '#8a2a3a', note: 'Bright red stems all winter; salt-tolerant enough for the drive bed.' });
 S('graydog', { n: 'Gray dogwood', l: 'Cornus racemosa', nat: 1, h0: 3, hM: 10, s0: 2, sM: 10, tau: 5, bl: [6], fr: [9], leaf: '#56804a', bc: '#f2f0e4', fc: '#f0f0ea', fall: '#8a3a4a', note: 'Thicket-forming native; white berries on red stalks.' });
 S('hazel', { n: 'American hazelnut', l: 'Corylus americana', nat: 1, ed: 1, h0: 3, hM: 10, s0: 2, sM: 10, tau: 5, bl: [3], fr: [9], leaf: '#5a843d', bc: '#c9b04a', fc: '#8a6a3a', fall: '#c7862e', note: 'Edible nuts if you beat the squirrels; good thicket screen.' });
+S('hazelH', { n: 'Hybrid hazelnut', v: 'UMHDI / Arbor Day hybrid', l: 'Corylus americana × avellana', ed: 1, h0: 2, hM: 12, s0: 1.5, sM: 10, tau: 4, bl: [3], fr: [9], leaf: '#5a843d', bc: '#c9b04a', fc: '#8a6a3a', fall: '#c7862e', reach: 10, price: 40, buy: 'Seedling tubes or 1-gal; plant at least 3 for pollination', roots: 'Fibrous, fairly shallow; suckers from the base.', note: 'Blight-tolerant hybrid that bears far more than wild American hazel: 5–10 lb of nuts in the shell per bush once mature (year 8). Plant at least 3 so they cross-pollinate. Works as a 10–12′ hedge, about 6′ apart.' });
 S('hydrangea', { n: 'Panicle hydrangea', v: "'Limelight'", l: 'Hydrangea paniculata', h0: 2.5, hM: 7, s0: 2, sM: 7, tau: 4, bl: [7, 8, 9], leaf: '#5a8a42', bc: '#f4efe4', note: 'Big white cones that age to pink; tough in clay.' });
 S('inkberry', { n: 'Inkberry holly', l: 'Ilex glabra', ev: 1, h0: 2, hM: 6, s0: 2, sM: 6, tau: 5, leaf: '#2f5a32', note: 'Evergreen foundation shrub; tolerates wet soil.' });
 S('boxwood', { n: 'Boxwood', v: "'Green Velvet'", l: 'Buxus', ev: 1, h0: 1.5, hM: 4, s0: 1.5, sM: 4, tau: 5, leaf: '#3a6a36', note: 'Formal evergreen edging and foundation balls.' });
@@ -437,8 +443,10 @@ PER('rattlesnake', 'Rattlesnake master', 'Eryngium yuccifolium', [7, 8], '#dfe6d
 PER('iris', 'Blue flag iris', 'Iris versicolor', [6], '#5a5ab8', { nat: 1, note: 'Rain garden: handles standing water.' });
 PER('milkweed', 'Swamp milkweed', 'Asclepias incarnata', [7, 8], '#d06a9a', { nat: 1, note: 'Monarch host plant for wet spots.' });
 PER('joepye', 'Joe-pye weed', 'Eutrochium maculatum', [8, 9], '#b8708a', { nat: 1, hM: 6, note: 'Tall wetland bloom for a rain garden.' });
-PER('asparagus', 'Asparagus', 'Asparagus officinalis', [], null, { ed: 1, fr: [5, 6], fc: '#7aa04a', leaf: '#7aa84f', note: 'Harvest spears May–June from year 3.' });
-PER('rhubarb', 'Rhubarb', 'Rheum rhabarbarum', [], null, { ed: 1, fr: [5, 6], fc: '#c23a4a', leaf: '#4f8a3a', note: 'Pull stalks in May and June.' });
+PER('asparagus', 'Asparagus', 'Asparagus officinalis', [6], '#e9e7b0', { ed: 1, h0: 0.5, hM: 5, s0: 1, sM: 2, tau: 2, fr: [4, 5, 6], fc: '#6fa04a', leaf: '#7fae5a', fall: '#d8c060', sp: 1.5, price: 3, buy: "Crowns, 'Millennium' (bred in Ontario for clay), 18″ apart", note: "A 20-year perennial and the first vegetable of spring. Don't harvest year 1, pick lightly year 2, fully from year 3. Ferny 5′ screen all summer. Keep it in its own permanent bed, not in the rotated calorie beds." });
+PER('rhubarb', 'Rhubarb', 'Rheum × hybridum', [6], '#efe8c8', { ed: 1, h0: 1, hM: 3, s0: 1.5, sM: 4, tau: 2, fr: [5, 6], fc: '#c23a4a', leaf: '#4f8a3a', price: 15, buy: "Crowns, 'Canada Red' or 'Victoria'", note: 'Stalks only: the leaves are toxic. 3–4 plants are plenty. Harvest from year 2.' });
+PER('walkonion', 'Egyptian walking onion', 'Allium × proliferum', [6], '#d8c8d8', { ed: 1, h0: 0.5, hM: 2.5, s0: 0.5, sM: 1.5, tau: 1, fr: [4, 5, 6, 9, 10], fc: '#a8708a', leaf: '#6a9a5a', price: 6, note: 'Perennial onion: green onions spring and fall, top-set bulblets in summer. It spreads by “walking”, so give it a corner.' });
+PER('horseradish', 'Horseradish', 'Armoracia rusticana', [6], '#f4f2e8', { ed: 1, h0: 1, hM: 3, s0: 1, sM: 2.5, tau: 1, fr: [10, 11], leaf: '#5d8a3a', price: 8, warn: 'Very hard to remove once planted. Grow it in a sunk container or a dedicated corner.', note: 'Dig roots after frost. One or two plants is a lifetime supply.' });
 PER('lavender', 'Lavender', "Lavandula 'Munstead'", [6, 7], '#9a8ad0', { leaf: '#8a9a88', note: 'Hardy English lavender.' });
 PER('sage', 'Culinary sage', 'Salvia officinalis', [6], '#9a8ad0', { ed: 1, leaf: '#8a9a80', note: 'Kitchen herb.' });
 PER('thyme', 'Thyme', 'Thymus vulgaris', [6], '#c8a8d8', { ed: 1, leaf: '#6a8a5a', hM: 0.5, note: 'Kitchen herb; creeping forms fill between stepping stones.' });
@@ -465,6 +473,7 @@ const isWoody = s => isTree(s) || s.c === 'shrub' || (s.c === 'berry' && s.k !==
 const grow = (a, b, tau, yrs) => a + (b - a) * (1 - Math.exp(-yrs / tau));
 const PLANT_PRICE = { conifer: 165, tree: 185, fruit: 45, berry: 18, shrub: 35, perennial: 9, grass: 9 };
 const ROW_PRICE = 6;
+const unitPrice = (s, row) => row ? (s.rowPrice ?? ROW_PRICE) : (s.price ?? PLANT_PRICE[s.c]);
 
 /* ================= materials + structures ================= */
 const BM = {
@@ -494,10 +503,11 @@ const BM = {
   moss: { n: 'Moss garden', c: '#3f6a35', s: 'speck', spk: ['#2f4f22', '#4f7a32', '#6d8f3c'], u: 'sf', p: 0.6 },
   groundcover: { n: 'Groundcover (thyme, sedum)', c: '#6f8a5a', s: 'speck', spk: ['#8aa070', '#5a7a48', '#b09ac0'], u: 'sf', p: 2.5 },
   rain: { n: 'Rain garden', c: '#3d4f34', s: 'speck', spk: ['#2f4a2a', '#4a6a38', '#3a3527', '#5a5ab8'], u: 'sf', p: 3 },
+  strawbed: { n: 'Strawberry bed (matted row)', c: '#4f7f3a', s: 'clover', spk: ['#d62a3a', '#6f9a48', '#f6f4ec'], u: 'sf', p: 1.2, food: 'strawberry', note: 'About 1 plant per sf at 18¢ plus compost' },
   soil: { n: 'In-ground veggie bed', c: '#4a3a2c', s: 'rowsoil', spk: ['#3a2c20', '#5a4634'], u: 'yd³', depth: 4, p: 40, food: 1 },
   water: { n: 'Water garden', c: '#5f8fa3', s: 'water', spk: ['#7fa7ba', '#4f7f94'], u: 'sf', p: 8, hard: 1 },
 };
-const BM_GROUPS = [['Turf', ['lawn', 'nomow', 'clover']], ['Mulch + straw', ['mulch', 'mulchBlack', 'cedar', 'needle', 'straw']], ['Patios + hardscape', ['pavers', 'brickpav', 'permpav', 'flagbed', 'bluestone', 'concpad', 'stamped', 'deckb']], ['Gravel + stone', ['gravel', 'crushed', 'dg', 'river', 'sand']], ['Planted zones', ['meadow', 'prairie', 'moss', 'groundcover', 'rain', 'soil', 'water']]];
+const BM_GROUPS = [['Turf', ['lawn', 'nomow', 'clover']], ['Mulch + straw', ['mulch', 'mulchBlack', 'cedar', 'needle', 'straw']], ['Patios + hardscape', ['pavers', 'brickpav', 'permpav', 'flagbed', 'bluestone', 'concpad', 'stamped', 'deckb']], ['Gravel + stone', ['gravel', 'crushed', 'dg', 'river', 'sand']], ['Planted zones', ['meadow', 'prairie', 'moss', 'groundcover', 'rain', 'soil', 'strawbed', 'water']]];
 const EDGES = { none: 'No edging', steel: 'Steel edging', stone: 'Stone border', brick: 'Brick soldier course', spade: 'Spade-cut edge' };
 const EDGE_PRICE = { none: 0, steel: 3, stone: 12, brick: 9, spade: 0 };
 const PM = {
@@ -524,12 +534,15 @@ const SD = {
   raised: { n: 'Raised bed 4×10', g: 'Garden', w: 4, h: 10, cost: 190 },
   raised8: { n: 'Raised bed 4×8', g: 'Garden', w: 4, h: 8, cost: 150 },
   round: { n: 'Round steel bed', g: 'Garden', w: 6, h: 6, shape: 'ellipse', lock: 1, cost: 160 },
+  calbed: { n: 'Calorie bed 4×24', g: 'Garden', w: 4, h: 24, cost: e => Math.round(e.w * e.h * 2.7), food: 1 },
+  lowtunnel: { n: 'Low tunnel (hoops + cover)', g: 'Garden', w: 4, h: 12, light: 1, cost: 120 },
   compost: { n: 'Compost bays (3)', g: 'Garden', w: 12, h: 4.5, cost: 250 },
   greenhouse: { n: 'Glass greenhouse', g: 'Garden', w: 10, h: 16, cost: 6500 },
   hoop: { n: 'Hoop house', g: 'Garden', w: 12, h: 24, cost: 1800 },
   potting: { n: 'Potting bench', g: 'Garden', w: 6, h: 2.5, light: 1, onHard: 1, cost: 220 },
   rainbarrel: { n: 'Rain barrel', g: 'Garden', w: 2.5, h: 2.5, shape: 'ellipse', lock: 1, light: 1, onHard: 1, cost: 110 },
   beehive: { n: 'Beehives (2)', g: 'Garden', w: 5, h: 2, light: 1, cost: 420 },
+  coop: { n: 'Chicken coop + run (TBD)', g: 'Garden', w: 8, h: 12, cost: 1500, tbd: 1 },
   shed: { n: 'Garden shed 10×12', g: 'Buildings', w: 10, h: 12, cost: 4500 },
   shedsm: { n: 'Tool shed 6×8', g: 'Buildings', w: 6, h: 8, cost: 1800 },
   gazebo: { n: 'Gazebo', g: 'Buildings', w: 12, h: 12, shape: 'ellipse', lock: 1, cost: 5500 },
@@ -552,11 +565,70 @@ const SD = {
   fountain: { n: 'Bubbler fountain', g: 'Accents', w: 4, h: 4, shape: 'ellipse', lock: 1, cost: 450 },
 };
 const SD_GROUPS = ['Garden', 'Buildings', 'Hardscape', 'Accents'];
-const TALL = new Set(['greenhouse', 'hoop', 'shed', 'shedsm', 'gazebo', 'pergola', 'arbor', 'swing', 'hammock']);
+const TALL = new Set(['coop', 'greenhouse', 'hoop', 'shed', 'shedsm', 'gazebo', 'pergola', 'arbor', 'swing', 'hammock']);
 function kgBeds(e) { const [bw, bl] = (e.bed || '4x10').split('x').map(Number), vert = e.h >= e.w, W2 = vert ? e.w : e.h, H2 = vert ? e.h : e.w, m = 2.5, a = 3;
   const cols = Math.max(0, Math.floor((W2 - 2 * m + a) / (bw + a))), rows = Math.max(0, Math.floor((H2 - 2 * m + a) / (bl + a))), gw = cols * bw + (cols - 1) * a, gh = rows * bl + (rows - 1) * a, out = [];
   for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) { const x0 = -gw / 2 + i * (bw + a), y0 = -gh / 2 + j * (bl + a); out.push(vert ? [x0, y0, x0 + bw, y0 + bl] : [y0, x0, y0 + bl, x0 + bw]); }
   return out; }
+
+/* ================= food: yields, calories, storage (tools/food_data.py reads this block) ================= */
+// per crop: first / full crop year, lb per unit per year at full crop, $ per lb, unit (plant | ft | sf), kcal per lb, picking months
+const FOOD = /*FOOD*/{
+ "haskap": {"name": "Haskap", "first": 2, "full": 6, "lb": 7, "price": 10, "unit": "plant", "kcal": 260, "months": [6], "src": "USU Extension: 5–15 lb per mature bush; picks up in years 3–4"},
+ "aronia": {"name": "Aronia", "first": 3, "full": 5, "lb": 15, "price": 4, "unit": "plant", "kcal": 250, "months": [8, 9], "src": "UW–Madison: 15–20 lb per mature plant; big yields in years 4–5"},
+ "blueberry": {"name": "Blueberries", "first": 3, "full": 7, "lb": 7, "price": 5, "unit": "plant", "kcal": 260, "months": [7, 8], "src": "Typical 5–10 lb per mature highbush plant; needs acid soil"},
+ "elder": {"name": "Elderberries", "first": 2, "full": 4, "lb": 8, "price": 6, "unit": "plant", "kcal": 330, "months": [8, 9], "src": "OSU: light crop year 2, full crop years 3–4"},
+ "service": {"name": "Serviceberries", "first": 3, "full": 7, "lb": 5, "price": 6, "unit": "plant", "kcal": 385, "months": [6], "src": "Estimate; birds take a share"},
+ "appleL": {"name": "Apples", "first": 3, "full": 8, "lb": 170, "price": 1.75, "unit": "plant", "kcal": 236, "months": [9, 10], "src": "Stark Bros: 5–10 bushels per semi-dwarf; estimate assumes ~4 bu home yield"},
+ "hazel": {"name": "Hazelnuts (American)", "first": 4, "full": 8, "lb": 4, "price": 6, "unit": "plant", "kcal": 1300, "months": [9], "src": "Estimate for American hazel, in-shell nuts"},
+ "hazelH": {"name": "Hybrid hazelnuts", "first": 4, "full": 8, "lb": 7, "price": 7, "unit": "plant", "kcal": 1300, "months": [9], "src": "UMHDI / Badgersett trials: ~5–10 lb in-shell per mature bush; kcal is in-shell (~45% kernel)"},
+ "chestnut": {"name": "Chestnuts", "first": 5, "full": 12, "lb": 50, "price": 7, "unit": "plant", "kcal": 900, "months": [9, 10], "src": "Chestnut Growers of America / MSU: grafted trees bear in 3–5 yrs; 50+ lb per mature tree"},
+ "appleD": {"name": "Apples (dwarf)", "first": 3, "full": 6, "lb": 60, "price": 1.75, "unit": "plant", "kcal": 236, "months": [9, 10], "src": "Estimate: 1–2 bushels per dwarf tree"},
+ "pear": {"name": "Pears", "first": 4, "full": 9, "lb": 80, "price": 2, "unit": "plant", "kcal": 260, "months": [9], "src": "Estimate: ~2 bushels per semi-dwarf pear"},
+ "plum": {"name": "Plums", "first": 3, "full": 7, "lb": 50, "price": 3, "unit": "plant", "kcal": 210, "months": [8, 9], "src": "Estimate: 1–2 bushels per European plum"},
+ "cherry": {"name": "Tart cherries", "first": 3, "full": 6, "lb": 30, "price": 5, "unit": "plant", "kcal": 230, "months": [7], "src": "MSU Extension: 20–40 lb per dwarf 'Montmorency'"},
+ "grape": {"name": "Grapes", "first": 3, "full": 5, "lb": 15, "price": 3, "unit": "plant", "kcal": 310, "months": [9], "src": "Estimate: 10–20 lb per trained vine"},
+ "blackberry": {"name": "Blackberries", "first": 2, "full": 3, "lb": 1, "price": 6, "unit": "ft", "kcal": 195, "months": [8], "src": "Estimate: ~1 lb per ft of trellised row"},
+ "hickory": {"name": "Hickory nuts", "first": 12, "full": 30, "lb": 40, "price": 4, "unit": "plant", "kcal": 1000, "months": [9, 10], "src": "Shagbark often takes 10–40 years to bear; legacy tree"},
+ "persimmon": {"name": "Persimmons", "first": 5, "full": 12, "lb": 40, "price": 6, "unit": "plant", "kcal": 575, "months": [9, 10, 11], "src": "Estimate: 25–50 lb per mature grafted tree; USDA FoodData Central ~127 kcal/100 g"},
+ "pawpaw": {"name": "Pawpaws", "first": 5, "full": 9, "lb": 25, "price": 8, "unit": "plant", "kcal": 365, "months": [9], "src": "KSU Pawpaw Program: 25–50 lb per mature tree; needs 2 unrelated cultivars"},
+ "asparagus": {"name": "Asparagus", "first": 2, "full": 3, "lb": 0.9, "price": 5, "unit": "plant", "kcal": 90, "months": [4, 5, 6], "src": "MSU Extension: ~0.5–0.75 lb per ft of row (one crown per 1.5 ft); 15–20 yr life"},
+ "rhubarb": {"name": "Rhubarb", "first": 2, "full": 3, "lb": 5, "price": 4, "unit": "plant", "kcal": 95, "months": [5, 6], "src": "Typical 3–6 lb per established crown"},
+ "walkonion": {"name": "Walking onions", "first": 1, "full": 2, "lb": 1, "price": 4, "unit": "plant", "kcal": 150, "months": [4, 5, 6, 9, 10], "src": "Estimate: ~1 lb greens + bulblets per clump"},
+ "horseradish": {"name": "Horseradish", "first": 1, "full": 2, "lb": 2, "price": 8, "unit": "plant", "kcal": 220, "months": [10, 11], "src": "Estimate"},
+ "strawberry": {"name": "Strawberries", "first": 2, "full": 2, "lb": 0.5, "price": 5, "unit": "sf", "kcal": 145, "months": [6], "src": "Cornell Small Fruit: ~1 qt per ft of matted row; 100 sf ≈ 50–60 lb in year 2; renovate yearly, replant every 4–5 yrs"},
+ "rasp_fall": {"name": "Fall raspberries", "first": 1, "full": 3, "lb": 0.7, "price": 8, "unit": "ft", "kcal": 236, "months": [8, 9, 10], "src": "CSU Extension: 15–20 lb per 25 ft row by year 3; fall types fruit the first fall"},
+ "rasp_summer": {"name": "Summer raspberries", "first": 2, "full": 3, "lb": 0.7, "price": 8, "unit": "ft", "kcal": 236, "months": [7], "src": "CSU Extension: 15–20 lb per 25 ft row by year 3"},
+ "rasp_d": {"name": "Summer raspberries", "first": 2, "full": 3, "lb": 0.7, "price": 8, "unit": "ft", "kcal": 236, "months": [7, 8], "src": "CSU Extension: same row yield; summer crop starts year 2"},
+ "veg": {"name": "Vegetables", "first": 1, "full": 1, "lb": 0.6, "price": 2.5, "unit": "sf", "kcal": 150, "months": [6, 7, 8, 9], "src": "Estimate: ~0.5–1 lb per sf of raised bed per season"},
+ "hoop": {"name": "Hoop-house vegetables", "first": 1, "full": 2, "lb": 1.0, "price": 3, "unit": "sf", "kcal": 150, "months": [4, 5, 6, 7, 8, 9, 10, 11], "src": "Estimate: longer season under plastic, ~1 lb per sf"},
+ "potato": {"name": "Potatoes", "first": 1, "full": 1, "lb": 0.75, "price": 1.2, "unit": "sf", "kcal": 350, "months": [7, 8, 9], "src": "MSU Extension home-garden yields: hilled in loose raised beds; stores 4–6 mo at 40°F"},
+ "wsquash": {"name": "Winter squash", "first": 1, "full": 1, "lb": 0.6, "price": 1.8, "unit": "sf", "kcal": 200, "months": [9, 10], "src": "MSU Extension: butternut / 'Waltham', ~25 sf per plant; stores 3–6 mo"},
+ "drybean": {"name": "Dry beans", "first": 1, "full": 1, "lb": 0.1, "price": 3, "unit": "sf", "kcal": 1550, "months": [9], "src": "Estimate: 'Jacob's Cattle' / 'Black Turtle'; low pounds, most calories and protein"},
+ "garlic": {"name": "Garlic", "first": 1, "full": 1, "lb": 0.2, "price": 10, "unit": "sf", "kcal": 680, "months": [7], "src": "Hardneck 'Music': plant in October, dig in July, then sow beans in the same bed"},
+ "onion": {"name": "Storage onions", "first": 1, "full": 1, "lb": 0.5, "price": 1.5, "unit": "sf", "kcal": 180, "months": [8], "src": "Long-day 'Copra' for Michigan; stores 6–9 mo"},
+ "sweetpot": {"name": "Sweet potatoes", "first": 1, "full": 1, "lb": 0.6, "price": 2, "unit": "sf", "kcal": 390, "months": [9, 10], "src": "Needs black plastic plus a low tunnel in zone 6"},
+ "sunchoke": {"name": "Sunchokes", "first": 1, "full": 1, "lb": 1.0, "price": 3, "unit": "sf", "kcal": 330, "months": [10, 11], "src": "Spreads aggressively: only in a sunk container or an isolated strip"},
+ "eggs": {"name": "Eggs (6 hens)", "first": 1, "full": 1, "lb": 170, "price": 3, "unit": "flock", "kcal": 650, "months": [3, 4, 5, 6, 7, 8, 9, 10], "src": "6 hens ≈ 1,200–1,500 eggs/yr (~170 lb); TBD pending HOA / township"}
+}/*END*/;
+const FAMILY_KCAL = 2200 * 4 * 365;
+const FOOD_KEY = { persimmonM: 'persimmon', apple: 'appleD', apple2: 'appleD', appleE: 'appleL', appleG: 'appleL', appleF: 'appleL', pear2: 'pear', rasp_summer: 'rasp_summer' };
+const foodKey = k => FOOD_KEY[k] || k;   // a family of 4, per year
+const CALCROPS = [['potato', 'Potatoes', '#8a6a3a'], ['wsquash', 'Winter squash', '#d88a2a'], ['drybean', 'Dry beans', '#7a3a2a'], ['garlic', 'Garlic, then beans', '#e8e2c8'], ['onion', 'Storage onions', '#c8a050'], ['sweetpot', 'Sweet potatoes', '#b0503a'], ['sunchoke', 'Sunchokes (spreads)', '#c8b040']];
+const CALROT = ['potato', 'drybean', 'wsquash', 'garlic'];
+const calCrop = e => e.rotate ? CALROT[(CALROT.indexOf(e.crop || 'potato') + Math.max(0, ST.year - 1) + CALROT.length) % CALROT.length] || 'potato' : (e.crop || 'potato');
+const STORAGE = [['Potatoes', '38–40°F, humid and dark (unheated basement corner)', '4–6 months'], ['Winter squash', '50–55°F and dry (basement shelf)', '3–6 months'], ['Onions, garlic', 'Cool and dry, braided or in mesh bags', '6–9 months'], ['Dry beans', 'Jars at room temperature', 'Years'], ["Apples ('GoldRush', 'Enterprise')", 'Fridge or a cold room', 'Into spring'], ['Chestnuts', 'Fridge: they’re perishable, like fresh produce', '1–2 months; freeze for longer'], ['Hazelnuts', 'Dried in the shell, room temperature', '1 year'], ['Berries, persimmon and pawpaw pulp', 'Chest freezer', '1 year']];
+/* what the plan grows at full crop: [key, qty, lb, kcal] */
+function foodOf(list) {
+  const q = {}, addQ = (k, n) => { k = foodKey(k); if (FOOD[k]) q[k] = (q[k] || 0) + n; };
+  for (const e of list) {
+    if (e.t === 'plant') addQ(e.sp, FOOD[foodKey(e.sp)] && FOOD[foodKey(e.sp)].unit === 'ft' ? 2 : 1);
+    else if (e.t === 'row') addQ(e.sp, FOOD[foodKey(e.sp)] && FOOD[foodKey(e.sp)].unit === 'ft' ? geo(e).len : rowCount(e));
+    else if (e.t === 'bed') { const m = BM[e.mat]; if (m && m.food === 'strawberry') addQ('strawberry', geo(e).area); else if (m && m.food) addQ('veg', geo(e).area); for (const [k, n] of e.comp || []) if (FOOD[foodKey(k)] && FOOD[foodKey(k)].unit === 'plant') addQ(k, n === D ? driftCount(e, k) : +n); }
+    else if (e.t === 'st') { if (e.k === 'calbed') addQ(calCrop(e), e.w * e.h); else if (e.k === 'raised' || e.k === 'raised8' || e.k === 'round') addQ('veg', geo(e).area); else if (e.k === 'kgarden') addQ('veg', kgBeds(e).reduce((a, [x0, y0, x1, y1]) => a + (x1 - x0) * (y1 - y0), 0)); else if (e.k === 'hoop') addQ('hoop', e.w * e.h); }
+  }
+  return Object.entries(q).map(([k, n]) => { const f = FOOD[k], lb = n * f.lb; return [k, n, lb, lb * f.kcal]; }).sort((a, b) => b[3] - a[3]);
+}
 
 /* ================= starting plans (all editable) ================= */
 let SEQ = 0;
@@ -704,7 +776,27 @@ function samples(e) {
   if (e.t === 'st') out.push([e.x, e.y]);
   return out;
 }
-const PLANTABLE_ST = new Set(['kgarden', 'raised', 'raised8', 'round', 'pergola', 'arbor', 'fireterrace', 'council']);
+const PLANTABLE_ST = new Set(['kgarden', 'raised', 'raised8', 'round', 'calbed', 'lowtunnel', 'pergola', 'arbor', 'fireterrace', 'council']);
+/* pollination partners and other plant-to-plant food rules */
+const POLL = { chestnut: 1, pawpaw: 1, hazelH: 1, hazel: 1, persimmon: 1 };
+const HAZELS = new Set(['hazel', 'hazelH']), PERSIMMONS = new Set(['persimmon', 'persimmonM']);
+const PLAY_ST = new Set(['swing', 'firepit', 'fireterrace', 'bench', 'chairs', 'hammock', 'patio', 'deck', 'council', 'gazebo', 'pergola']);
+function nearestOf(e, all, set) { let best = Infinity, n = 0; for (const o of all) { if (o === e || o.id === e.id || o.t !== 'plant' || !set.has(o.sp)) continue; const d = Math.hypot(o.x - e.x, o.y - e.y); best = Math.min(best, d); } return best; }
+function countNear(e, all, set, r) { let n = 1; for (const o of all) if (o !== e && o.id !== e.id && o.t === 'plant' && set.has(o.sp) && Math.hypot(o.x - e.x, o.y - e.y) <= r) n++; return n; }
+function pollination(e, s, all) {
+  const out = [];
+  if (s.k === 'chestnut') { const d = nearestOf(e, all, new Set(['chestnut'])); if (d === Infinity) out.push('Only one chestnut: it needs a second chestnut within 200′ to set nuts.'); else if (d > 200) out.push(`The other chestnut is ${d.toFixed(0)}′ away; keep them within 200′ for pollination.`); else if (d < 40) out.push(`${d.toFixed(0)}′ from the other chestnut; space them ≥40′ so both crowns get full sun.`);
+    const R2 = s.sM / 2; for (const o of all) { if (o === e) continue; let hit = false, what = '';
+      if (o.t === 'path' && PM[o.mat] && !PM[o.mat].fence) { const P = geo(o).pts; for (let i = 1; i < P.length && !hit; i++) if (distSeg(e.x, e.y, ...P[i - 1], ...P[i]) < R2) { hit = true; what = 'the ' + PM[o.mat].n.toLowerCase(); } }
+      else if (o.t === 'bed' && BM[o.mat] && BM[o.mat].paved && distPoly(e.x, e.y, geo(o).pts) < R2) { hit = true; what = 'the ' + BM[o.mat].n.toLowerCase(); }
+      else if (o.t === 'st' && PLAY_ST.has(o.k) && distPoly(e.x, e.y, geo(o).pts) < R2) { hit = true; what = 'the ' + SD[o.k].n.toLowerCase(); }
+      if (hit) { out.push(`Spiny burs will drop on ${what} (${o.id}): it's inside the ${s.sM}′ crown.`); break; } }
+    if (distPoly(e.x, e.y, PATIO) < R2) out.push(`Spiny burs will drop on the walkout patio: it's inside the ${s.sM}′ crown.`); }
+  if (s.k === 'pawpaw' && nearestOf(e, all, new Set(['pawpaw'])) > 30) out.push('Pawpaws need a second, genetically different pawpaw within 30′ to fruit.');
+  if (HAZELS.has(s.k) && countNear(e, all, HAZELS, 50) < 3) out.push('Hazels need at least 3 plants within 50′ of each other to cross-pollinate.');
+  if (s.k === 'persimmon' && nearestOf(e, all, PERSIMMONS) > 200) out.push("Only one persimmon: plant a second one, or swap to ’Meader’, which fruits on its own.");
+  return out;
+}
 function checks(e, all) {
   const out = [], seen = new Set(), add = (lv, m) => { if (!seen.has(m)) { seen.add(m); out.push([lv, m]); } };
   const pts = samples(e);
@@ -720,7 +812,8 @@ function checks(e, all) {
       const dT = distRect(x, y, TRENCH);
       if (tree && dT < 28 && !inRect(x, y, SEPTIC)) add('err', `Trunk ${dT.toFixed(0)}′ from the septic trenches; trees need ≥28′.`);
       else if (shrubby && dT < 10 && !inRect(x, y, SEPTIC)) add('warn', `${dT.toFixed(0)}′ from the trenches; roots may reach the laterals.`);
-      if (s.reach) { if (dT < s.reach && !inRect(x, y, SEPTIC)) add('err', `Willow roots hunt for water: ${dT.toFixed(0)}′ from the septic trenches, keep ≥${s.reach}′.`); const dw = Math.hypot(x - WELL[0], y - WELL[1]); if (dw < s.reach && dw >= 10) add('err', `Willow roots: ${dw.toFixed(0)}′ from the well, keep ≥${s.reach}′.`); const dh = distPoly(x, y, HOUSE); if (dh < s.reach / 2 && !inPoly(x, y, HOUSE)) add('warn', `Willow roots can reach footing drains and the sewer line (${dh.toFixed(0)}′ from the house).`); }
+      if (s.reach && !s.thirsty) { if (dT < s.reach && dT >= (tree ? 28 : 10) && !inRect(x, y, SEPTIC)) add('err', `Roots spread about ${s.reach}′: ${dT.toFixed(0)}′ from the septic trenches, keep ≥${s.reach}′.`); }
+      if (s.reach && s.thirsty) { if (dT < s.reach && !inRect(x, y, SEPTIC)) add('err', `Willow roots hunt for water: ${dT.toFixed(0)}′ from the septic trenches, keep ≥${s.reach}′.`); const dw = Math.hypot(x - WELL[0], y - WELL[1]); if (dw < s.reach && dw >= 10) add('err', `Willow roots: ${dw.toFixed(0)}′ from the well, keep ≥${s.reach}′.`); const dh = distPoly(x, y, HOUSE); if (dh < s.reach / 2 && !inPoly(x, y, HOUSE)) add('warn', `Willow roots can reach footing drains and the sewer line (${dh.toFixed(0)}′ from the house).`); }
       if (inRect(x, y, RES)) { if (tree) add('err', 'Septic reserve: no trees.'); else if (s.c === 'berry') add('warn', 'On the septic reserve: berry shrubs need Lapeer County OK (pending).'); else if (shrubby) add('warn', 'On the septic reserve: woody plants need Lapeer County OK.'); else if (['bigblue', 'indian', 'switch'].includes(s.k)) add('warn', 'Deep-rooted prairie grass on the reserve.'); }
       if (inEase(x, y)) { if (tree) add('err', 'Inside the 12′ drainage / utility easement.'); else if (shrubby) add('warn', 'In the 12′ easement: may be removed for swale or utility work.'); }
       if (Math.hypot(x - WELL[0], y - WELL[1]) < 10 && woody) add('err', 'Within 10′ of the well; keep it reachable for a service rig.');
@@ -731,7 +824,9 @@ function checks(e, all) {
       if (tree && s.hM >= 30 && distPoly(x, y, DRIVE) < 6 && !inPoly(x, y, DRIVE)) add('warn', `${distPoly(x, y, DRIVE).toFixed(0)}′ from the driveway; big-tree roots can lift the slab (6′+ is safer).`);
       if (y > LOD) add('warn', 'Beyond the limit of disturbance, in Pond Easement #1: confirm planting is allowed.');
     }
-    if (s.warn) add('warn', s.warn);
+    if (s.warn && !POLL[s.k]) add('warn', s.warn);
+    if (e.t === 'plant') for (const m of pollination(e, s, all)) add('warn', m);
+    if (tree && e.t === 'plant') for (const o of all) { if (o.t !== 'st' || !TALL.has(o.k) || (SD[o.k] && SD[o.k].tbd)) continue; const d = distPoly(e.x, e.y, geo(o).pts); if (d < s.sM * 0.3 && !hitEnt(o, e.x, e.y, 0)) add('warn', `${d.toFixed(0)}′ from the ${SD[o.k].n.toLowerCase()} (${o.id}): at ${s.sM}′ wide the crown will hang over and shade it.`); }
     if (tree && e.t === 'plant') for (const o of all) { if (o === e || o.t !== 'plant' || o.id === e.id) continue; const t = SP[o.sp]; if (!isTree(t)) continue; const d = Math.hypot(o.x - e.x, o.y - e.y), need = (s.sM + t.sM) / 2 * 0.5; if (d < need) add('warn', `Crowds ${o.id} at maturity (${d.toFixed(0)}′ apart).`); }
   } else if (e.t === 'st') {
     const d = SD[e.k], heavy = !d.light;
@@ -744,6 +839,9 @@ function checks(e, all) {
       if (heavy && Math.hypot(x - WELL[0], y - WELL[1]) < 10) add('err', 'Within 10′ of the well.');
       if (heavy && y > LOD) add('warn', 'Beyond the limit of disturbance (Pond Easement #1).');
     }
+    if (d.food || e.k === 'coop') { let onF = false, onR = false, nearW = false; for (const [x, y] of pts) { if (inRect(x, y, SEPTIC)) onF = true; if (inRect(x, y, RES)) onR = true; if (Math.hypot(x - WELL[0], y - WELL[1]) < 50) nearW = true; }
+      if (d.food) { if (onF) add('block', 'No food beds on the septic field.'); if (onR) add('block', 'No food beds on the septic reserve.'); if (nearW) add('warn', 'Within 50′ of the well: no manure or manure compost in this bed.'); if (e.crop === 'sunchoke') add('warn', 'Sunchokes spread hard: grow them in a sunk container or an isolated strip.'); }
+      if (e.k === 'coop') { add('warn', 'TBD: pending a Pine Crest HOA and Almont Township check on hens. Not counted in the budget.'); if (nearW) add('err', 'Keep the coop ≥50′ from the well.'); if (onF) add('err', 'Keep the coop off the septic field.'); } }
     if (['greenhouse', 'hoop', 'shed', 'shedsm', 'gazebo'].includes(e.k)) add('warn', 'Accessory building: check Pine Crest HOA rules and Almont Township setbacks before building.');
   } else if (e.t === 'bed') {
     const m = BM[e.mat];
@@ -752,6 +850,7 @@ function checks(e, all) {
       if (inPoly(x, y, HOUSE)) add('warn', m.paved ? 'Part of this patio runs under the house; trim it to the foundation.' : 'Part of this bed runs under the house; trim it to the foundation.');
       else if (inPoly(x, y, DRIVE) && !m.paved) add('warn', 'Part of this bed is on the driveway.');
       if (m.paved && Math.hypot(x - WELL[0], y - WELL[1]) < 10) add('warn', 'Paving within 10′ of the well: keep the cap reachable for service.');
+      if (m.food && Math.hypot(x - WELL[0], y - WELL[1]) < 50) add('warn', 'Within 50′ of the well: no manure or manure compost in this bed.');
       if (inRect(x, y, SEPTIC)) { if (m.paved) add('err', 'No patios or paving over the septic field.'); else if (m.hard) add('warn', 'Stone or fill over the septic field: the county may object.'); if (m.food) add('err', 'No food gardens on the septic field.'); }
       if (inRect(x, y, RES)) { if (m.paved) add('err', 'Septic reserve: no patios or paving (county rule).'); else if (m.hard) add('warn', 'No fill on the septic reserve.'); if (m.food) add('err', 'No in-ground vegetable beds on the septic reserve.'); }
       if (y > LOD && !['meadow', 'prairie', 'moss', 'nomow', 'rain'].includes(e.mat)) add('warn', 'Beyond the limit of disturbance (Pond Easement #1).');
@@ -783,7 +882,7 @@ function pathQty(e) { const m = PM[e.mat], L = geo(e).len; return m.u === 'lf' ?
 function driftDensity(s) { return s.c === 'grass' ? 22 : s.c === 'shrub' ? 90 : s.k === 'moss' ? 40 : 30; }
 function driftCount(e, sp) { const nd = (e.comp || []).filter(c => c[1] === D).length || 1; return Math.max(1, Math.round(geo(e).area / nd / driftDensity(SP[sp]))); }
 function budget() {
-  const lines = { plants: {}, beds: {}, edge: {}, paths: {}, st: {} }, addPlant = (sp, q, row) => { const s = SP[sp], k = (row ? 'row:' : 'sp:') + sp, L = lines.plants[k] ||= { key: k, n: s.n + (s.v ? ' ' + s.v : '') + (row ? ' (canes)' : ''), q: 0, u: 'ea', p: priceOf(k, row ? ROW_PRICE : PLANT_PRICE[s.c]) }; L.q += q; };
+  const lines = { plants: {}, beds: {}, edge: {}, paths: {}, st: {} }, addPlant = (sp, q, row) => { const s = SP[sp], k = (row ? 'row:' : 'sp:') + sp, L = lines.plants[k] ||= { key: k, n: s.n + (s.v ? ' ' + s.v : '') + (row ? ' (canes)' : ''), q: 0, u: 'ea', p: priceOf(k, unitPrice(s, row)) }; L.q += q; };
   for (const e of ents()) {
     if (e.t === 'plant') addPlant(e.sp, 1);
     else if (e.t === 'row') addPlant(e.sp, rowCount(e), true);
@@ -793,7 +892,7 @@ function budget() {
       if (e.edge && EDGE_PRICE[e.edge]) { const k3 = 'edge:' + e.edge, L3 = lines.edge[k3] ||= { key: k3, n: EDGES[e.edge], q: 0, u: 'LF', p: priceOf(k3, EDGE_PRICE[e.edge]) }; const P = geo(e).pts; L3.q += polyLen([...P, P[0]]); }
     }
     else if (e.t === 'path') { const k = 'path:' + e.mat, [q, u] = pathQty(e), L = lines.paths[k] ||= { key: k, n: PM[e.mat].n, q: 0, u, p: priceOf(k, PM[e.mat].p) }; L.q += q; }
-    else if (e.t === 'st') { const d = SD[e.k]; if (typeof d.cost === 'function') { const k = 'st:' + e.id; lines.st[k] = { key: k, n: entName(e), q: 1, u: 'ea', p: priceOf(k, d.cost(e)) }; } else { const k = 'st:' + e.k, L = lines.st[k] ||= { key: k, n: d.n, q: 0, u: 'ea', p: priceOf(k, d.cost) }; L.q++; } }
+    else if (e.t === 'st') { const d = SD[e.k]; if (d.tbd) continue; if (typeof d.cost === 'function') { const k = 'st:' + e.id; lines.st[k] = { key: k, n: entName(e), q: 1, u: 'ea', p: priceOf(k, d.cost(e)) }; } else { const k = 'st:' + e.k, L = lines.st[k] ||= { key: k, n: d.n, q: 0, u: 'ea', p: priceOf(k, d.cost) }; L.q++; } }
   }
   let total = 0; const out = {}; for (const g in lines) { out[g] = Object.values(lines[g]).sort((a, b) => b.q * b.p - a.q * a.p); for (const L of out[g]) total += L.q * L.p; }
   return { lines: out, total };
@@ -964,6 +1063,15 @@ function drawStLocal(g, e, k) {
       g.fillStyle = '#3a3a36'; for (const [px, py] of [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2], [-gx, h / 2], [gx, h / 2]]) g.fillRect(px - Math.max(1.5, k * 0.25), py - Math.max(1.5, k * 0.25), Math.max(3, k * 0.5), Math.max(3, k * 0.5)); break; }
     case 'raised': case 'raised8': { sh(); box(cedar); g.beginPath(); g.rect(-w / 2 + k * 0.3, -h / 2 + k * 0.3, w - k * 0.6, h - k * 0.6); g.fillStyle = soil; g.fill(); sprouts(-e.w / 2, -e.h / 2, e.w / 2, e.h / 2); break; }
     case 'round': { sh(); box('#9aa1a8', '#5f666c'); g.beginPath(); g.ellipse(0, 0, Math.max(1, w / 2 - k * 0.3), Math.max(1, h / 2 - k * 0.3), 0, 0, 7); g.fillStyle = soil; g.fill(); break; }
+    case 'calbed': { sh(); box(cedar); g.beginPath(); g.rect(-w / 2 + k * 0.3, -h / 2 + k * 0.3, w - k * 0.6, h - k * 0.6); g.fillStyle = winter ? '#5a4635' : '#4a3a2a'; g.fill();
+      const cr = calCrop(e), cc = (CALCROPS.find(c => c[0] === cr) || CALCROPS[0])[2], hw = e.w / 2 - 0.5, hh = e.h / 2 - 0.5;
+      if (!winter || cr === 'garlic') { if (cr === 'drybean' || cr === 'garlic' || cr === 'onion') { g.strokeStyle = cr === 'drybean' ? '#6f9a48' : '#9ab86a'; g.lineWidth = Math.max(1, k * 0.25); g.beginPath(); const along = e.h >= e.w; for (let t = -0.3; t <= 0.31; t += 0.3) { if (along) { const [a, b2] = L(t * e.w, -hh), [c2, d2] = L(t * e.w, hh); g.moveTo(a, b2); g.lineTo(c2, d2); } else { const [a, b2] = L(-hw, t * e.h), [c2, d2] = L(hw, t * e.h); g.moveTo(a, b2); g.lineTo(c2, d2); } } g.stroke(); }
+        else { const step = cr === 'wsquash' || cr === 'sunchoke' ? 2.4 : 1.5; for (let a = -hw + step / 2; a < hw; a += step) for (let b2 = -hh + step / 2; b2 < hh; b2 += step) { const [px, py] = L(a, b2); g.beginPath(); g.arc(px, py, Math.max(1, k * (cr === 'wsquash' ? 0.95 : 0.55)), 0, 7); g.fillStyle = cr === 'wsquash' ? '#5f8a3a' : cr === 'potato' ? '#6f9a48' : '#7a9a40'; g.fill(); if (cr === 'wsquash' && ST.month >= 8 && ST.month <= 10 && (a + b2) % 2 < 1) { g.beginPath(); g.arc(px + k * 0.5, py, Math.max(1, k * 0.4), 0, 7); g.fillStyle = cc; g.fill(); } } } }
+      if (k > 2.2) { g.save(); g.rotate(e.h > e.w ? -Math.PI / 2 : 0); g.font = `600 ${Math.max(8, Math.min(12, k * 1.2))}px "IBM Plex Mono", monospace`; g.fillStyle = 'rgba(255,255,255,.85)'; g.textAlign = 'center'; g.fillText((CALCROPS.find(c => c[0] === cr) || CALCROPS[0])[1].split(',')[0].split(' (')[0], 0, 3); g.textAlign = 'start'; g.restore(); }
+      break; }
+    case 'lowtunnel': { g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(-w / 2 + k * 0.3, -h / 2 - k * 0.3, w, h); g.fillStyle = 'rgba(246,246,240,.72)'; g.fillRect(-w / 2, -h / 2, w, h); g.strokeStyle = 'rgba(120,126,130,.9)'; g.lineWidth = Math.max(1, k * 0.12); g.beginPath(); const along = e.h >= e.w; for (let t = k * 3; t < (along ? h : w); t += k * 3) { if (along) { g.moveTo(-w / 2, -h / 2 + t); g.lineTo(w / 2, -h / 2 + t); } else { g.moveTo(-w / 2 + t, -h / 2); g.lineTo(-w / 2 + t, h / 2); } } g.stroke(); g.strokeStyle = 'rgba(120,126,130,.6)'; g.strokeRect(-w / 2, -h / 2, w, h); break; }
+    case 'coop': { g.globalAlpha = 0.6; g.strokeStyle = '#3a3f44'; g.lineWidth = Math.max(1, k * 0.15); g.setLineDash([Math.max(2, k * 0.6), Math.max(1.5, k * 0.4)]); g.strokeRect(-w / 2, -h / 2, w, h); g.setLineDash([]); g.fillStyle = 'rgba(200,180,120,.25)'; g.fillRect(-w / 2, -h / 2, w, h); const cw = Math.min(w, 6 * k), ch = Math.min(h, 4 * k); g.fillStyle = '#a0522d'; g.fillRect(-w / 2, h / 2 - ch, cw, ch); g.fillStyle = shade('#a0522d', -0.25); g.fillRect(-w / 2, h / 2 - ch, cw, ch / 2);
+      g.globalAlpha = 1; if (k > 1.5) { g.font = `700 ${Math.max(8, Math.min(12, k * 1.3))}px "IBM Plex Mono", monospace`; g.fillStyle = '#b26a00'; g.textAlign = 'center'; g.fillText('TBD', 0, 4); g.textAlign = 'start'; } break; }
     case 'compost': { sh(); box('#6b4a32'); g.strokeStyle = cedar; g.lineWidth = Math.max(1.5, k * 0.35); g.strokeRect(-w / 2, -h / 2, w, h); const long = w >= h; for (let i = 1; i < 3; i++) { g.beginPath(); if (long) { g.moveTo(-w / 2 + w * i / 3, -h / 2); g.lineTo(-w / 2 + w * i / 3, h / 2); } else { g.moveTo(-w / 2, -h / 2 + h * i / 3); g.lineTo(w / 2, -h / 2 + h * i / 3); } g.stroke(); } break; }
     case 'greenhouse': { sh(); box('rgba(205,230,232,.92)', '#2b2f33'); g.strokeStyle = '#2b2f33'; g.lineWidth = Math.max(1, k * 0.12); g.beginPath(); if (vert) { g.moveTo(0, -h / 2); g.lineTo(0, h / 2); for (let y = -h / 2; y < h / 2; y += k * 2) { g.moveTo(-w / 2, y); g.lineTo(w / 2, y); } } else { g.moveTo(-w / 2, 0); g.lineTo(w / 2, 0); for (let x = -w / 2; x < w / 2; x += k * 2) { g.moveTo(x, -h / 2); g.lineTo(x, h / 2); } } g.stroke(); g.fillStyle = 'rgba(80,140,70,.35)'; if (vert) { g.fillRect(-w / 2 + k * 0.4, -h / 2 + k * 0.4, k * 2.2, h - k * 0.8); g.fillRect(w / 2 - k * 2.6, -h / 2 + k * 0.4, k * 2.2, h - k * 0.8); } else { g.fillRect(-w / 2 + k * 0.4, -h / 2 + k * 0.4, w - k * 0.8, k * 2.2); g.fillRect(-w / 2 + k * 0.4, h / 2 - k * 2.6, w - k * 0.8, k * 2.2); } break; }
     case 'hoop': { sh(); box('rgba(240,242,236,.95)', '#8a8f92'); g.strokeStyle = 'rgba(120,126,130,.8)'; g.lineWidth = 1; g.beginPath(); for (let t = k * 4; t < (vert ? h : w); t += k * 4) { if (vert) { g.moveTo(-w / 2, -h / 2 + t); g.lineTo(w / 2, -h / 2 + t); } else { g.moveTo(-w / 2 + t, -h / 2); g.lineTo(-w / 2 + t, h / 2); } } g.stroke(); const gr = vert ? g.createLinearGradient(-w / 2, 0, w / 2, 0) : g.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, 'rgba(0,0,0,.12)'); gr.addColorStop(0.5, 'rgba(255,255,255,.2)'); gr.addColorStop(1, 'rgba(0,0,0,.18)'); g.fillStyle = gr; g.fillRect(-w / 2, -h / 2, w, h); break; }
@@ -1044,7 +1152,12 @@ function drawSetbacks() {
   hatch([[0, 0], [12, 12], [12, 220], [0, 220]]); hatch([[0, 0], [236, 0], [224, 12], [12, 12]]); hatch([[236, 0], [236, 76.1], [184.05, 220], [171.3, 220], [224, 74], [224, 12]]);
   if (cam.z > 2.2) { label('SEPTIC FIELD · TURF ONLY', 160, 44, '#1f7a43', 10); label('SEPTIC RESERVE', 30, 120, '#1f7a43', 10); label('WELL · 50′', WELL[0], WELL[1] - 5, COL.blue, 10); label('LIMIT OF DISTURBANCE', 120, LOD + 3, '#8c5a28', 9); }
 }
+/* drip zone 8 · food beds: elbow runs from the valve box to every calorie bed, strawberry bed, veggie bed and low tunnel */
+function zone8() { const ir = (BUILTIN[plan().base] || BUILTIN.A).irr, vb = (ir && ir.vb) || [89.6, 122.7], out = [];
+  for (const e of ents()) { let c = null; if (e.t === 'st' && (SD[e.k].food || e.k === 'lowtunnel')) c = [e.x, e.y]; else if (e.t === 'bed' && BM[e.mat] && BM[e.mat].food) c = centroid(e.pts); if (c) out.push([vb, [vb[0], c[1]], c]); }
+  return { vb, lines: out }; }
 function drawIrrigation() {
+  const z8 = zone8(); for (const L2 of z8.lines) lineW(L2, '#c27a14', 1.8, [5, 3]); if (z8.lines.length) { const [a, b] = w2s(z8.vb[0], z8.vb[1]); ctx.fillStyle = '#174a7c'; ctx.fillRect(a - 5, b - 4, 10, 8); }
   const ir = (BUILTIN[plan().base] || BUILTIN.A).irr; if (!ir || !ir.heads) return; const ZC = { 1: '#2a78c2', 2: '#7b4fb5', 3: '#d2691e' };
   for (const [zn, x, y, a0, a1] of ir.heads) { const [sx, sy] = w2s(x, y); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.arc(sx, sy, 26 * cam.z, -a1 * Math.PI / 180, -a0 * Math.PI / 180); ctx.closePath(); ctx.fillStyle = ZC[zn] + '22'; ctx.fill(); ctx.strokeStyle = ZC[zn] + '88'; ctx.lineWidth = 1; ctx.stroke(); ctx.beginPath(); ctx.arc(sx, sy, 3, 0, 7); ctx.fillStyle = ZC[zn]; ctx.fill(); }
   for (const m of ir.main) lineW(m, '#174a7c', 2.4);
@@ -1417,11 +1530,14 @@ function renderHint() {
   for (const b of $('hintActs').children) b.onclick = () => { const k = b.dataset.h; if (k === 'done') finishDraft(); else if (k === 'cancel') finishDraft(true); else if (k === 'back') { ST.draft.pts.pop(); if (!ST.draft.pts.length) ST.draft = null; renderHint(); } else if (k === 'rotl') rotPlace(-15); else if (k === 'rotr') rotPlace(15); else if (k === 'rot90') rotPlace(90); else if (k === 'row') { ST.rowMode = !ST.rowMode; renderHint(); if (ST.tab === 'palette') renderDrawer(); } };
 }
 const HOTPLANTS = ['haskap', 'aronia', 'rasp_fall', 'rasp_summer', 'blueberry', 'strawberry', 'elder', 'pine', 'arbor', 'sweetgum', 'fmaple', 'blackgum', 'service', 'redbud', 'rmaple', 'oak', 'fountain', 'allium', 'appleL', 'viburnum', 'hydrangea', 'coneflower', 'dropseed'];
+const STAPLES = ['hazelH', 'chestnut', 'persimmonM', 'persimmon', 'pawpaw', 'hickory', 'asparagus', 'rhubarb', 'walkonion', 'horseradish', 'strawberry', 'hazel'];
+const EDIBLE_SWAP = { viburnum: ['elder', 'aronia'], birch: ['persimmonM', 'pawpaw'], willow: ['pawpaw', 'persimmonM'], sweetgum: ['chestnut', 'persimmonM'], arbor: ['hazelH'], redbud: ['service'], lmaple: ['persimmonM'] };
+const SWAP_NOTE = { arbor: 'Hazels drop their leaves, so the winter screen is gone. Mix them with evergreens if screening the road matters.', willow: 'Also fixes the willow-roots problem near the well and septic.', sweetgum: 'Chestnut is a much wider tree (40′): check the crowding notes after swapping.' };
 let placeRot = 0;
 function rotPlace(d) { placeRot = ((placeRot + d) % 360 + 360) % 360; renderHint(); DIRTY = true; if (ST.tab === 'palette' && ST.tool === 'build') renderDrawer(); if (typeof V3 !== 'undefined') { V3.ghostKey = ''; V3.hovDirty = true; } toast(`Placing at ${placeRot}°`); }
 const STRIPCAT = { plant: 'rec', bed: null, path: null, build: null };
 function stripGroups(t) {
-  if (t === 'plant') return [['rec', 'Picks for this lot', HOTPLANTS], ...Object.keys(CATS).map(c => [c, CATS[c], Object.values(SP).filter(s => s.c === c).map(s => s.k)])];
+  if (t === 'plant') return [['rec', 'Picks for this lot', HOTPLANTS], ['food', 'Nuts + staple crops', STAPLES], ...Object.keys(CATS).map(c => [c, CATS[c], Object.values(SP).filter(s => s.c === c).map(s => s.k)])];
   if (t === 'bed') return BM_GROUPS.map(([n, keys], i) => [i, n, keys]);
   if (t === 'path') return PM_GROUPS.map(([n, keys], i) => [i, n, keys]);
   if (t === 'build') return SD_GROUPS.map((g, i) => [i, g, Object.keys(SD).filter(k => SD[k].g === g)]);
@@ -1486,7 +1602,7 @@ function renderTabs() { for (const b of $('tabs').children) b.setAttribute('aria
 function renderDrawer() { const dr = $('drawer'), top = dr.scrollTop; renderTabs(); ({ palette: renderPalette, plan: renderPlanTab, season: renderSeason, view: renderView })[ST.tab](); wireSecs(dr); dr.scrollTop = top; }
 function calHTML(s) { let h = '<div class="cal">'; for (let m = 1; m <= 12; m++) { const b = s.bl.includes(m), f = s.fr.includes(m), c = f ? s.fc : b ? s.bc : null; h += `<span class="${m === ST.month ? 'now' : ''}" title="${MONTH_FULL[m - 1]}${b ? ' · bloom' : ''}${f ? ' · fruit' : ''}" style="${c ? 'background:' + c : ''}"></span>`; } return h + '</div>'; }
 function spRow(k, right, sub, pressed) { const s = SP[k]; return `<button class="row" data-sp="${k}" aria-pressed="${!!pressed}"><span class="sw ${s.c === 'perennial' || s.c === 'grass' ? 'sq' : ''}" style="background:${plantColor(s, ST.month)}"></span><span class="nm"><b>${esc(s.n)}${s.warn ? ' <span style="color:var(--warn)">!</span>' : ''}</b><i>${esc(sub ?? (s.v || s.l))}</i>${calHTML(s)}</span><span class="cnt">${right}</span></button>`; }
-function swatchGrid(kind, keys, cur) { const T2 = kind === 'bed' ? BM : kind === 'path' ? PM : SD; return `<div class="swg">${keys.map(k => `<button data-${kind}="${k}" aria-pressed="${k === cur}" title="${esc(T2[k].n)}"><canvas width="120" height="48"></canvas><span>${esc(T2[k].n)}</span></button>`).join('')}</div>`; }
+function swatchGrid(kind, keys, cur) { const T2 = kind === 'bed' ? BM : kind === 'path' ? PM : SD; return `<div class="swg">${keys.map(k => `<button data-${kind}="${k}" aria-pressed="${k === cur}" title="${esc(T2[k].n + (T2[k].tbd ? ': TBD, pending HOA / township check; not counted in the budget' : ''))}"${T2[k].tbd ? ' class="tbd"' : ''}><canvas width="120" height="48"></canvas><span>${esc(T2[k].n.replace(' (TBD)', ''))}${T2[k].tbd ? ' <em class="tbdb">TBD</em>' : ''}</span></button>`).join('')}</div>`; }
 function paintSwatches(root) { root.querySelectorAll('.swg button').forEach(b => { const kind = b.dataset.bed ? 'bed' : b.dataset.path ? 'path' : 'st', k = b.dataset[kind]; if (!k) return; b.querySelector('canvas').getContext('2d').drawImage(swatchCanvas(kind, k), 0, 0); }); }
 const tip = t => `<p class="tip">${t}</p>`;
 function objRow(e) { const v = worst(allChecks().get(e) || []); return `<button class="row" data-id="${e.id}" aria-pressed="${ST.sel.includes(e.id)}"><span class="sw sq" style="background:${e.t === 'bed' ? BM[e.mat].c : e.t === 'path' ? PM[e.mat].c : e.t === 'st' ? '#b9ac90' : SP[e.sp].leaf}"></span><span class="nm"><b>${esc(entName(e))}</b><i>${e.id} · ${esc(entKind(e))}</i></span><span class="cnt" style="color:var(--${v === 'ok' ? 'mute' : v})">${v === 'ok' ? '' : '!'}</span></button>`; }
@@ -1506,6 +1622,7 @@ function renderPalette() {
     h += sec('pl-age', 'Plant age shown', ageChips('agesP') + `<div class="seg" style="margin-top:6px"><button data-pv="cards" aria-pressed="${palView === 'cards'}">Cards</button><button data-pv="list" aria-pressed="${palView === 'list'}">List</button></div>` + tip('Every plant on the map, in 3D and on these cards grows to the age you pick. The dashed outline on a card is its mature size; the figure is 6′ tall.'), true, ST.year >= 25 ? 'mature' : ST.year ? ST.year + ' yr' : 'planting');
     if (q || catFilter !== 'all') { const list = Object.values(SP).filter(pass); h += sec('pl-res', q ? 'Search results' : catFilter === 'edible' ? 'Edible plants' : 'Michigan natives', many(list) || tip('No plants match.'), true, list.length); }
     else { h += sec('pl-rec', 'Picks for this lot', many(HOTPLANTS.map(k => SP[k])), true, HOTPLANTS.length);
+      h += sec('pl-food', 'Nuts + staple crops', tip('Food that carries a household through winter. Calorie beds (potatoes, squash, dry beans, garlic) and low tunnels are under Build; the strawberry bed is a bed material under Beds.') + many(STAPLES.map(k => SP[k])), false, STAPLES.length);
       for (const c of Object.keys(CATS)) { const list = Object.values(SP).filter(x => x.c === c); h += sec('pl-' + c, CATS[c], many(list), false, list.length); } }
   } else if (t === 'bed') {
     h += sec('bed-shape', 'Shape + edging', `<div class="seg"><button data-shape="poly" aria-pressed="${ST.bedShape === 'poly'}">Freeform</button><button data-shape="rect" aria-pressed="${ST.bedShape === 'rect'}">Rectangle</button><button data-shape="ellipse" aria-pressed="${ST.bedShape === 'ellipse'}">Oval</button></div>${ST.bedShape === 'poly' ? `<label class="tog"><input type="checkbox" id="bedSmooth" ${ST.bedSmooth ? 'checked' : ''}>Curved edges (smooth through the corners)</label>` : ''}<div class="field" style="margin-top:8px"><label for="edgeDef">Edging</label><select id="edgeDef">${Object.entries(EDGES).map(([k, n]) => `<option value="${k}" ${k === ST.edgeDef ? 'selected' : ''}>${n}</option>`).join('')}</select></div>`, true);
@@ -1546,6 +1663,9 @@ function renderBudget() {
   let h = `<div class="tot"><span class="k">Rough DIY materials</span><b>${money(B.total)}</b></div>` + tip(`2027 DIY prices for bare-root, B&amp;B and bulk materials; no labor. Edit any unit price as quotes come in; it saves with this plan. Lawn left: about ${Math.round(lawnArea()).toLocaleString()} sf.`);
   for (const g of ['plants', 'beds', 'edge', 'paths', 'st']) { const Ls = B.lines[g]; if (!Ls.length) continue; const sub = Ls.reduce((a, l) => a + l.q * l.p, 0);
     h += sec('bud-' + g, secs[g], Ls.map(l => `<div class="bud"><span>${esc(l.n)}</span><b>${money(l.q * l.p)}</b><span class="q">${fmtQ(l.q)} ${l.u}${l.sf && l.u !== 'sf' ? ' · ' + Math.round(l.sf).toLocaleString() + ' sf' : ''} × $<input type="number" min="0" step="0.01" value="${+l.p.toFixed(2)}" data-price="${l.key}" aria-label="Unit price for ${esc(l.n)}"></span><span></span></div>`).join(''), true, money(sub)); }
+  const tbd = ents().filter(e => e.t === 'st' && SD[e.k].tbd); if (tbd.length) h += tip(`Not counted: ${tbd.map(e => esc(SD[e.k].n)).join(', ')} (${money(tbd.reduce((a, e) => a + SD[e.k].cost, 0))}).`);
+  const F = foodOf(ents()); if (F.length) { const lb = F.reduce((a, f) => a + f[2], 0), kc = F.reduce((a, f) => a + f[3], 0);
+    h += sec('bud-food', 'Food at full crop', `<div class="tot"><span class="k">Calories a year</span><b>${(kc / 1e6).toFixed(2)}M · ${(kc / FAMILY_KCAL * 100).toFixed(0)}%</b></div>` + tip(`About ${Math.round(lb).toLocaleString()} lb a year once everything bears. % is of a family of 4 (2,200 kcal × 4 × 365). Hens, if allowed, aren't counted.`) + F.map(([k, n, lb2, kc2]) => `<div class="bud"><span>${esc(FOOD[k].name)}</span><b>${Math.round(kc2 / 1000)}k kcal</b><span class="q">${fmtQ(n)} ${FOOD[k].unit === 'plant' ? 'plants' : FOOD[k].unit} · ${Math.round(lb2)} lb</span><span></span></div>`).join(''), false, (kc / FAMILY_KCAL * 100).toFixed(0) + '% of calories'); }
   if (!ents().length) h += tip('Nothing in this plan yet. Pick a tool on the left and start placing.');
   $('psub').innerHTML = h;
   $('psub').querySelectorAll('[data-price]').forEach(i => i.onchange = () => { const v = +i.value; if (!isFinite(v) || v < 0) return; edit(() => { plan().prices[i.dataset.price] = v; }); });
@@ -1571,7 +1691,7 @@ function renderPlans() {
   if ($('pReset')) $('pReset').onclick = () => { if ($('pReset').dataset.sure) { const b = snapshot(), f = freshPlan(p.base); p.ents = f.ents; p.prices = {}; p.name = f.name; commit(b); p.edited = false; deleteSaved(p.id); renderStats(); renderDrawer(); toast('Reset to the drawn plan. Undo restores your edits.'); } else { $('pReset').dataset.sure = 1; $('pReset').textContent = 'Tap again'; } };
   if ($('pDel')) $('pDel').onclick = () => { if ($('pDel').dataset.sure) { const id = p.id; ST.order = ST.order.filter(k => k !== id); delete ST.plans[id]; deleteSaved(id); ST.cur = 'A'; ST.sel = []; editVer++; renderUI(); renderHint(); savePrefs(); toast('Plan deleted.'); } else { $('pDel').dataset.sure = 1; $('pDel').textContent = 'Tap again'; } };
 }
-const TASKS = { 1: ['Order bare-root berries, shrubs and trees for April delivery.', 'Check young trunks for rabbit and vole damage.'], 2: ['Prune apples, pears and plum while dormant.'], 3: ['Mow the fall raspberries to the ground.', 'Mow meadows once, early spring.', 'Thin last year’s weak summer-raspberry canes.'], 4: ['Plant bare-root berries and shrubs.', 'Cut new beds; turn on the drip zones.', 'Refresh mulch.'], 5: ['Watch late frosts on blooming haskap and fruit trees.', 'Set out the raised beds.'], 6: ['Net the haskap row before it colors up.', 'Harvest haskap (early–mid June).', 'Shear catmint after its first flush.'], 7: ['Harvest summer raspberries.', 'Deep-water new plantings weekly if it’s dry.', 'Cut out spent summer-raspberry canes.'], 8: ['Fall raspberries start mid-August.', 'Hydroseed window: late August to mid-September.', 'Aronia starts to ripen.'], 9: ['Harvest aronia and fall raspberries.', 'Plant trees; deciduous through October.'], 10: ['Plant evergreens by mid-October.', 'Smother-mulch new bed areas with cardboard + chips.'], 11: ['Blow out the irrigation lines.', 'Seed meadows (needs winter stratification).', 'Wrap young trunks; deer rub season.'], 12: ['Plan next year here; copy the plan into a chat for a review.'] };
+const TASKS = { 1: ['Order bare-root berries, shrubs and trees for April delivery.', 'Check young trunks for rabbit and vole damage.'], 2: ['Prune apples, pears and plum while dormant.'], 3: ['Mow the fall raspberries to the ground.', 'Mow meadows once, early spring.', 'Thin last year’s weak summer-raspberry canes.', 'Start onion seeds indoors.'], 4: ['Plant bare-root berries and shrubs.', 'Cut new beds; turn on the drip zones.', 'Refresh mulch.', 'Plant potatoes, onion sets and asparagus crowns.'], 5: ['Watch late frosts on blooming haskap and fruit trees.', 'Set out the raised beds.'], 6: ['Net the haskap row before it colors up.', 'Harvest haskap (early–mid June).', 'Shear catmint after its first flush.', 'Hill the potatoes.'], 7: ['Harvest summer raspberries.', 'Deep-water new plantings weekly if it’s dry.', 'Cut out spent summer-raspberry canes.', 'Dig garlic; sow dry beans in the same bed.'], 8: ['Fall raspberries start mid-August.', 'Hydroseed window: late August to mid-September.', 'Aronia starts to ripen.'], 9: ['Harvest aronia and fall raspberries.', 'Plant trees; deciduous through October.', 'Pick up hazelnuts and chestnuts as they drop (squirrels compete).'], 10: ['Plant evergreens by mid-October.', 'Smother-mulch new bed areas with cardboard + chips.', 'Plant garlic. Cure squash; dig potatoes before hard frost.'], 11: ['Blow out the irrigation lines.', 'Seed meadows (needs winter stratification).', 'Wrap young trunks; deer rub season.'], 12: ['Plan next year here; copy the plan into a chat for a review.'] };
 function renderSeason() {
   const m = ST.month, have = new Set(); for (const e of ents()) { if (e.t === 'plant' || e.t === 'row') have.add(e.sp); if (e.t === 'bed') for (const [k] of e.comp || []) have.add(k); }
   const bl = [...have].filter(k => SP[k] && SP[k].bl.includes(m)), fr = [...have].filter(k => SP[k] && SP[k].fr.includes(m) && SP[k].ed);
@@ -1583,7 +1703,7 @@ function renderSeason() {
   $('drawer').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => { setTool('plant'); ST.armed.plant = b.dataset.sp; renderHint(); renderStrip(); });
 }
 function renderView() {
-  const L = [['setbacks', 'Septic, well + easement setbacks', '#2e9e57'], ['irrigation', 'Irrigation heads + Z7 berry drip', '#2a78c2'], ['contours', '1′ contours from the plot plan', '#8c5a28'], ['labels', 'Names + plant IDs', COL.ink], ['drifts', 'Bed plantings (drifts)', '#7b9447'], ['issues', 'Rule markers (red ! breaks a rule, amber dot to check)', COL.err], ['rings', 'Mature canopy rings (trees)', COL.mute], ['grid', 'Always show the snap grid', COL.mute]];
+  const L = [['setbacks', 'Septic, well + easement setbacks', '#2e9e57'], ['irrigation', 'Irrigation heads, Z7 berry drip + Z8 food-bed drip', '#2a78c2'], ['contours', '1′ contours from the plot plan', '#8c5a28'], ['labels', 'Names + plant IDs', COL.ink], ['drifts', 'Bed plantings (drifts)', '#7b9447'], ['issues', 'Rule markers (red ! breaks a rule, amber dot to check)', COL.err], ['rings', 'Mature canopy rings (trees)', COL.mute], ['grid', 'Always show the snap grid', COL.mute]];
   $('drawer').innerHTML = sec('v-view', 'View', `<div class="seg"><button data-v="2d" aria-pressed="${!V3.on}">2D plan</button><button data-v="3d" aria-pressed="${V3.on}">3D orbit</button></div>${V3.on ? `<label class="tog"><input type="checkbox" id="v3sh" ${V3.shadows ? 'checked' : ''}>Shadows</label><label class="tog"><input type="checkbox" id="v3beds" ${V3.beds ? 'checked' : ''}>Bed plantings as 3D plants</label><div class="acts" style="margin-top:6px"><button id="v3home">Reset camera</button><button id="v3top">Top down</button><button id="v3street">From the street</button></div>` : ''}` + tip(V3.on ? 'Drag to orbit, right-drag or two fingers to pan, scroll or pinch to zoom. Select, Plant, Build and Erase work in 3D; beds and paths are drawn in the 2D plan.' : 'The 3D view uses the same plan: every edit shows up in both.') + (small ? '' : `<div class="keys">${[['W A S D', V3.on ? 'Move the camera' : 'Pan the map'], ['Q / E', 'Orbit left / right (3D)'], ['R / F', 'Tilt up / down (3D)'], ['Z / C  or  + / −', 'Zoom in / out'], ['Shift', 'Move faster'], ['H', V3.on ? 'Reset the camera' : 'Fit the lot'], ['T', 'Switch 2D / 3D'], ['V P B L U X G', 'Tools'], ['R  (with a selection)', 'Rotate 15° (Shift: 90°)'], ['Arrows (with a selection)', 'Nudge'], ['Ctrl Z / Y / D / C / V', 'Undo, redo, duplicate, copy, paste'], ['Del  ·  Esc', 'Remove  ·  Deselect']].map(([k, d]) => `<span><kbd>${k}</kbd></span><span>${d}</span>`).join('')}</div>`), true, V3.on ? '3D' : '2D')
     + sec('v-snap', 'Snapping', `<div class="field"><label for="gridSel">Grid</label><select id="gridSel">${[[0, 'Off'], [0.5, '6″'], [1, '1 ft'], [2, '2 ft'], [5, '5 ft']].map(([v, n]) => `<option value="${v}" ${+ST.snap.grid === v ? 'selected' : ''}>${n}</option>`).join('')}</select></div><label class="tog"><input type="checkbox" id="snapObj" ${ST.snap.obj ? 'checked' : ''}>Snap to path ends, corners + edges</label><label class="tog"><input type="checkbox" id="snapAng" ${ST.snap.angle ? 'checked' : ''}>Straighten near-45° lines</label>`, true)
     + sec('v-layers', 'Map layers', L.map(([k, t2, c]) => `<label class="tog"><input type="checkbox" id="ly-${k}" ${ST.layers[k] ? 'checked' : ''}>${t2}<span class="sw sq" style="background:${c}"></span></label>`).join(''), true)
@@ -1633,6 +1753,7 @@ function renderInspector() {
     const s = SP[e.sp], hh = grow(s.h0, s.hM, s.tau, ST.year), ww = canopyFt(s, ST.year), opts = Object.keys(CATS).map(cat => `<optgroup label="${CATS[cat]}">${Object.values(SP).filter(x => x.c === cat && (e.t === 'plant' ? !x.row : x.row)).map(x => `<option value="${x.k}" ${x.k === e.sp ? 'selected' : ''}>${esc(x.n + (x.v ? ' ' + x.v : ''))}</option>`).join('')}</optgroup>`).join('');
     h = `<header><h3>${esc(s.n)}<small>${esc(s.v || s.l)}${s.v ? ' · <i>' + esc(s.l) + '</i>' : ''}</small></h3><button class="x" id="ix" aria-label="Close">✕</button></header><div class="body">${heroHTML(e.sp)}<div class="chips"><span class="chip">${esc(entKind(e))}</span>${s.nat ? '<span class="chip">Native</span>' : ''}${s.ed ? '<span class="chip">Edible</span>' : ''}${s.ev ? '<span class="chip">Evergreen</span>' : ''}${chip}</div>
     <div class="field"><label for="iSp">Swap for</label><select id="iSp">${opts}</select></div>
+    ${e.t === 'plant' && EDIBLE_SWAP[e.sp] ? `<div class="field"><label>Swap to edible</label><div class="acts">${EDIBLE_SWAP[e.sp].map(k => `<button data-eswap="${k}" title="${esc((SWAP_NOTE[e.sp] || '') + (FOOD[foodKey(k)] ? ` About ${FOOD[foodKey(k)].lb} lb a year once mature.` : ''))}">${esc(SP[k].n + (SP[k].v && SP[k].v.length < 18 ? ' ' + SP[k].v : ''))}</button>`).join('')}</div>${SWAP_NOTE[e.sp] ? `<p style="font-size:11px;color:var(--mute);margin-top:4px">${esc(SWAP_NOTE[e.sp])}</p>` : ''}</div>` : ''}
     ${e.t === 'plant' ? `<div class="field"><label>Position (ft)</label><div class="pair"><input id="iX" type="number" step="0.5" value="${e.x}" aria-label="x"><input id="iY" type="number" step="0.5" value="${e.y}" aria-label="y"></div></div>` : `<div class="field"><label for="iSpc">Spacing (ft)</label><div class="pair"><input id="iSpc" type="number" min="1" max="10" step="0.5" value="${e.spacing || 2}"><span class="num" style="align-self:center">${rowCount(e)} plants · ${Math.round(geo(e).len)}′</span></div></div>`}
     <div class="facts"><div><span class="k">ID</span><b>${esc(e.id)}</b></div><div><span class="k">${2027 + ST.year} size</span><b>${hh.toFixed(0)}′ × ${ww.toFixed(0)}′</b></div><div><span class="k">Mature</span><b>${s.hM}′ × ${s.sM}′</b></div></div>
     ${sec('in-grow', 'Growth · tall × wide', `<div class="grow">${AGES.map(([y, n]) => `<button data-age="${y}" aria-pressed="${ST.year === y}"><span>${n}</span><b>${Math.round(grow(s.h0, s.hM, s.tau, y))}′×${Math.round(canopyFt(s, y))}′</b></button>`).join('')}</div>`, true)}
@@ -1642,6 +1763,7 @@ function renderInspector() {
     h = `<header><h3>${esc(entName(e))}<small>${Math.round(g.area).toLocaleString()} sf${u === 'sf' ? '' : ' · ' + fmtQ(q) + ' ' + u} · ${e.pts.length} corners</small></h3><button class="x" id="ix" aria-label="Close">✕</button></header><div class="body"><div class="chips"><span class="chip">Bed / zone</span>${chip}</div>
     <div class="field"><label for="iName">Name</label><input id="iName" type="text" value="${esc(e.name || '')}" placeholder="${esc(BM[e.mat].n + ' bed')}"></div>
     ${sec('in-mat', 'Material + edging', BM_GROUPS.map(([gn, keys]) => `<span class="k">${gn}</span>` + swatchGrid('bed', keys, e.mat)).join('') + `<div class="field"><label for="iEdge">Edging</label><select id="iEdge">${Object.entries(EDGES).map(([k, n]) => `<option value="${k}" ${k === (e.edge || 'none') ? 'selected' : ''}>${n}</option>`).join('')}</select></div><label class="tog"><input type="checkbox" id="iSmooth" ${e.smooth ? 'checked' : ''}>Curved edges</label>`, true, BM[e.mat].n)}
+    ${BM[e.mat].food === 'strawberry' ? `<div class="field"><label for="iSv">Strawberry type</label><select id="iSv"><option value="jewel" ${e.sv !== 'albion' ? 'selected' : ''}>June-bearing 'Jewel' · one big jam crop</option><option value="albion" ${e.sv === 'albion' ? 'selected' : ''}>Day-neutral 'Albion' · a summer-long trickle</option></select></div><div class="facts"><div><span class="k">Plants</span><b>${Math.round(g.area)}</b></div><div><span class="k">Per year</span><b>${Math.round(g.area * FOOD.strawberry.lb)} lb</b></div><div><span class="k">From</span><b>year 2</b></div></div>` : ''}
     ${sec('in-mix', 'Planting mix', `<span class="k">A count, or “drift” to fill</span>${(e.comp || []).map(([k, n], i) => `<div class="mix"><span class="sw" style="background:${SP[k] ? plantColor(SP[k], ST.month) : '#999'}"></span><select data-mixsp="${i}" aria-label="Plant">${Object.values(SP).filter(x => !isTree(x) && !x.row).map(x => `<option value="${x.k}" ${x.k === k ? 'selected' : ''}>${esc(x.n)}</option>`).join('')}</select><input data-mixn="${i}" type="text" inputmode="numeric" value="${n === D ? 'drift' : n}" aria-label="Count or drift"><button data-mixdel="${i}" class="x" aria-label="Remove from mix">✕</button></div>`).join('') || '<p style="font-size:11px;color:var(--mute)">No plants in this bed yet.</p>'}<div class="acts" style="margin-top:6px"><button id="iMixAdd">+ Add plant</button></div>`, true, (e.comp || []).length)}
     ${ST.selVert >= 0 ? `<div class="acts"><button id="iDelV">Delete corner ${ST.selVert + 1}</button></div>` : `<p style="font-size:11px;color:var(--mute)">Drag the squares to reshape; drag a + to add a corner; ${small ? 'double-tap' : 'double-click'} a corner to delete it.</p>`}
     <div class="acts"><button id="iBack">Send back</button><button id="iFront">Bring front</button></div>${checksHTML}${actions}</div>`;
@@ -1662,12 +1784,15 @@ function renderInspector() {
     <div class="field"><label>Size (ft)</label><div class="pair"><input id="iWd" type="number" min="1" step="0.5" value="${e.w}" aria-label="Width"><input id="iHt" type="number" min="1" step="0.5" value="${e.h}" aria-label="Depth" ${d.lock ? 'disabled' : ''}></div></div>
     <div class="field"><label for="iRot">Rotation</label><div class="pair3"><input id="iRot" type="range" min="0" max="359" step="1" value="${e.rot || 0}"><b class="num" id="iRotv">${e.rot || 0}°</b><button id="iR90" class="x">+90°</button></div></div>
     <div class="field"><label>Center (ft)</label><div class="pair"><input id="iX" type="number" step="0.5" value="${e.x}" aria-label="x"><input id="iY" type="number" step="0.5" value="${e.y}" aria-label="y"></div></div>
+    ${e.k === 'calbed' ? `<div class="field"><label for="iCrop">Crop</label><select id="iCrop">${CALCROPS.map(([k, n]) => `<option value="${k}" ${k === (e.crop || 'potato') ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div><label class="tog"><input type="checkbox" id="iRotate" ${e.rotate ? 'checked' : ''}>Rotate each year (potatoes → beans → squash → garlic)</label>${(() => { const cr = calCrop(e), f = FOOD[cr], lb = e.w * e.h * f.lb; return `<div class="facts"><div><span class="k">${2027 + ST.year} crop</span><b>${esc(f.name)}</b></div><div><span class="k">Per year</span><b>${Math.round(lb)} lb</b></div><div><span class="k">Calories</span><b>${Math.round(lb * f.kcal / 1000)}k</b></div></div><p style="font-size:11px;color:var(--mute)">${esc(f.src)}. Needs about 2″ of compost a year.</p>`; })()}` : ''}
+    ${e.k === 'coop' ? `<p class="msg warn">TBD: hens wait on the Pine Crest HOA covenants and Almont Township zoning (how many hens, no roosters, setbacks). Placed here for layout only; it isn't counted in the budget. Run about 10 sf per hen; 6 hens ≈ 1,200–1,500 eggs a year.</p>` : ''}
     ${e.k === 'kgarden' ? `<div class="field"><label for="iBedSz">Raised beds</label><div class="pair"><select id="iBedSz">${['3x8', '4x8', '4x10', '4x12'].map(b => `<option value="${b}" ${b === (e.bed || '4x10') ? 'selected' : ''}>${b.replace('x', '′ × ')}′</option>`).join('')}</select><span class="num" style="align-self:center">${kgBeds(e).length} beds fit</span></div></div>` : ''}
     <div class="facts"><div><span class="k">Footprint</span><b>${Math.round(geo(e).area)} sf</b></div><div><span class="k">Est. cost</span><b>${money(priceOf(typeof d.cost === 'function' ? 'st:' + e.id : 'st:' + e.k, cost))}</b></div><div><span class="k">ID</span><b>${e.id}</b></div></div>${checksHTML}${actions}</div>`;
   }
   el.innerHTML = h; el.hidden = false; el.scrollTop = scrollTop; paintSwatches(el); wireShots(el); wireSecs(el); wireAges(el);
   const on = (id, evn, fn) => { const x = $(id); if (x) x[evn] = fn; };
   on('ix', 'onclick', () => setSel([])); on('iDup', 'onclick', duplicateSel); on('iDel', 'onclick', deleteSel); on('iCenter', 'onclick', () => centerOn(...center(e)));
+  el.querySelectorAll('[data-eswap]').forEach(b => b.onclick = () => { const k = b.dataset.eswap; edit(() => { e.sp = k; dirty(e); }); const c2 = checks(e, ents()), lv2 = worst(c2); toast(`Swapped to ${SP[k].n}. ${lv2 === 'ok' ? 'Rules clear.' : lv2 === 'warn' ? 'See the notes in Site checks.' : 'It breaks a rule here: see Site checks.'}`); });
   on('iSp', 'onchange', ev => edit(() => { e.sp = ev.target.value; if (e.t === 'row') e.spacing = SP[e.sp].sp || e.spacing; dirty(e); }));
   on('iX', 'onchange', ev => { const v = +ev.target.value; if (isFinite(v)) edit(() => { e.x = v; dirty(e); }); });
   on('iY', 'onchange', ev => { const v = +ev.target.value; if (isFinite(v)) edit(() => { e.y = v; dirty(e); }); });
@@ -1684,6 +1809,9 @@ function renderInspector() {
   on('iHt', 'onchange', ev => edit(() => { e.h = clamp(+ev.target.value || 1, SD[e.k].min || 1, 200); dirty(e); }));
   on('iKind', 'onchange', ev => edit(() => { const k = ev.target.value, d = SD[k]; e.k = k; if (d.lock) e.w = e.h = d.w; else if (e.w * e.h > d.w * d.h * 4 || e.w * e.h < d.w * d.h / 4) { e.w = d.w; e.h = d.h; } if (k === 'kgarden' && !e.bed) e.bed = '4x10'; dirty(e); }));
   on('iBedSz', 'onchange', ev => edit(() => { e.bed = ev.target.value; }));
+  on('iCrop', 'onchange', ev => edit(() => { e.crop = ev.target.value; dirty(e); }));
+  on('iRotate', 'onchange', ev => edit(() => { e.rotate = ev.target.checked ? 1 : 0; dirty(e); }));
+  on('iSv', 'onchange', ev => edit(() => { e.sv = ev.target.value; }));
   el.querySelectorAll('[data-mixsp]').forEach(s => s.onchange = () => edit(() => { e.comp[+s.dataset.mixsp][0] = s.value; dirty(e); }));
   el.querySelectorAll('[data-mixn]').forEach(s => s.onchange = () => edit(() => { const v = s.value.trim().toLowerCase(); e.comp[+s.dataset.mixn][1] = !v || v[0] === 'd' || !isFinite(+v) ? D : clamp(Math.round(+v) || 1, 1, 999); dirty(e); }));
   el.querySelectorAll('[data-mixdel]').forEach(s => s.onclick = () => edit(() => { e.comp.splice(+s.dataset.mixdel, 1); dirty(e); }));
@@ -2255,6 +2383,12 @@ function plantGeo(s, h, w, m, v, lite) {
   } else if (s.c === 'grass') {
     const n = lite ? 9 : 18, seed = bloom || (season(m) === 'fall' ? '#d8c690' : null); for (let i = 0; i < n; i++) { const a = i / n * 6.28 + r() * 0.4, t = R(0.12, 0.55), bh = h * R(0.7, 1.05); b.at('blade', Math.cos(a) * w * 0.08, 0, Math.sin(a) * w * 0.08, Math.max(0.08, w * 0.12), bh, Math.max(0.05, w * 0.05), fol, 0.12, Math.sin(a) * t, 0, -Math.cos(a) * t);
       if (seed && i % 2 === 0) b.at('lump', Math.cos(a) * (w * 0.08 + Math.sin(t) * bh), Math.cos(t) * bh * 1.02, Math.sin(a) * (w * 0.08 + Math.sin(t) * bh), w * 0.08, h * 0.16, w * 0.08, seed, 0.1); }
+  } else if (s.k === 'asparagus') {
+    if (m === 4 || m === 5) { for (let i = 0; i < (lite ? 4 : 9); i++) { const a = r() * 6.28, d = R(0, w * 0.3), hh = R(0.5, 0.9); b.stick(Math.cos(a) * d, 0, Math.sin(a) * d, Math.cos(a) * d, hh, Math.sin(a) * d, 0.05, '#7aa04a'); b.at('lump', Math.cos(a) * d, hh, Math.sin(a) * d, 0.13, 0.18, 0.13, '#8a7aa0', 0.1); } }
+    else if (fol || m >= 10) { const c2 = fol || '#c8b060'; b.stick(0, 0, 0, 0, h * 0.85, 0, 0.04, mixC(c2, '#2a3a1c', 0.3)); for (let i = 0; i < (lite ? 4 : 8); i++) { const t = R(0.2, 0.9), a = r() * 6.28; b.at('cone', Math.cos(a) * w * 0.12, h * t * 0.85, Math.sin(a) * w * 0.12, w * R(0.5, 0.8) * (1 - t * 0.5), h * 0.3, w * R(0.5, 0.8) * (1 - t * 0.5), mixC(c2, '#e8f0c0', R(0, 0.3)), 0.1); } if (bloom) dots(0, h * 0.6, 0, w * 0.35, h * 0.3, w * 0.35, 10, bloom, 0.08); }
+  } else if (s.k === 'rhubarb' && fol) {
+    const n = lite ? 4 : 8; for (let i = 0; i < n; i++) { const a = i / n * 6.28 + r() * 0.4, d = w * R(0.25, 0.4), hh = h * R(0.45, 0.7); b.stick(0, 0, 0, Math.cos(a) * d, hh, Math.sin(a) * d, 0.07, '#c23a4a'); b.at('blob', Math.cos(a) * d * 1.1, hh + 0.1, Math.sin(a) * d * 1.1, w * R(0.38, 0.5), 0.35, w * R(0.38, 0.5), fol, 0.12, 0, a, 0); }
+    if (bloom) for (let i = 0; i < 2; i++) b.at('lump', R(-0.3, 0.3), h * R(0.9, 1.1), R(-0.3, 0.3), 0.6, 1.2, 0.6, bloom, 0.08);
   } else {   // perennials and ground covers
     const low = h < 0.8, n = lite ? 3 : 6, base = fol || '#8a7a5a';
     for (let i = 0; i < n; i++) { const a = r() * 6.28, d = w * R(0, 0.25), sz = w * R(0.35, 0.55); b.at('blob', Math.cos(a) * d, low ? 0.05 : h * 0.22, Math.sin(a) * d, sz * 1.15, Math.max(0.25, (low ? h : h * 0.5) * R(0.8, 1.1)), sz, base, 0.14, 0, r() * 6.28, 0); }
@@ -2287,6 +2421,10 @@ function st3D(e) {
   else if (k === 'round') { Cy('#7f8b8f', w, 1.5, d); Cy('#4a3a2a', w - 0.3, 0.06, d - 0.3, 0, 1.46, 0); }
   else if (k === 'kgarden') { const fc = '#3a3f44', H2 = 5; for (const [sx, sz, L, along] of [[0, d / 2, w, 1], [0, -d / 2, w, 1], [w / 2, 0, d, 0], [-w / 2, 0, d, 0]]) B(fc, along ? L : 0.12, H2, along ? 0.12 : L, sx, 0, sz, { op: 0.32 }); posts(w, d, 5.4, dark);
     for (const [x0, y0, x1, y1] of kgBeds(e)) { B(wood, x1 - x0, 1.1, y1 - y0, (x0 + x1) / 2, 0, (y0 + y1) / 2); B('#4a3a2a', x1 - x0 - 0.4, 0.06, y1 - y0 - 0.4, (x0 + x1) / 2, 1.06, (y0 + y1) / 2); } }
+  else if (k === 'calbed') { B(wood, w, 1.4, d); B('#4a3a2a', w - 0.4, 0.06, d - 0.4, 0, 1.36, 0); const cr = calCrop(e), cc = (CALCROPS.find(c => c[0] === cr) || CALCROPS[0])[2], sea = season(ST.month), grow2 = sea === 'summer' || ST.month === 9 || (cr === 'garlic' && ST.month >= 4 && ST.month <= 7);
+    if (grow2) { const fol = cr === 'wsquash' ? '#5f8a3a' : cr === 'drybean' ? '#6f9a48' : cr === 'garlic' || cr === 'onion' ? '#9ab86a' : '#6a9440', ht = cr === 'drybean' ? 1.6 : cr === 'wsquash' ? 1.2 : cr === 'garlic' || cr === 'onion' ? 1.4 : 1.8, n = Math.max(2, Math.round(d / 2)); for (let i = 0; i < n; i++) { const z = -d / 2 + (i + 0.5) * d / n; put(g, 'ball', fol, w * 0.85, ht, d / n * 1.05, 0, 1.4 + ht * 0.25, z); if (cr === 'wsquash' && ST.month >= 8 && i % 2 === 0) put(g, 'ball', cc, 0.9, 0.8, 1.3, w * 0.25, 1.5, z); } } }
+  else if (k === 'lowtunnel') { put(g, 'hoop', '#f2f4f0', w, 2.2, d, 0, 0, 0, { op: 0.5, ds: 1 }); }
+  else if (k === 'coop') { const cw = Math.min(w, 6), ch = Math.min(d, 4); gable(g, cw, ch, 4, 6, '#a0522d', '#5d5048', { op: 0.75 }); g.children.forEach(c => c.position.add(new THREE.Vector3(-w / 2 + cw / 2, 0, -(-d / 2 + ch / 2)))); for (const [sx, sz, L2, along] of [[0, d / 2, w, 1], [0, -d / 2, w, 1], [w / 2, 0, d, 0], [-w / 2, 0, d, 0]]) B('#3a3f44', along ? L2 : 0.08, 5, along ? 0.08 : L2, sx, 0, sz, { op: 0.25 }); }
   else if (k === 'compost') { B(wood, w, 3.2, d); B('#4a3a2a', w - 0.5, 0.1, d - 0.5, 0, 3.0, 0); }
   else if (k === 'greenhouse') gable(g, w, d, 6.5, 9.5, '#d5ebf2', '#d5ebf2', glass);
   else if (k === 'hoop') { put(g, 'hoop', '#eef2f0', w, Math.min(w, 18), d, 0, 0, 0, { op: 0.62, ds: 1 }); }
@@ -2336,10 +2474,11 @@ function rebuildObjs() {
     else if (e.t === 'st' && SD[e.k]) o = st3D(e);
     else if (e.t === 'path' && PM[e.mat] && PM[e.mat].fence) o = fence3D(e);
     if (o) { o.userData.id = e.id; G.add(o); V3.objs.set(e.id, o); } }
+  if (ST.layers.irrigation) { const z8 = zone8(); if (z8.lines.length) { const zg = new THREE.Group(); for (const L2 of z8.lines) zg.add(drapeLine(L2, 0xc27a14, { lift: 0.24, dash: [1.4, 0.9] })); zg.add(label3D('Z8 FOOD DRIP', '#c27a14', z8.lines[0][2][0], z8.lines[0][2][1], 3.5, 2)); G.add(zg); } }
   if (oldCache) for (const [k, g] of oldCache) if (!PCACHE.has(k)) g.dispose();
   V3.built = keyObjs(); V3.dirty = true; V3.hovDirty = true;
 }
-const keyObjs = () => ST.cur + '|' + editVer + '|' + ST.month + '|' + ST.year + '|' + V3.beds + ST.layers.drifts;
+const keyObjs = () => ST.cur + '|' + editVer + '|' + ST.month + '|' + ST.year + '|' + V3.beds + ST.layers.drifts + ST.layers.irrigation;
 let flatVer = -1, flatS = '';
 function flatSig() { if (flatVer !== editVer) { flatVer = editVer; flatS = JSON.stringify(ents().filter(e => e.t === 'bed' || (e.t === 'path' && PM[e.mat] && !PM[e.mat].fence) || (e.t === 'st' && !TALL.has(e.k))).map(strip)); } return flatS; }
 const keyTex = () => ST.cur + '|' + flatSig() + '|' + ST.month + '|' + ST.layers.contours + '|' + COL['map-bg'] + V3.beds;
@@ -2663,6 +2802,6 @@ const reTheme = () => { DIRTY = true; readColors(); groundKey = ''; contour = nu
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', reTheme);
 new MutationObserver(reTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(() => { contour = null; groundKey = ''; if (ground) buildGround(); });
-window.__yb = { ST, ents, plan, byId, geo, checks, budget, setTool, setPlan, cam, w2s, s2w, snapPt, undo, redo, fitLot, V3, setView, camPreset, UNDO, settled3D: () => V3.ready && V3.built === keyObjs() && V3.texKey === keyTex() && !V3.dirty };
+window.__yb = { foodKey, ST, ents, plan, byId, geo, checks, budget, setSel, foodOf, FOOD, SP, SD, BM, zone8, calCrop, setTool, setPlan, cam, w2s, s2w, snapPt, undo, redo, fitLot, V3, setView, camPreset, UNDO, settled3D: () => V3.ready && V3.built === keyObjs() && V3.texKey === keyTex() && !V3.dirty };
 boot();
 </script>
