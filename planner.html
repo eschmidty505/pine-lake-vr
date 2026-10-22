@@ -2757,10 +2757,13 @@ function valid(e) { if (!e || !e.id || !e.t) return false; if (e.t === 'plant') 
 function applySaved(d) { if (!d || !d.id || !Array.isArray(d.ents)) return; const p = { id: d.id, name: d.name || 'My yard', base: BUILTIN[d.base] ? d.base : 'A', builtin: !!BUILTIN[d.id], ents: d.ents.filter(valid), prices: d.prices || {}, edited: true }; const seen = new Set(); for (const e of p.ents) { if (e.t === 'bed' && !Array.isArray(e.comp)) e.comp = []; let id = e.id, n = 2; while (seen.has(id)) id = e.id + '-' + n++; e.id = id; seen.add(id); } ST.plans[d.id] = p; if (!ST.order.includes(d.id)) ST.order.push(d.id); }
 async function loadSaved() {
   try { const all = JSON.parse(localStorage.getItem('plb-plans') || '{}'); for (const d of Object.values(all)) applySaved(d); } catch (e) {}
-  try { const pr = JSON.parse(localStorage.getItem('plb-prefs') || 'null'); if (pr) { Object.assign(ST.layers, pr.layers || {}); Object.assign(ST.snap, pr.snap || {}); if (pr.cur && ST.plans[pr.cur]) ST.cur = pr.cur; if (pr.view === '3d') V3.want = true; if (typeof pr.shadows === 'boolean') V3.shadows = pr.shadows; if (typeof pr.beds3d === 'boolean') V3.beds = pr.beds3d; } } catch (e) {}
+  let wantCur = null; try { const pr = JSON.parse(localStorage.getItem('plb-prefs') || 'null'); if (pr) { wantCur = pr.cur || null; Object.assign(ST.layers, pr.layers || {}); Object.assign(ST.snap, pr.snap || {}); if (pr.cur && ST.plans[pr.cur]) ST.cur = pr.cur; if (pr.view === '3d') V3.want = true; if (typeof pr.shadows === 'boolean') V3.shadows = pr.shadows; if (typeof pr.beds3d === 'boolean') V3.beds = pr.beds3d; } } catch (e) {}
   setSaveState(Object.values(ST.plans).some(p => p.edited) ? 'Saved' : 'Not edited', false, 'Saved on this device'); editVer++; renderUI(); renderHint();
   if (!window.claude || !window.claude.use) return;
-  try { const db = await window.claude.use('db'); if (!db) return; DB = db; const snap = await db.collection('plans').get(); for (const d of snap.docs) applySaved(d.data()); setSaveState('Synced', true, 'Synced with this page’s shared store'); editVer++; renderUI(); } catch (e) {}
+  try { const db = await window.claude.use('db'); if (!db) return; DB = db; const snap = await db.collection('plans').get(); const docs = snap.docs.map(d => d.data()); for (const d of docs) applySaved(d);
+    // Open the plan this device last had open; with none remembered, open the newest saved plan rather than the starting plan.
+    if (!ST.sel.length) { let k = wantCur && ST.plans[wantCur] ? wantCur : null; if (!wantCur) { const mine = docs.filter(d => d && d.id && ST.plans[d.id]).sort((a, b) => String(b.updated || '').localeCompare(String(a.updated || ''))); if (mine.length) k = mine[0].id; } if (k && k !== ST.cur) { ST.cur = k; ST.selVert = -1; renderHint(); savePrefs(); } }
+    setSaveState('Synced', true, 'Synced with this page’s shared store'); editVer++; renderUI(); } catch (e) {}
 }
 function savePrefs() { try { localStorage.setItem('plb-prefs', JSON.stringify({ layers: ST.layers, snap: ST.snap, cur: ST.cur, view: V3.on ? '3d' : '2d', shadows: V3.shadows, beds3d: V3.beds })); } catch (e) {} }
 
