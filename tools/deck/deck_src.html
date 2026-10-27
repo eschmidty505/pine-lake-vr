@@ -230,7 +230,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
     <div><h1>Deck Studio</h1><span class="sub">Rear deck off the nook's east slider · freestanding over the walkout patio · sized, priced and sun-checked on the house model</span></div>
     <div><span class="lbl">Project</span><span class="val">7305 Pine Lake Blvd</span><span class="val">Berkeley · Elev C</span></div>
     <div><span class="lbl">Deck surface</span><span class="val" id="tb-h">889.18</span><span class="val">units: feet, lot grid</span></div>
-    <div><span class="lbl">Rev</span><span class="val">B · 2026-10-27</span><span class="val">PROJ · Deck</span></div>
+    <div><span class="lbl">Rev</span><span class="val">C · 2026-10-27</span><span class="val">PROJ · Deck</span></div>
   </header>
 
   <section class="box summary" aria-label="Current layout and price by who builds it">
@@ -261,6 +261,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <button class="btn" type="button" data-cam="great">Great room</button>
         <button class="btn" type="button" data-cam="under">Patio below</button>
         <button class="btn" type="button" data-cam="top">Top</button>
+        <button class="btn" type="button" data-cam="cols">Columns</button>
         <button class="btn" type="button" id="b-frame" aria-pressed="false">Framing</button>
         <button class="btn" type="button" id="b-furn3" aria-pressed="true">Furniture</button>
         <span class="hint">drag to orbit · scroll or pinch to zoom</span>
@@ -313,6 +314,16 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         </div>
       </details>
 
+      <details class="pg" open id="pg-posts"><summary><span class="t">Posts &amp; columns</span><span class="v" id="sv-posts"></span></summary>
+        <div class="pgb">
+          <div class="seg" role="group" aria-label="Posts" id="seg-posts"></div>
+          <label class="tgl"><input type="checkbox" id="c-brickall"> Wrap the house-side posts too</label>
+          <span class="tagline" id="posts-note"></span>
+          <button class="btn" type="button" id="b-cols">Show the columns in 3D</button>
+          <span class="tagline">Brick columns: 16″ square thin-brick wrap on a precast base with a cap under the beam, matched to the house brick. Sleeves: white composite over the 6×6.</span>
+        </div>
+      </details>
+
       <details class="pg" open id="pg-furn"><summary><span class="t">Furniture</span><span class="v" id="sv-furn"></span></summary>
         <div class="pgb">
           <label class="tgl"><input type="checkbox" id="c-furn"> Show furniture in the 3D and plan views</label>
@@ -331,7 +342,6 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
       <details class="pg" id="pg-add"><summary><span class="t">Add-ons</span><span class="v" id="sv-add"></span></summary>
         <div class="pgb">
           <label class="tgl"><input type="checkbox" id="c-drain"> Under-deck drainage (dry patio below)</label>
-          <label class="tgl"><input type="checkbox" id="c-brick"> Brick-wrapped outer posts</label>
         </div>
       </details>
 
@@ -399,7 +409,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <tr><td>Utility easements</td><td><span class="tag c">Clear</span></td><td>VI 3(ff) bans decks over utility easements. The nearest is the strip along the side lot lines, far from the house.</td></tr>
         <tr><td>Almont Twp building permit</td><td><span class="tag x">Yes</span></td><td>Michigan Residential Code: decks more than 30″ above grade need a permit. This one is 9′-8″ up. Expect footing-hole and final inspections. Ask whether they want an engineer's stamp for a freestanding deck this tall.</td></tr>
         <tr><td>Lapeer County Health (septic, well)</td><td><span class="tag c">No</span></td><td>The septic field is in the front yard. The well is 18′ west of the deck's west edge, past the 10′ setback.</td></tr>
-        <tr><td>Electrical / gas permits</td><td><span class="tag a">Only if</span></td><td>An outlet, light or gas stub added after closing needs its own permit. Done by Lombardo before drywall, it rides on the house permit.</td></tr>
+        <tr><td>Electrical permit</td><td><span class="tag a">Only if</span></td><td>An outlet or light added after closing needs its own permit. Done by Lombardo before drywall, it rides on the house permit. The grill runs on propane tanks, so no gas work.</td></tr>
         <tr><td>MISS DIG 811</td><td><span class="tag x">Yes</span></td><td>Call before digging footings. The well line, sump lead and any electric run sit behind the house.</td></tr>
       </table></div>
     </div>
@@ -409,7 +419,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
     </div>
   </section>
 
-  <div class="foot"><span>DK-01 · Deck Studio · house, grades and sliders from pine-lake-vr (index.html / planner.html) · yard features from your Yard Builder plan "LEGIT MANAUL SAVE"</span><span>Rev B · concept and budget, not a construction drawing</span></div>
+  <div class="foot"><span>DK-01 · Deck Studio · house, grades and sliders from pine-lake-vr (index.html / planner.html) · yard features from your Yard Builder plan "LEGIT MANAUL SAVE"</span><span>Rev C · concept and budget, not a construction drawing</span></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

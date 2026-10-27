@@ -38,7 +38,6 @@ const MATS = {
   cedar: { name: 'Cedar', short: 'Cedar', mat: [6, 9], lab: [3.5, 5.5], fascia: [3, 5], life: '15–25 yr', care: 'Oil or stain every 1–2 years. Softer than pine, so chair legs dent it.', heat: 'Cool underfoot.', tones: { warm: '#b07a4f', grey: '#8d8478', charcoal: '#4b4846' } },
   compE: { name: 'Composite, Trex Enhance class', short: 'Trex entry', mat: [6, 8], lab: [4, 7], fascia: [3, 5], life: '25–35 yr', care: 'Wash twice a year. No staining. 25-year fade and stain warranty is typical.', heat: 'Gets hot in full sun, worst in charcoal.', tones: { warm: '#8a6a4f', grey: '#8c8a84', charcoal: '#4a4b4c' } },
   compP: { name: 'Composite, Trex Transcend class', short: 'Trex premium', mat: [9, 13], lab: [4, 7], fascia: [4, 6.5], life: '25–50 yr', care: 'Wash. Deeper grain and better scratch and fade resistance than the entry line.', heat: 'Gets hot in full sun.', tones: { warm: '#7d5d44', grey: '#878580', charcoal: '#454647' } },
-  porc: { name: 'Porcelain pavers on a support grid', short: 'Porcelain', mat: [11, 19], lab: [10, 16], fascia: [4, 6.5], life: '40+ yr', care: 'Wash. Reset a tile if one cracks. Stone or brick look up top.', heat: 'Warmer than wood, cooler than dark composite.', tones: { warm: '#b8a387', grey: '#9d9a95', charcoal: '#5a5b5c' } },
 };
 const RAILS = {
   cable: { name: 'Cable', long: 'Black aluminum posts, stainless cable', mat: [50, 100], lab: [45, 80], sp: 4, col: '#1d2023' },
@@ -76,9 +75,10 @@ const PLAN_COL = { permpav: '#9a958c', pavers: '#a39484', needle: '#9a6b3c', riv
 function stRect(e) { const sw = (e.rot % 180) ? e.h : e.w, sh = (e.rot % 180) ? e.w : e.h; return { x0: e.x - sw / 2, x1: e.x + sw / 2, y0: e.y - sh / 2, y1: e.y + sh / 2 }; }
 
 /* ---------------- state ---------------- */
-const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, brick: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, view: '3d', pinned: true };
+const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, posts: 'plain', brickAll: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, view: '3d', pinned: true };
 let S = Object.assign({}, DEF);
 try { const s = JSON.parse(localStorage.getItem('dk01') || 'null'); if (s) S = Object.assign(S, s); } catch (e) { }
+if (S.brick) S.posts = 'brick'; delete S.brick; if (!MATS[S.mat]) S.mat = 'compE'; if (!S.posts) S.posts = 'plain';
 if (S.table === 'none') { S.table = 'r60'; S.tableOn = false; } if (!S.loungers) { S.loungers = 2; S.loungeOn = false; }
 const eff = s => Object.assign({}, s, { table: s.tableOn ? s.table : 'none', loungers: s.loungeOn ? s.loungers : 0 });
 const persist = () => { try { localStorage.setItem('dk01', JSON.stringify(S)); } catch (e) { } };
@@ -303,7 +303,9 @@ function estimate(s, G) {
   const hwSf = s.mat === 'pt' || s.mat === 'cedar' ? [2.0, 3.2] : [2.25, 3.6];
   line('frame', 'Connectors, bolts, hangers' + (s.mat === 'pt' || s.mat === 'cedar' ? '' : ', joist tape'), Math.round(G.area) + ' sf', add2(mul2(hwSf, G.area), mul2([45, 70], nP)), [0, 0]);
   line('frame', 'Frame labor at ~10′ (crew + scaffold)', Math.round(G.area) + ' sf', [0, 0], mul2([9, 15], G.area));
-  if (s.brick) { const n = G.posts.filter(p => p.beam !== 'inner').length; line('frame', 'Brick-wrapped outer posts (thin brick)', n + ' ea', mul2([650, 1100], n), mul2([900, 1500], n), 'match to Chimney Mountain not confirmed'); }
+  const wrapped = G.posts.filter(p => s.brickAll || p.beam !== 'inner').length;
+  if (s.posts === 'brick') { line('finish', 'Brick columns, 16″ thin-brick wrap' + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2([690, 1180], wrapped), mul2([900, 1500], wrapped), 'cement-board box, thin brick, precast cap and base; wider footing'); line('frame', 'Hidden bracing for wrapped posts', wrapped + ' ea', mul2([40, 80], wrapped), mul2([60, 120], wrapped), 'knee braces would show, so bracing moves inside or to engineered bases'); }
+  if (s.posts === 'sleeve') line('finish', 'Post sleeves, white composite' + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2([60, 120], wrapped), mul2([40, 70], wrapped), 'slips over the 6×6, with base and cap trim');
   const deckMat = M.mat;
   line('finish', 'Decking: ' + M.name, Math.round(G.area) + ' sf +10%', mul2(deckMat, G.area * 1.1), mul2(M.lab, G.area));
   line('finish', 'Fascia on the open edges', Math.round(G.openLf) + ' lf', mul2(M.fascia, G.openLf), mul2([4, 7], G.openLf));
@@ -354,8 +356,8 @@ function checks(s, G, F, E, sun, sunJun) {
   const lz = F.lounge.length ? zoneSun(sun, { u0: Math.min(...F.lounge.map(l => l.u0)), u1: Math.max(...F.lounge.map(l => l.u1)), v0: F.lounge[0].v0, v1: F.lounge[0].v1 }) : null;
   out.push({ s: sun.avg >= 5 ? 'ok' : sun.avg >= 3 ? 'warn' : 'bad', t: 'Sun on ' + dt.name + ': ' + sun.avg.toFixed(1) + ' h average', d: 'The house is south of the deck and shades it for part of the day. ' + Math.round(sun.pct6 * 100) + '% of the deck gets 6+ hours. Best spot gets ' + sun.max.toFixed(1) + ' h, worst ' + sun.min.toFixed(1) + ' h.' + (lz != null ? ' The lounge chairs get about ' + lz.toFixed(1) + ' h.' : '') + ' (Jun 21: ' + sunJun.avg.toFixed(1) + ' h average.)' });
   if (MATS[s.mat] && (s.mat === 'compE' || s.mat === 'compP') && s.tone === 'charcoal') out.push({ s: 'warn', t: 'Charcoal composite in the sun', d: 'Dark composite can get too hot for bare feet on summer afternoons. Grey or warm brown runs noticeably cooler; check the maker’s heat-rated lines.' });
-  if (s.mat === 'porc') out.push({ s: 'warn', t: 'Porcelain needs a stiff frame', d: 'Tiles crack if the deck flexes. Use the maker’s support grid, 12″ joist spacing or extra blocking, and expect the frame to cost a bit more than shown.' });
-  if (s.grill && F.grill) out.push({ s: 'info', t: 'Grill against the ' + F.grill.where, d: 'Away from the slider. Put the gas stub and a GFCI outlet on the rear wall near the house corner (checklist items 3 and 4). Use a grill mat on composite.' });
+  if (s.posts === 'brick') out.push({ s: 'warn', t: 'Brick columns hide the knee braces', d: 'A freestanding deck still needs lateral bracing. With 16″ brick wraps it moves inside the wrap, between posts under the joists, or to engineered post bases; show it on the permit drawing. Brick needs a footing about 24″ wide so the veneer sits on concrete, not wood. Thin brick matching Chimney Mountain isn’t confirmed; compare samples against the house.' });
+  if (s.grill && F.grill) out.push({ s: 'info', t: 'Grill against the ' + F.grill.where, d: 'Away from the slider. Propane tank grill, so no gas line; a GFCI outlet on the rear wall near the house corner covers lights and a rotisserie. Use a grill mat on composite and store the spare tank outside, not under the deck or in the garage.' });
   // stairs
   if (st) {
     const okR = st.rise <= 7.75 + 1e-6, okRise = st.R * 12 <= 151;
@@ -403,8 +405,14 @@ function renderPanel(G, E) {
   const dS = [E.withS[S.labor][0] - E.noS[S.labor][0], E.withS[S.labor][1] - E.noS[S.labor][1]];
   $('stair-note').textContent = G.stair ? `Shown as an option: ${G.stair.n} risers, ${ftin(G.stair.run)} run, ${ftin(G.stair.R)} drop. Adds ${rng2(dS)} in this labor mode.` : `Your plan is no stairs: the yard is reached through the walkout slider. The east stair would add ${rng2(dS)} here.`;
   $('sv-stairs').textContent = S.stairs === 'none' ? 'none (plan)' : S.stairs + ' · +' + k(dS[0]);
-  $('c-drain').checked = S.drain; $('c-brick').checked = S.brick; $('c-heat').checked = S.heat; $('c-furn').checked = S.showFurn;
-  $('sv-add').textContent = [S.drain && 'drainage', S.brick && 'brick posts'].filter(Boolean).join(', ') || 'none';
+  $('c-drain').checked = S.drain; $('c-brickall').checked = S.brickAll; $('c-heat').checked = S.heat; $('c-furn').checked = S.showFurn;
+  $('sv-add').textContent = S.drain ? 'drainage' : 'none';
+  seg('seg-posts', [['plain', '6×6 wood'], ['sleeve', 'White sleeves'], ['brick', 'Brick columns']], S.posts, v => { S.posts = v; update(); });
+  const nw = G.posts.filter(p => S.brickAll || p.beam !== 'inner').length;
+  $('sv-posts').textContent = { plain: '6×6 wood', sleeve: 'white sleeves', brick: 'brick columns' }[S.posts] + (S.posts !== 'plain' ? ' · ' + nw : '');
+  const pd = (mode) => { const a = estimate(Object.assign({}, S, { posts: mode }), G).by[S.labor], b = estimate(Object.assign({}, S, { posts: 'plain' }), G).by[S.labor]; return [a[0] - b[0], a[1] - b[1]]; };
+  $('posts-note').textContent = S.posts === 'plain' ? `Brick columns would add ${rng2(pd('brick'))}; white sleeves ${rng2(pd('sleeve'))}.` : `Adds ${rng2(pd(S.posts))} over plain 6×6 posts in this labor mode.`;
+  $('c-brickall').closest('label').hidden = S.posts === 'plain';
   seg('seg-labor', Object.entries(LABOR), S.labor, v => { S.labor = v; update(); });
   $('labor-note').textContent = LABOR_NOTE[S.labor]; $('sv-labor').textContent = LABOR[S.labor];
   seg('seg-date', DATES.map(d => [d.id, d.name]), S.date, v => { S.date = v; update({ noBuild: true }); });
@@ -415,7 +423,7 @@ function renderPanel(G, E) {
 function renderFurn(F) {
   const fit = kind => { const it = F.items.filter(i => i.kind === kind); if (!it.length) return ''; const bad = it.filter(i => !i.ok); return bad.length ? `<span class="fit no" title="${esc(bad.map(i => i.why).join('; '))}">doesn’t fit</span>` : '<span class="fit ok">fits</span>'; };
   const row = (id, on, label, fitHtml, segHtml) => `<div class="frow"><label class="tgl"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${label}</label>${fitHtml || ''}${segHtml ? `<div class="seg" role="group" aria-label="${label} options" id="${id}-seg"></div>` : ''}</div>`;
-  $('furn').innerHTML = row('f-table', S.tableOn, 'Table with umbrella', fit('table'), true) + row('f-lounge', S.loungeOn, 'Lounge chairs', fit('lounger'), true) + row('f-grill', S.grill, 'Gas grill by the east rail', fit('grill'), false);
+  $('furn').innerHTML = row('f-table', S.tableOn, 'Table with umbrella', fit('table'), true) + row('f-lounge', S.loungeOn, 'Lounge chairs', fit('lounger'), true) + row('f-grill', S.grill, 'Propane grill', fit('grill'), false);
   if (S.tableOn) seg('f-table-seg', [['bistro', 'Bistro, 2'], ['r48', '48″ round, 4'], ['r60', '60″ round, 6']], S.table, v => { S.table = v; update(); }); else $('f-table-seg').hidden = true;
   if (S.loungeOn) seg('f-lounge-seg', [[1, 'One'], [2, 'Two']], S.loungers, v => { S.loungers = +v; update(); }); else $('f-lounge-seg').hidden = true;
   $('f-table').onchange = e => { S.tableOn = e.target.checked; update(); };
@@ -468,7 +476,7 @@ function renderPlan(G, F, sun) {
   for (let v = 0.47; v < G.Dmax; v += 0.47 * 3) for (const [a, b] of scan(G.poly, v)) o.push(`<line x1="${sx(L(a))}" y1="${sy(V(v))}" x2="${sx(L(b))}" y2="${sy(V(v))}" stroke="var(--ink)" stroke-opacity=".12" stroke-width=".05"/>`);
   for (const sg of G.railSegs) o.push(`<line x1="${sx(L(sg.a[0]))}" y1="${sy(V(sg.a[1]))}" x2="${sx(L(sg.b[0]))}" y2="${sy(V(sg.b[1]))}" stroke="var(--ink)" stroke-width=".5"/>`);
   for (const b of G.beams) o.push(`<line x1="${sx(L(b.u0))}" y1="${sy(V(b.v))}" x2="${sx(L(b.u1))}" y2="${sy(V(b.v))}" stroke="var(--ink2)" stroke-width=".22" stroke-dasharray=".7 .35"/>`);
-  for (const p of G.posts) o.push(`<circle cx="${sx(L(p.u))}" cy="${sy(V(p.v))}" r=".67" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".25 .15"/><rect x="${+sx(L(p.u)) - .23}" y="${+sy(V(p.v)) - .23}" width=".46" height=".46" fill="var(--ink)"/>`);
+  for (const p of G.posts) { const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner'), hs = wr ? (S.posts === 'brick' ? .67 : .33) : .23; o.push(`<circle cx="${sx(L(p.u))}" cy="${sy(V(p.v))}" r="${wr && S.posts === 'brick' ? 1 : .67}" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".25 .15"/><rect x="${+sx(L(p.u)) - hs}" y="${+sy(V(p.v)) - hs}" width="${2 * hs}" height="${2 * hs}" fill="${wr ? (S.posts === 'brick' ? 'var(--brick)' : 'var(--sheet)') : 'var(--ink)'}" stroke="var(--ink)" stroke-width=".08"/>`); }
   // stairs
   if (G.stair) {
     const st = G.stair, r = st.rect;
@@ -528,9 +536,11 @@ function renderElev(G) {
   R(xa + 0.25, X0 + G.uEndOuter - 0.25, BEAM_BOT, JOIST_BOT, 'var(--ink2)', 'fill-opacity=".8"');
   for (const p of G.posts.filter(p => p.beam !== 'inner')) {
     const x = X0 + p.u, g = pyH(x, Y0 + p.v);
-    if (S.brick) R(x - 0.67, x + 0.67, g, BEAM_BOT, 'var(--brick)', 'stroke="var(--ink)" stroke-width=".08"'); else R(x - 0.23, x + 0.23, g + 0.17, BEAM_BOT, 'var(--ink2)');
+    if (S.posts === 'brick') { R(x - 0.83, x + 0.83, g, g + 0.33, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); R(x - 0.67, x + 0.67, g + 0.33, BEAM_BOT - 0.25, 'var(--brick)', 'stroke="var(--ink)" stroke-width=".08"'); for (let e = g + 0.55; e < BEAM_BOT - 0.3; e += 0.45) o.push(`<line x1="${sx(x + 0.67)}" y1="${sy(e)}" x2="${sx(x - 0.67)}" y2="${sy(e)}" stroke="var(--ink)" stroke-opacity=".25" stroke-width=".03"/>`); R(x - 0.83, x + 0.83, BEAM_BOT - 0.25, BEAM_BOT, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); }
+    else if (S.posts === 'sleeve') R(x - 0.33, x + 0.33, g + 0.17, BEAM_BOT, 'var(--sheet)', 'stroke="var(--ink)" stroke-width=".08"');
+    else R(x - 0.23, x + 0.23, g + 0.17, BEAM_BOT, 'var(--ink2)');
     o.push(`<rect x="${(+sx(x + 0.67))}" y="${sy(g)}" width="1.33" height="3.5" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".3 .2"/>`);
-    if (!S.brick) for (const s2 of [-1, 1]) { const xe = x + s2 * 2; if (xe > xa && xe < xb) o.push(`<line x1="${sx(x)}" y1="${sy(BEAM_BOT - 2)}" x2="${sx(xe)}" y2="${sy(BEAM_BOT)}" stroke="var(--ink2)" stroke-width=".22"/>`); }
+    if (S.posts === 'plain') for (const s2 of [-1, 1]) { const xe = x + s2 * 2; if (xe > xa && xe < xb) o.push(`<line x1="${sx(x)}" y1="${sy(BEAM_BOT - 2)}" x2="${sx(xe)}" y2="${sy(BEAM_BOT)}" stroke="var(--ink2)" stroke-width=".22"/>`); }
   }
   // guard
   const gt = TOP + S.guard / 12, rcol = RAILS[S.rail].col || 'var(--deck)';
@@ -564,7 +574,8 @@ function renderCost(G, E) {
   const grpName = { frame: 'Structure · a crew does this in “hire the frame” mode', finish: 'Surface and railing · yours in “hire the frame” mode', stairs: 'Stairs, structure (option)', stairfin: 'Stairs, treads and rails (option)' };
   const rows = [`<tr><th>Item</th><th class="n">Qty</th><th class="n">DIY materials</th><th class="n">Hired, installed</th></tr>`];
   let g = '';
-  for (const l of E.lines) {
+  const GO = { frame: 0, finish: 1, stairs: 2, stairfin: 3 };
+  for (const l of E.lines.slice().sort((x, y) => GO[x.grp] - GO[y.grp])) {
     if (l.grp !== g) { g = l.grp; rows.push(`<tr class="grp"><td colspan="4">${grpName[g]}</td></tr>`); }
     const h = [l.mat[0] * TAX * MK[0] + l.lab[0], l.mat[1] * TAX * MK[1] + l.lab[1]];
     rows.push(`<tr><td>${esc(l.name)}${l.note ? `<small>${esc(l.note)}</small>` : ''}</td><td class="n">${esc(l.qty)}</td><td class="n">${l.mat[1] ? rng2(l.mat) : '—'}</td><td class="n">${rng2(h)}</td></tr>`);
@@ -596,7 +607,7 @@ function renderCost(G, E) {
   const d = mode => [E.withS[mode][0] - E.noS[mode][0], E.withS[mode][1] - E.noS[mode][1]];
   const sg = geom(Object.assign({}, S, { stairs: S.stairs === 'none' ? 'east' : S.stairs })).stair;
   $('stair-delta').textContent = `The ${sg.side} stair would be ${sg.n} risers at ${inch(sg.rise / 12)} and ${sg.treads} treads, a ${ftin(sg.run)} run, 4′ wide, with guards both sides. It adds ${rng2(d('diy'))} DIY, ${rng2(d('split'))} with the frame crew building the stringers, or ${rng2(d('hired'))} fully hired. Easiest to add while the frame crew is there; adding it later means a second mobilization and two more footings.`;
-  $('matnotes').innerHTML = `<tr><th>Decking</th><th>Lasts</th><th>Upkeep</th><th>Underfoot</th></tr>` + Object.values(MATS).map(m => `<tr><td><b>${esc(m.short)}</b></td><td>${esc(m.life)}</td><td>${esc(m.care)}</td><td>${esc(m.heat)}</td></tr>`).join('') + `<tr><td><b>Brick</b></td><td colspan="3">A brick deck surface only works at grade, not 10′ up. Brick shows up three ways here: brick-wrapped outer posts (add-on above), porcelain pavers in a brick or stone look on the deck, or real brick pavers on the patio below, which you're building anyway.</td></tr>`;
+  $('matnotes').innerHTML = `<tr><th>Decking</th><th>Lasts</th><th>Upkeep</th><th>Underfoot</th></tr>` + Object.values(MATS).map(m => `<tr><td><b>${esc(m.short)}</b></td><td>${esc(m.life)}</td><td>${esc(m.care)}</td><td>${esc(m.heat)}</td></tr>`).join('') + `<tr><td><b>Brick</b></td><td colspan="3">A brick deck surface only works at grade, not 10′ up. Brick shows up two ways here: brick columns around the posts (Posts &amp; columns in the options) and brick pavers on the patio below, which you’re building anyway.</td></tr>`;
 }
 
 /* ================= DIY or hire table ================= */
@@ -611,7 +622,7 @@ function renderHire(G, E) {
     ['Cable railing', 'diy', 'Yours, with a kit. Drill the posts, run cable, crimp or swage the ends and tension in order from the middle out. Use the kit’s posts, since end posts carry the cable load. Budget a crimper.', '2–3 days'],
     ['Under-deck drainage', 'diy', 'Yours, and it has to go in after the joists and before the decking.', '1–2 days'],
     ['Brick-wrapped posts', 'either', 'Thin brick on cement board is DIY-able. A mason matches the house better; Chimney Mountain thin brick may not exist, so compare samples.', '2 days'],
-    ['Deck outlet, light, gas stub', 'lom', 'Through Lombardo before drywall (licensed trades, covered by the house permit and warranty). After closing each one needs its own permit and opening the brick.', 'before closing'],
+    ['Deck outlet and lights', 'lom', 'Through Lombardo before drywall (licensed trades, covered by the house permit and warranty). After closing each one needs its own permit and opening the brick. The grill runs on propane tanks, so no gas line.', 'before closing'],
     ['Permit drawing', 'either', 'Draw it from this page using the AWC DCA 6 freestanding-deck details. Pay an engineer only if Almont Twp asks for a stamp at this height.', '1 evening'],
   ];
   const lbl = { diy: 'DIY', hire: 'Hire', either: 'Your call', lom: 'Lombardo' };
@@ -629,7 +640,7 @@ function renderFacts() {
     ['Nook slider 6′ wide, 1′ off the rear wall; walkout slider and basement window positions', '3D model', 'i'],
     ['Great room rear window 11.2′ wide, sill 30″', '3D model', 'i'], ['Grade beyond the patio', '3D model grading', 'i'],
     ['Joist and beam spans', 'IRC R507 tables, #2 southern pine, approx.', 'a'], ['House footing projection and depth at the walkout wall', 'Assumed', 'a'],
-    ['Natural gas at the house (the fireplace is gas)', 'Assumed', 'a'], ['All prices: 2026 retail ranges, not quotes', 'Assumed', 'a'],
+    ['Natural gas house; the grill will run on propane tanks (no gas stub)', 'Owner', 'c'], ['All prices: 2026 retail ranges, not quotes', 'Assumed', 'a'],
     ['Fence, path, arbor, pergola, patios near the deck', 'Yard Builder plan, updated 2026-10-22', 'c'],
   ];
   const tl = { c: 'Confirmed', i: 'Inferred', a: 'Assumed' };
@@ -641,7 +652,6 @@ const TODO = [
   { id: 'nook-slider', t: 'Ask what Lombardo puts on the nook slider at closing', p: 'With no deck it opens onto a 9′-8″ drop. Ask whether they install a guard bar or lock the panel, and whether the occupancy inspection needs anything.', who: 'Debbie Kern', due: 'Pre-construction meeting' },
   { id: 'lombardo-deck', t: 'Get Lombardo’s deck option price, if they have one', p: 'Compare it to the "hire the frame" total here. A builder deck gets financed at the mortgage rate for 30 years, and contractor quotes for a cash job wait until after closing so they don’t touch underwriting.', who: 'Debbie Kern', due: 'Pre-construction meeting' },
   { id: 'gfci', t: 'Weatherproof GFCI outlet on the rear wall at deck height', p: 'East end, about 18″ above the deck surface (≈ 890.7) and 2–3′ west of the house corner, by the grill. It goes in before the brick.', who: 'Lombardo electrical', due: 'Before brick / pre-drywall walk' },
-  { id: 'gas', t: 'Natural gas stub for a grill', p: 'Rear wall near the house corner at deck height, with a shutoff and quick-connect. Ask for the option price. Confirm the meter location first.', who: 'Lombardo / Debbie (design)', due: 'Before brick / plumbing rough-in' },
   { id: 'light', t: 'Exterior light at the nook slider, switched inside', p: 'On the brick beside the slider, high enough to clear a 36–42″ guard. Optional second switched box for string lights at the east end.', who: 'Lombardo electrical', due: 'Pre-drywall walk' },
   { id: 'under', t: 'Power on the walkout wall for the patio below', p: 'A GFCI outlet and a switched box on the basement walkout wall if you add under-deck drainage and a fan or lights later.', who: 'Lombardo electrical', due: 'Pre-drywall walk' },
   { id: 'hose', t: 'Hose bib on the rear wall', p: 'Near the walkout, for washing the deck and patio. Check the base plan; add if missing.', who: 'Lombardo plumbing', due: 'Plumbing rough-in' },
@@ -730,6 +740,16 @@ function buildContext() {
   V3.sc.add(G);
 }
 const MAT3 = {};
+let BRICK3 = null;
+function brickMat() {
+  if (BRICK3) return BRICK3;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 256; const g = c.getContext('2d'); let r = 7; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+  g.fillStyle = '#b3a897'; g.fillRect(0, 0, 256, 256); const rows = 9, bh = 256 / rows, bw = 256 / 3;
+  const cols = ['#6e4a3a', '#7b5443', '#855d49', '#5f4034', '#74503f', '#8d6650', '#694637'];
+  for (let j = 0; j < rows; j++) for (let i = -1; i < 4; i++) { g.fillStyle = cols[(rnd() * cols.length) | 0]; g.fillRect(i * bw + (j % 2 ? bw / 2 : 0) + 2, j * bh + 2, bw - 4, bh - 4); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1.33 / 2, 7.4 / 2);   // modular brick: 3 bricks per 2′, 9 courses per 2′
+  return (BRICK3 = new THREE.MeshLambertMaterial({ map: t }));
+}
 const m3 = (key, c, o) => MAT3[key] || (MAT3[key] = lam(c, o));
 function build3D(G, F) {
   if (!V3.ok) return;
@@ -740,8 +760,11 @@ function build3D(G, F) {
   const rcol = RAILS[S.rail].col ? new THREE.Color(RAILS[S.rail].col) : tone.clone().offsetHSL(0, 0, 0.05);
   const rail = lam(rcol), steel = lam(0xc9cdd1);
   // framing
-  for (const p of G.posts) { const x = L(p.u), y = V(p.v), g = p.grade; add(box3(x - 0.75, x + 0.75, y - 0.75, y + 0.75, g - 0.05, g + 0.17, lam(0xb8b4ab))); if (S.brick && p.beam !== 'inner') add(box3(x - 0.67, x + 0.67, y - 0.67, y + 0.67, g + 0.17, BEAM_BOT, m3('brick', 0x7f5646))); else add(box3(x - 0.23, x + 0.23, y - 0.23, y + 0.23, g + 0.17, BEAM_BOT, pt));
-    if (!(S.brick && p.beam !== 'inner')) for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const ux = p.u + dx, vy = p.v + dy; if (ux < 0.2 || ux > G.W - 0.2 || vy < 0.2 || vy > G.Dmax - 0.2) continue; if (dy && Math.abs(p.v - G.vb0) < 0.01 && dy < 0) continue; add(rod(W3(x, y, BEAM_BOT - 2), W3(x + dx, y + dy, BEAM_BOT - 0.02), 0.29, 0.29, pt)); } }
+  for (const p of G.posts) { const x = L(p.u), y = V(p.v), g = p.grade; add(box3(x - 0.75, x + 0.75, y - 0.75, y + 0.75, g - 0.05, g + 0.17, lam(0xb8b4ab))); const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner');
+    if (wr && S.posts === 'brick') { add(box3(x - 0.83, x + 0.83, y - 0.83, y + 0.83, g, g + 0.33, m3('cap', 0xd8d3c7))); const col = box3(x - 0.67, x + 0.67, y - 0.67, y + 0.67, g + 0.33, BEAM_BOT - 0.25, brickMat()); add(col); add(box3(x - 0.83, x + 0.83, y - 0.83, y + 0.83, BEAM_BOT - 0.25, BEAM_BOT, m3('cap', 0xd8d3c7))); }
+    else if (wr) { add(box3(x - 0.33, x + 0.33, y - 0.33, y + 0.33, g + 0.17, BEAM_BOT, m3('sleeve', 0xf3f1ec))); add(box3(x - 0.4, x + 0.4, y - 0.4, y + 0.4, g + 0.17, g + 0.5, m3('sleeve', 0xf3f1ec))); }
+    else add(box3(x - 0.23, x + 0.23, y - 0.23, y + 0.23, g + 0.17, BEAM_BOT, pt));
+    if (!wr) for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const ux = p.u + dx, vy = p.v + dy; if (ux < 0.2 || ux > G.W - 0.2 || vy < 0.2 || vy > G.Dmax - 0.2) continue; if (dy && Math.abs(p.v - G.vb0) < 0.01 && dy < 0) continue; add(rod(W3(x, y, BEAM_BOT - 2), W3(x + dx, y + dy, BEAM_BOT - 0.02), 0.29, 0.29, pt)); } }
   for (const b of G.beams) add(box3(L(b.u0), L(b.u1), V(b.v) - 0.19, V(b.v) + 0.19, BEAM_BOT, JOIST_BOT, pt));
   for (let u = 0.06; u < G.W; u += 16 / 12) for (const [a, b] of scan(G.poly.map(q => [q[1], q[0]]), u)) add(box3(L(u) - 0.0625, L(u) + 0.0625, V(a) + 0.03, V(b) - 0.03, JOIST_BOT, TOP - DECK_T, pt));
   for (const sg of G.segs) { const a = sg.a, b = sg.b; add(rod(W3(L(a[0]), V(a[1]), TOP - 0.47), W3(L(b[0]), V(b[1]), TOP - 0.47), 0.1, 0.78, sg.open ? boards[1] : pt)); }
@@ -793,7 +816,7 @@ const CAMS = {
   yard: [[150, 206, 898], [134, 142, 886]], slider: [[123.6, 138.7, FF + 5.3], [150, 152, TOP + 2.2]], great: [[134.6, 131.2, FF + 5.2], [134.6, 165, FF + 2]],
   under: [[127, 160, PATIO + 5.4], [137, 138, PATIO + 3.5]], top: [[134, 146, 962], [134, 145.9, 889]],
 };
-function camPreset(kk) { if (!V3.ok) return; const [p, t] = CAMS[kk]; V3.cam.position.copy(W3(...p)); V3.ctl.target.copy(W3(...t)); V3.ctl.update(); V3.dirty = true; document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === kk))); }
+function camPreset(kk) { if (!V3.ok) return; if (kk === 'cols') { const G = LAST ? LAST.G : geom(S); CAMS.cols = [[X0 - 3, Y0 + G.Dmax + 13, PATIO + 4.8], [X0 + G.W * 0.55, Y0 + G.vb1, (PATIO + BEAM_BOT) / 2 + 0.8]]; } const [p, t] = CAMS[kk]; V3.cam.position.copy(W3(...p)); V3.ctl.target.copy(W3(...t)); V3.ctl.update(); V3.dirty = true; document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === kk))); }
 document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => camPreset(b.dataset.cam)));
 
 /* ================= update ================= */
@@ -859,7 +882,8 @@ $('r-d').addEventListener('input', e => { S.D = +e.target.value; update({ noBuil
 ['r-w', 'r-d'].forEach(id => $(id).addEventListener('change', () => update()));
 $('r-hour').addEventListener('input', e => { S.hour = +e.target.value; $('o-hour').textContent = hourLabel(S.hour); setSun(); persist(); });
 $('c-drain').addEventListener('change', e => { S.drain = e.target.checked; update(); });
-$('c-brick').addEventListener('change', e => { S.brick = e.target.checked; update(); });
+$('c-brickall').addEventListener('change', e => { S.brickAll = e.target.checked; update(); });
+$('b-cols').addEventListener('click', () => { if (S.posts === 'plain') S.posts = 'brick'; update(); setView('3d'); camPreset('cols'); });
 $('c-heat').addEventListener('change', e => { S.heat = e.target.checked; update({ noBuild: true }); });
 const toggleFurn = () => { S.showFurn = !S.showFurn; update(); };
 $('c-furn').addEventListener('change', e => { S.showFurn = e.target.checked; update(); });
@@ -876,7 +900,7 @@ $('b-play').addEventListener('click', e => {
 });
 
 /* ================= compare (this browser) ================= */
-const CMP_KEYS = ['W', 'D', 'shape', 'mat', 'tone', 'rail', 'guard', 'stairs', 'drain', 'brick'];
+const CMP_KEYS = ['W', 'D', 'shape', 'mat', 'tone', 'rail', 'guard', 'stairs', 'drain', 'posts', 'brickAll'];
 let CMP = []; try { CMP = JSON.parse(localStorage.getItem('dk01-cmp') || '[]') || []; } catch (e) { CMP = []; }
 const cmpKey = c => CMP_KEYS.map(kk => c[kk]).join('|');
 function renderCmp() {
@@ -884,7 +908,7 @@ function renderCmp() {
   if (!CMP.length) { el.innerHTML = '<div class="empty">Nothing to compare yet. Set up a layout and press “Add to compare” in the options. Add up to four.</div>'; return; }
   const dt = DATES.find(d => d.id === 'aug1');
   const rows = CMP.map((c, i) => { const s2 = Object.assign({}, S, c), G = geom(s2), E = estimate(s2, G), sun = sunMap(G, dt), on = cmpKey(c) === cmpKey(S);
-    return `<tr class="${on ? 'cur' : ''}"><td><b>${c.W}×${c.D}</b>${c.shape !== 'rect' ? ' ' + c.shape : ''}<small>${Math.round(G.area)} sf</small></td><td>${esc(MATS[c.mat].short)}<small>${c.tone}</small></td><td>${esc(RAILS[c.rail].name)} ${c.guard}″<small>${c.stairs === 'none' ? 'no stairs' : c.stairs + ' stairs'}${c.drain ? ' · drainage' : ''}${c.brick ? ' · brick posts' : ''}</small></td><td class="n">${sun.avg.toFixed(1)} h</td><td class="n">${rng2(E.diy)}</td><td class="n">${rng2(E.split)}</td><td class="n">${rng2(E.hired)}</td><td class="n"><button class="btn sm" type="button" data-load="${i}">Load</button> <button class="btn sm" type="button" data-del="${i}" aria-label="Remove from compare">✕</button></td></tr>`; });
+    return `<tr class="${on ? 'cur' : ''}"><td><b>${c.W}×${c.D}</b>${c.shape !== 'rect' ? ' ' + c.shape : ''}<small>${Math.round(G.area)} sf</small></td><td>${esc(MATS[c.mat].short)}<small>${c.tone}</small></td><td>${esc(RAILS[c.rail].name)} ${c.guard}″<small>${c.stairs === 'none' ? 'no stairs' : c.stairs + ' stairs'}${c.drain ? ' · drainage' : ''}${c.posts === 'brick' ? ' · brick columns' : c.posts === 'sleeve' ? ' · post sleeves' : ''}</small></td><td class="n">${sun.avg.toFixed(1)} h</td><td class="n">${rng2(E.diy)}</td><td class="n">${rng2(E.split)}</td><td class="n">${rng2(E.hired)}</td><td class="n"><button class="btn sm" type="button" data-load="${i}">Load</button> <button class="btn sm" type="button" data-del="${i}" aria-label="Remove from compare">✕</button></td></tr>`; });
   el.innerHTML = `<table class="cmp"><tr><th>Size</th><th>Decking</th><th>Railing</th><th class="n">Sun, Aug 1</th><th class="n">All DIY</th><th class="n">Hire the frame</th><th class="n">Fully hired</th><th></th></tr>${rows.join('')}</table>`;
 }
 $('cmp').addEventListener('click', e => { const l = e.target.closest('[data-load]'), d = e.target.closest('[data-del]');
@@ -901,7 +925,7 @@ $('b-cmp').addEventListener('click', () => {
 $('b-save').addEventListener('click', async () => {
   if (!LAST) return;
   const { G, E } = LAST;
-  const pick = { W: S.W, D: S.D, shape: S.shape, area: Math.round(G.area), mat: S.mat, matName: MATS[S.mat].name, tone: S.tone, rail: S.rail, guard: S.guard, stairs: S.stairs, drain: S.drain, brick: S.brick, labor: S.labor,
+  const pick = { W: S.W, D: S.D, shape: S.shape, area: Math.round(G.area), mat: S.mat, matName: MATS[S.mat].name, tone: S.tone, rail: S.rail, guard: S.guard, stairs: S.stairs, drain: S.drain, posts: S.posts, brickAll: S.brickAll, labor: S.labor,
     table: S.tableOn ? S.table : 'none', loungers: S.loungeOn ? S.loungers : 0, grill: S.grill,
     diy: E.diy.map(Math.round), split: E.split.map(Math.round), hired: E.hired.map(Math.round), posts: G.posts.length, railLf: Math.round(G.railLf), savedAt: new Date().toISOString() };
   try { localStorage.setItem('dk01-pick', JSON.stringify(pick)); } catch (e) { }
