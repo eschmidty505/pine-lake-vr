@@ -1548,16 +1548,25 @@ function init3D() {
 }
 function theme3D() { if (!V3.ok) return; const dk = document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches); V3.sc.background = new THREE.Color(dk ? 0x1d2429 : 0xc9d8e2); V3.sc.fog = new THREE.Fog(V3.sc.background, 180, 520); V3.dirty = true; }
 function buildGround() {
-  const x0 = 30, x1 = 290, y0 = 60, y1 = 262, st = 2, nx = (x1 - x0) / st + 1, ny = (y1 - y0) / st + 1;
-  const pos = new Float32Array(nx * ny * 3), col = new Float32Array(nx * ny * 3), idx = [];
+  /* grid lines every 2′, plus every house wall line, so the terrain meets the foundation cleanly; cells inside the
+     house footprint are left out, so the ground never runs through the basement (its floor slab shows instead) */
+  const lines = (a, b, extra) => { const v = new Set(); for (let t = a; t <= b + 1e-6; t += 2) v.add(+t.toFixed(3)); extra.forEach(e => v.add(+e.toFixed(3))); return [...v].sort((p, q) => p - q); };
+  const xs = lines(30, 290, HRECTS.flatMap(h => [HX + h[0], HX + h[1]])), ys = lines(60, 262, HRECTS.flatMap(h => [HY + h[2], HY + h[3]]));
+  const nx = xs.length, ny = ys.length, pos = new Float32Array(nx * ny * 3), col = new Float32Array(nx * ny * 3), idx = [];
   for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const x = x0 + i * st, y = y0 + j * st, h = groundH(x, y), q = (j * nx + i) * 3, v = W3(x, y, h);
+    const x = xs[i], y = ys[j], h = groundH(x, y), q = (j * nx + i) * 3, v = W3(x, y, h);
     pos[q] = v.x; pos[q + 1] = v.y; pos[q + 2] = v.z; const t = 0.9 + 0.1 * Math.sin(x * 0.7) * Math.cos(y * 0.5);
     col[q] = 0.36 * t; col[q + 1] = 0.52 * t; col[q + 2] = 0.27 * t;
   }
-  for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) { const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, b, c, b, d, c); }
+  for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+    if (inHouseCut((xs[i] + xs[i + 1]) / 2, (ys[j] + ys[j + 1]) / 2)) continue;
+    const a = j * nx + i, b = a + 1, c = a + nx, d = c + 1; idx.push(a, b, c, b, d, c);
+  }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })); m.receiveShadow = true; V3.sc.add(m);
+  // level basement floor under the whole footprint, and the garage slab, so the openings look onto floor, not grass
+  for (const h of HRECTS.slice(0, 3)) V3.sc.add(box3(HX + h[0], HX + h[1], HY + h[2], HY + h[3], EL.B - 0.5, EL.B, lam(0xb7b5ae)));
+  { const h = HRECTS[3]; V3.sc.add(box3(HX + h[0], HX + h[1], HY + h[2], HY + h[3], EL.G - 0.5, EL.G, lam(0xb7b5ae))); }
   const far = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), lam(0x5d7a45)); far.rotation.x = -Math.PI / 2; far.position.y = 858 - Z0; V3.sc.add(far);
   const patio = box3(122.54, 144.54, 134.73, 150.73, PATIO - 0.2, PATIO + 0.06, lam(0xb5b0a6)); patio.receiveShadow = true; V3.sc.add(patio);
 }
