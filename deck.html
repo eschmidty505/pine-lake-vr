@@ -934,7 +934,15 @@ const circRect = (c, r) => { const cx = Math.max(r.u0, Math.min(c.u, r.u1)), cy 
 function segHitsRect(a, b, r) {     // segment vs axis-aligned rect, sampled
   for (let i = 0; i <= 40; i++) { const t = i / 40, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t; if (x > r.x0 && x < r.x1 && y > r.y0 && y < r.y1) return true; } return false;
 }
-const pyH = (x, y) => groundH(x, y);
+/* finished grade for the deck area: the shared model's soft pad blending leaves a few inches of hump where the house
+   and patio pads meet, so the walkout patio is held dead level at 879.5 and eased into the yard over 4′ */
+const PAT = { x0: 122.54, x1: 144.54, y0: 134.73, y1: 150.73 };
+const pyH = (x, y) => {
+  const dx = Math.max(PAT.x0 - x, 0, x - PAT.x1), dy = Math.max(PAT.y0 - y, 0, y - PAT.y1), d = Math.hypot(dx, dy);
+  if (d === 0) return PATIO;
+  const g = groundH(x, y); if (d >= 4) return g;
+  const t = d / 4, k = t * t * (3 - 2 * t); return PATIO + (g - PATIO) * k;
+};
 
 /* ---------------- geometry ---------------- */
 function geom(s) {
@@ -1551,10 +1559,10 @@ function buildGround() {
   /* grid lines every 2′, plus every house wall line, so the terrain meets the foundation cleanly; cells inside the
      house footprint are left out, so the ground never runs through the basement (its floor slab shows instead) */
   const lines = (a, b, extra) => { const v = new Set(); for (let t = a; t <= b + 1e-6; t += 2) v.add(+t.toFixed(3)); extra.forEach(e => v.add(+e.toFixed(3))); return [...v].sort((p, q) => p - q); };
-  const xs = lines(30, 290, HRECTS.flatMap(h => [HX + h[0], HX + h[1]])), ys = lines(60, 262, HRECTS.flatMap(h => [HY + h[2], HY + h[3]]));
+  const xs = lines(30, 290, HRECTS.flatMap(h => [HX + h[0], HX + h[1]])), ys = lines(60, 262, HRECTS.flatMap(h => [HY + h[2], HY + h[3]]).concat([PAT.y1]));
   const nx = xs.length, ny = ys.length, pos = new Float32Array(nx * ny * 3), col = new Float32Array(nx * ny * 3), idx = [];
   for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    const x = xs[i], y = ys[j], h = groundH(x, y), q = (j * nx + i) * 3, v = W3(x, y, h);
+    const x = xs[i], y = ys[j], h = pyH(x, y) - (x >= PAT.x0 && x <= PAT.x1 && y >= PAT.y0 && y <= PAT.y1 ? 0.06 : 0), q = (j * nx + i) * 3, v = W3(x, y, h);
     pos[q] = v.x; pos[q + 1] = v.y; pos[q + 2] = v.z; const t = 0.9 + 0.1 * Math.sin(x * 0.7) * Math.cos(y * 0.5);
     col[q] = 0.36 * t; col[q + 1] = 0.52 * t; col[q + 2] = 0.27 * t;
   }
