@@ -76,9 +76,11 @@ const PLAN_COL = { permpav: '#9a958c', pavers: '#a39484', needle: '#9a6b3c', riv
 function stRect(e) { const sw = (e.rot % 180) ? e.h : e.w, sh = (e.rot % 180) ? e.w : e.h; return { x0: e.x - sw / 2, x1: e.x + sw / 2, y0: e.y - sh / 2, y1: e.y + sh / 2 }; }
 
 /* ---------------- state ---------------- */
-const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, brick: false, table: 'r60', loungers: 2, grill: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false };
+const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, brick: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, view: '3d', pinned: true };
 let S = Object.assign({}, DEF);
 try { const s = JSON.parse(localStorage.getItem('dk01') || 'null'); if (s) S = Object.assign(S, s); } catch (e) { }
+if (S.table === 'none') { S.table = 'r60'; S.tableOn = false; } if (!S.loungers) { S.loungers = 2; S.loungeOn = false; }
+const eff = s => Object.assign({}, s, { table: s.tableOn ? s.table : 'none', loungers: s.loungeOn ? s.loungers : 0 });
 const persist = () => { try { localStorage.setItem('dk01', JSON.stringify(S)); } catch (e) { } };
 
 /* ---------------- polygon helpers ---------------- */
@@ -182,51 +184,59 @@ function geom(s) {
   return { W, D, Dmax, c, bump, poly, area, segs, railSegs, railLf, openLf, vb0, vb1, c1, js, maxSpan, innerGap: inner.gap, outerGap, posts, beams, beamLf, jCount, joistLf, stair, uEndOuter };
 }
 
-/* ---------------- furniture layout ---------------- */
+/* ---------------- furniture layout ----------------
+   Tries a few sensible spots for each piece (grill on the east rail or against the house, loungers along the north
+   edge or the east end, upright or end to end) and keeps the first arrangement where everything fits. */
 function furniture(s, G) {
-  const out = [], P = G.poly, W = G.W, D = G.D;
-  const landing = { u0: 0, u1: 3.5, v0: NOOK_SLIDER.v0 - 0.2, v1: NOOK_SLIDER.v1 + 0.2, name: 'slider landing', keep: true };
+  const P = G.poly, W = G.W, D = G.D, st = G.stair;
+  const landing = { u0: 0, u1: 3.5, v0: NOOK_SLIDER.v0 - 0.2, v1: NOOK_SLIDER.v1 + 0.2, name: 'slider landing' };
   const keep = [landing];
-  if (G.stair) { const st = G.stair; keep.push(st.side === 'east' ? { u0: W - 4, u1: W, v0: st.a[1], v1: st.b[1], name: 'stair top', keep: true } : { u0: st.a[0], u1: st.b[0], v0: D - 4, v1: D, name: 'stair top', keep: true }); }
-  let grill = null;
-  if (s.grill) {
-    grill = { kind: 'grill', name: 'Grill', u0: W - 2.6, u1: W - 0.4, v0: 0.4, v1: 5.4, clear: { u0: W - 4.6, u1: W - 2.6, v0: 0.4, v1: 5.4 } };
-    if (G.stair && G.stair.side === 'east' && G.stair.a[1] < 6) { const ue = Math.min(W, CORNER); grill = { kind: 'grill', name: 'Grill', u0: ue - 5.6, u1: ue - 0.6, v0: 0.4, v1: 2.6, clear: { u0: ue - 5.6, u1: ue - 0.6, v0: 2.6, v1: 4.6 } }; }
-    out.push(grill);
-  }
+  if (st) keep.push(st.side === 'east' ? { u0: W - 4, u1: W, v0: st.a[1], v1: st.b[1], name: 'stair top' } : { u0: st.a[0], u1: st.b[0], v0: D - 4, v1: D, name: 'stair top' });
+  const eastAt = v => G.c ? W - Math.max(0, v - (D - G.c)) : W;           // east edge at height v (clipped corner)
   const T = TABLES[s.table];
-  let table = null;
-  if (T.R) {
-    let u = 3.5 + T.R + 0.2, v = Math.max(T.R + 0.2, D - T.R - 0.3);
-    if (G.bump && T.R <= 6.2) { u = (G.bump.u0 + G.bump.u1) / 2; v = D + G.bump.d - T.R - 0.3; }
-    table = { kind: 'table', name: T.name + ' with umbrella', u, v, R: T.R, top: T.top };
-    out.push(table);
+  const tables = !T.R ? [null] : (G.bump && T.R <= 6.2 ? [{ u: (G.bump.u0 + G.bump.u1) / 2, v: D + G.bump.d - T.R - 0.3 }] : []).concat([
+    { u: 3.5 + T.R + 0.2, v: Math.max(T.R + 0.2, D - T.R - 0.3) }, { u: 3.5 + T.R + 0.2, v: Math.max(T.R + 0.2, (D) / 2) }]).map(p => ({ kind: 'table', name: T.name + ' with umbrella', u: p.u, v: p.v, R: T.R, top: T.top }));
+  const ue = Math.min(W, CORNER);
+  const grills = !s.grill ? [null] : [
+    { kind: 'grill', name: 'Grill', where: 'east rail', u0: W - 2.6, u1: W - 0.4, v0: 0.4, v1: 5.4, clear: { u0: W - 4.6, u1: W - 2.6, v0: 0.4, v1: 5.4 } },
+    { kind: 'grill', name: 'Grill', where: 'house wall', u0: ue - 5.6, u1: ue - 0.6, v0: 0.4, v1: 2.6, clear: { u0: ue - 5.6, u1: ue - 0.6, v0: 2.6, v1: 4.6 } }];
+  const L = 6.7, w = 2.3, n = s.loungers;
+  const lounges = [];
+  if (!n) lounges.push([]);
+  else {
+    const mk = (u0, u1, v0, v1, i) => ({ kind: 'lounger', name: 'Lounge chair ' + (i + 1), u0, u1, v0, v1 });
+    let v1 = D - 0.3, v0 = v1 - L, e = eastAt(v1) - 0.4; if (st && st.side === 'east' && st.b[1] > v0) e = Math.min(e, W - 4.3); if (st && st.side === 'north') e = Math.min(e, st.a[0] - 0.3);
+    lounges.push([...Array(n)].map((_, i) => mk(e - i * (w + 1.2) - w, e - i * (w + 1.2), v0, v1, i)));                  // upright, NE corner
+    lounges.push([...Array(n)].map((_, i) => { const b = D - 0.3 - i * (w + 0.9), ee = Math.min(eastAt(b), st && st.side === 'north' ? st.a[0] - 0.3 : 99) - 0.4; return mk(ee - L, ee, b - w, b, i); }));   // end to end along the north edge
+    lounges.push([...Array(n)].map((_, i) => mk(W - 0.4 - i * (w + 1.2) - w, W - 0.4 - i * (w + 1.2), 0.4, 0.4 + L, i)));   // upright, SE corner (grill moves to the wall)
   }
-  const lounge = [];
-  if (s.loungers) {
-    const L = 6.7, w = 2.3, gap = 1.2, v1 = (G.bump ? D : D) - 0.3, v0 = v1 - L;
-    let ue = W - 0.4 - (G.c ? Math.max(0, v1 - (D - G.c)) : 0);
-    if (G.stair) { const st = G.stair; if (st.side === 'east' && st.b[1] > v0) ue = Math.min(ue, W - 4.3); if (st.side === 'north') ue = Math.min(ue, st.a[0] - 0.3); }
-    for (let i = 0; i < s.loungers; i++) { const u1 = ue - i * (w + gap); lounge.push({ kind: 'lounger', name: 'Lounge chair ' + (i + 1), u0: u1 - w, u1, v0, v1 }); }
-    out.push(...lounge);
-  }
-  /* fit checks */
-  const res = [];
-  for (const it of out) {
-    let ok = true, why = '';
-    if (it.kind === 'table') {
-      if (!circIn(it, P)) { ok = false; why = 'the chair circle runs off the deck'; }
-      for (const o of [...keep, ...out.filter(x => x !== it)]) { const r = o.kind === 'grill' ? o : o; if (o.kind !== 'table' && circRect(it, r)) { ok = false; why = 'crowds the ' + (o.name || o.kind).toLowerCase(); } if (o.kind === 'grill' && circRect(it, o.clear)) { ok = false; why = 'sits in the grill’s working space'; } }
-    } else {
-      if (!rectIn(it, P)) { ok = false; why = 'runs off the deck'; }
-      for (const o of [...keep, ...out.filter(x => x !== it && x.kind !== 'table')]) if (rectHit(it, o)) { ok = false; why = 'overlaps the ' + o.name.toLowerCase(); }
-      if (it.kind === 'grill') for (const o of [...keep, ...lounge]) if (rectHit(it.clear, o)) { ok = false; why = 'no 2′ working space in front'; }
+  const evalSet = items => {
+    let bad = 0;
+    for (const it of items) {
+      let ok = true, why = '';
+      if (it.kind === 'table') {
+        if (!circIn(it, P)) { ok = false; why = 'the chair circle runs off the deck'; }
+        for (const o of [...keep, ...items.filter(x => x !== it && x.kind !== 'table')]) { if (circRect(it, o)) { ok = false; why = 'crowds the ' + o.name.toLowerCase(); } if (o.kind === 'grill' && circRect(it, o.clear)) { ok = false; why = 'sits in the grill’s working space'; } }
+      } else {
+        if (!rectIn(it, P)) { ok = false; why = 'runs off the deck'; }
+        for (const o of [...keep, ...items.filter(x => x !== it && x.kind !== 'table')]) if (rectHit(it, o)) { ok = false; why = 'overlaps the ' + o.name.toLowerCase(); }
+        if (it.kind === 'grill') for (const o of [...keep, ...items.filter(x => x.kind === 'lounger')]) if (rectHit(it.clear, o)) { ok = false; why = 'no 2′ working space in front'; }
+        for (const g of items.filter(x => x.kind === 'grill' && x !== it)) if (rectHit(it, g.clear)) { ok = false; why = 'blocks the grill'; }
+      }
+      it.ok = ok; it.why = why; if (!ok) bad++;
     }
-    it.ok = ok; it.why = why; res.push(it);
+    return bad;
+  };
+  let best = null;
+  for (const t of tables) for (const g of grills) for (const lg of lounges) {
+    const items = [g, t, ...lg].filter(Boolean).map(x => Object.assign({}, x));
+    const bad = evalSet(items);
+    if (!best || bad < best.bad) best = { bad, items };
+    if (!bad) break;
   }
-  /* walkway from the slider past the table to the rest of the deck */
-  let walk = null;
-  if (table) { const gapBelow = table.v - table.R, gapAbove = (G.bump ? D + G.bump.d : D) - (table.v + table.R); walk = Math.max(gapBelow, 0); if (G.bump) walk = D; table.walk = walk; }
+  const out = best.items, table = out.find(i => i.kind === 'table') || null, grill = out.find(i => i.kind === 'grill') || null, lounge = out.filter(i => i.kind === 'lounger');
+  const walk = table ? (G.bump && table.v > D ? D : Math.max(0, table.v - table.R)) : null;
+  if (table) table.walk = walk;
   return { items: out, keep, table, grill, lounge, walk };
 }
 
@@ -345,7 +355,7 @@ function checks(s, G, F, E, sun, sunJun) {
   out.push({ s: sun.avg >= 5 ? 'ok' : sun.avg >= 3 ? 'warn' : 'bad', t: 'Sun on ' + dt.name + ': ' + sun.avg.toFixed(1) + ' h average', d: 'The house is south of the deck and shades it for part of the day. ' + Math.round(sun.pct6 * 100) + '% of the deck gets 6+ hours. Best spot gets ' + sun.max.toFixed(1) + ' h, worst ' + sun.min.toFixed(1) + ' h.' + (lz != null ? ' The lounge chairs get about ' + lz.toFixed(1) + ' h.' : '') + ' (Jun 21: ' + sunJun.avg.toFixed(1) + ' h average.)' });
   if (MATS[s.mat] && (s.mat === 'compE' || s.mat === 'compP') && s.tone === 'charcoal') out.push({ s: 'warn', t: 'Charcoal composite in the sun', d: 'Dark composite can get too hot for bare feet on summer afternoons. Grey or warm brown runs noticeably cooler; check the maker’s heat-rated lines.' });
   if (s.mat === 'porc') out.push({ s: 'warn', t: 'Porcelain needs a stiff frame', d: 'Tiles crack if the deck flexes. Use the maker’s support grid, 12″ joist spacing or extra blocking, and expect the frame to cost a bit more than shown.' });
-  if (s.grill && F.grill) out.push({ s: 'info', t: 'Grill at the east end', d: 'Away from the slider and the great room window. Put the gas stub and a GFCI outlet on the rear wall near the house corner (checklist items 3 and 4). Use a grill mat on composite.' });
+  if (s.grill && F.grill) out.push({ s: 'info', t: 'Grill against the ' + F.grill.where, d: 'Away from the slider. Put the gas stub and a GFCI outlet on the rear wall near the house corner (checklist items 3 and 4). Use a grill mat on composite.' });
   // stairs
   if (st) {
     const okR = st.rise <= 7.75 + 1e-6, okRise = st.R * 12 <= 151;
@@ -371,34 +381,57 @@ function seg(id, opts, cur, on) {
   const el = $(id); el.innerHTML = opts.map(o => `<button class="btn" type="button" data-v="${esc(o[0])}" aria-pressed="${String(o[0]) === String(cur)}">${esc(o[1])}</button>`).join('');
   el.onclick = e => { const b = e.target.closest('button'); if (!b) return; on(b.dataset.v); };
 }
+const SHAPE_SVG = p => { const W = p.W, D = p.D + (p.shape === 'bump' ? 4 : 0), sc = 20 / Math.max(D, 12), w = 32 * sc / 1.0, pts = p.shape === 'clip' ? [[0, 0], [p.W, 0], [p.W, p.D - 4], [p.W - 4, p.D], [0, p.D]] : p.shape === 'bump' ? [[0, 0], [p.W, 0], [p.W, p.D], [12, p.D], [12, p.D + 4], [2, p.D + 4], [2, p.D], [0, p.D]] : [[0, 0], [p.W, 0], [p.W, p.D], [0, p.D]];
+  return `<svg class="shape" viewBox="-1 -1 34 ${D + 2}" preserveAspectRatio="xMinYMid meet" aria-hidden="true"><rect x="-1" y="${D - 0.5}" width="23" height="1.5" fill="var(--house)"/><polygon points="${pts.map(q => q[0] + ',' + (D - q[1])).join(' ')}" fill="var(--deck)" stroke="var(--ink)" stroke-width=".5"/></svg>`; };
 function renderPanel(G, E) {
   const presetCost = p => { const s2 = Object.assign({}, S, { W: p.W, D: p.D, shape: p.shape }); return estimate(s2, geom(s2)).by[S.labor]; };
-  $('presets').innerHTML = PRESETS.map(p => { const on = S.W === p.W && S.D === p.D && S.shape === p.shape; return `<button class="card" type="button" data-p="${p.id}" aria-pressed="${on}"><span class="sw" style="background:var(--deck);opacity:.85;clip-path:${p.shape === 'clip' ? 'polygon(0 0,100% 0,100% 60%,80% 100%,0 100%)' : p.shape === 'bump' ? 'polygon(0 0,100% 0,100% 72%,55% 72%,55% 100%,10% 100%,10% 72%,0 72%)' : 'none'}"></span><span><b>${p.id} · ${esc(p.name)} <span class="mono" style="font-size:.78rem;font-weight:500">${p.W}×${p.D}</span></b><small>${esc(p.sub)}</small></span><span class="tot">${rng2(presetCost(p))}</span></button>`; }).join('');
-  $('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (!b) return; const p = PRESETS.find(q => q.id === b.dataset.p); Object.assign(S, { W: p.W, D: p.D, shape: p.shape }); update(); };
+  const cur = PRESETS.find(p => S.W === p.W && S.D === p.D && S.shape === p.shape);
+  $('presets').innerHTML = PRESETS.map(p => `<button class="pre" type="button" data-p="${p.id}" aria-pressed="${cur === p}" title="${esc(p.sub)}">${SHAPE_SVG(p)}<b>${p.id} · ${esc(p.name)}</b><span class="dim">${p.W}×${p.D}${p.shape === 'bump' ? ' + bay' : p.shape === 'clip' ? ' clipped' : ''}</span><span class="tot">${rng2(presetCost(p))}</span></button>`).join('') + `<button class="pre" type="button" data-p="custom" aria-pressed="${!cur}" tabindex="-1" style="cursor:default"><b>Custom</b><span class="dim">${S.W}×${S.D}${S.shape !== 'rect' ? ' ' + S.shape : ''}</span><span class="tot">use the sliders or drag in the plan</span></button>`;
+  $('preset-note').textContent = cur ? cur.sub : 'A custom size. Presets above reset it.';
+  $('presets').onclick = e => { const b = e.target.closest('[data-p]'); if (!b || b.dataset.p === 'custom') return; const p = PRESETS.find(q => q.id === b.dataset.p); Object.assign(S, { W: p.W, D: p.D, shape: p.shape }); update(); };
   $('r-w').value = S.W; $('o-w').textContent = ftin(S.W); $('r-d').value = S.D; $('o-d').textContent = ftin(S.D);
   seg('seg-shape', [['rect', 'Rectangle'], ['clip', 'Clipped corner'], ['bump', 'Table bay']], S.shape, v => { S.shape = v; update(); });
-  $('mats').innerHTML = Object.entries(MATS).map(([kk, m]) => { const s2 = Object.assign({}, S, { mat: kk }), c = estimate(s2, geom(s2)).by[S.labor]; return `<button class="card" type="button" data-m="${kk}" aria-pressed="${S.mat === kk}"><span class="sw" style="background:repeating-linear-gradient(0deg,${m.tones[S.tone]} 0 6px,rgba(0,0,0,.25) 6px 7px)"></span><span><b>${esc(m.name)}</b><small>$${m.mat[0]}–${m.mat[1]}/sf material · lasts ${esc(m.life)}</small></span><span class="tot">${rng2(c)}</span></button>`; }).join('');
+  $('sv-size').textContent = `${S.W}×${S.D} · ${Math.round(G.area)} sf`;
+  $('mats').innerHTML = Object.entries(MATS).map(([kk, m]) => { const s2 = Object.assign({}, S, { mat: kk }), c = estimate(s2, geom(s2)).by[S.labor]; return `<button class="card" type="button" data-m="${kk}" aria-pressed="${S.mat === kk}"><span class="sw" style="background:repeating-linear-gradient(0deg,${m.tones[S.tone]} 0 5px,rgba(0,0,0,.28) 5px 6px)"></span><span><b>${esc(m.short)}</b><small>$${m.mat[0]}–${m.mat[1]}/sf · ${esc(m.life)}</small></span><span class="tot">${rng2(c)}</span></button>`; }).join('');
   $('mats').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; S.mat = b.dataset.m; update(); };
   seg('seg-tone', [['warm', 'Warm brown'], ['grey', 'Mid grey'], ['charcoal', 'Charcoal']], S.tone, v => { S.tone = v; update(); });
+  $('sv-mat').textContent = MATS[S.mat].short + ' · ' + S.tone;
   seg('seg-rail', Object.entries(RAILS).map(([kk, r]) => [kk, r.name]), S.rail, v => { S.rail = v; update(); });
-  seg('seg-guard', [[36, '36″ (code minimum)'], [42, '42″']], S.guard, v => { S.guard = +v; update(); });
-  $('o-raillf').textContent = Math.round(G.railLf) + ' lf of guard';
+  seg('seg-guard', [[36, '36″ guard (code minimum)'], [42, '42″ guard']], S.guard, v => { S.guard = +v; update(); });
+  $('sv-rail').textContent = `${RAILS[S.rail].name} ${S.guard}″ · ${Math.round(G.railLf)} lf`;
   seg('seg-stairs', [['none', 'No stairs'], ['east', 'East, to the garden path'], ['north', 'North, to the patio']], S.stairs, v => { S.stairs = v; update(); });
-  $('stair-note').textContent = G.stair ? `Shown as an option: ${G.stair.n} risers, ${ftin(G.stair.run)} run, lands at ${ftin(G.stair.R)} below the deck. Adds ${rng2([E.withS[S.labor][0] - E.noS[S.labor][0], E.withS[S.labor][1] - E.noS[S.labor][1]])} in this labor mode.` : `Plan is no stairs; the yard is reached through the walkout slider. Adding the east stair would cost ${rng2([E.withS[S.labor][0] - E.noS[S.labor][0], E.withS[S.labor][1] - E.noS[S.labor][1]])} here.`;
-  $('c-drain').checked = S.drain; $('c-brick').checked = S.brick; $('c-grill').checked = S.grill; $('c-heat').checked = S.heat;
-  seg('seg-table', Object.entries(TABLES).map(([kk, t]) => [kk, t.name]), S.table, v => { S.table = v; update(); });
-  seg('seg-lounge', [[0, 'No loungers'], [1, '1 lounger'], [2, '2 loungers']], S.loungers, v => { S.loungers = +v; update(); });
+  const dS = [E.withS[S.labor][0] - E.noS[S.labor][0], E.withS[S.labor][1] - E.noS[S.labor][1]];
+  $('stair-note').textContent = G.stair ? `Shown as an option: ${G.stair.n} risers, ${ftin(G.stair.run)} run, ${ftin(G.stair.R)} drop. Adds ${rng2(dS)} in this labor mode.` : `Your plan is no stairs: the yard is reached through the walkout slider. The east stair would add ${rng2(dS)} here.`;
+  $('sv-stairs').textContent = S.stairs === 'none' ? 'none (plan)' : S.stairs + ' · +' + k(dS[0]);
+  $('c-drain').checked = S.drain; $('c-brick').checked = S.brick; $('c-heat').checked = S.heat; $('c-furn').checked = S.showFurn;
+  $('sv-add').textContent = [S.drain && 'drainage', S.brick && 'brick posts'].filter(Boolean).join(', ') || 'none';
   seg('seg-labor', Object.entries(LABOR), S.labor, v => { S.labor = v; update(); });
-  $('labor-note').textContent = LABOR_NOTE[S.labor];
-  seg('seg-date', DATES.map(d => [d.id, d.name]), S.date, v => { S.date = v; update(); });
+  $('labor-note').textContent = LABOR_NOTE[S.labor]; $('sv-labor').textContent = LABOR[S.labor];
+  seg('seg-date', DATES.map(d => [d.id, d.name]), S.date, v => { S.date = v; update({ noBuild: true }); });
   $('r-hour').value = S.hour; $('o-hour').textContent = hourLabel(S.hour);
   $('b-frame').setAttribute('aria-pressed', String(!!S.frame));
+  ['b-furn2', 'b-furn3'].forEach(id => $(id).setAttribute('aria-pressed', String(!!S.showFurn)));
+}
+function renderFurn(F) {
+  const fit = kind => { const it = F.items.filter(i => i.kind === kind); if (!it.length) return ''; const bad = it.filter(i => !i.ok); return bad.length ? `<span class="fit no" title="${esc(bad.map(i => i.why).join('; '))}">doesn’t fit</span>` : '<span class="fit ok">fits</span>'; };
+  const row = (id, on, label, fitHtml, segHtml) => `<div class="frow"><label class="tgl"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${label}</label>${fitHtml || ''}${segHtml ? `<div class="seg" role="group" aria-label="${label} options" id="${id}-seg"></div>` : ''}</div>`;
+  $('furn').innerHTML = row('f-table', S.tableOn, 'Table with umbrella', fit('table'), true) + row('f-lounge', S.loungeOn, 'Lounge chairs', fit('lounger'), true) + row('f-grill', S.grill, 'Gas grill by the east rail', fit('grill'), false);
+  if (S.tableOn) seg('f-table-seg', [['bistro', 'Bistro, 2'], ['r48', '48″ round, 4'], ['r60', '60″ round, 6']], S.table, v => { S.table = v; update(); }); else $('f-table-seg').hidden = true;
+  if (S.loungeOn) seg('f-lounge-seg', [[1, 'One'], [2, 'Two']], S.loungers, v => { S.loungers = +v; update(); }); else $('f-lounge-seg').hidden = true;
+  $('f-table').onchange = e => { S.tableOn = e.target.checked; update(); };
+  $('f-lounge').onchange = e => { S.loungeOn = e.target.checked; update(); };
+  $('f-grill').onchange = e => { S.grill = e.target.checked; update(); };
+  const n = F.items.length, bad = F.items.filter(i => !i.ok).length;
+  $('sv-furn').textContent = n ? (bad ? bad + ' won’t fit' : 'all fit') + (S.showFurn ? '' : ' · hidden') : 'none';
 }
 function hourLabel(h) { const hh = Math.floor(h), mm = Math.round((h - hh) * 60), ap = hh >= 12 ? 'pm' : 'am', h12 = ((hh + 11) % 12) + 1; const dt = DATES.find(d => d.id === S.date) || DATES[2], sp = sunPos(dt.m, dt.d, h); return `${h12}:${String(mm).padStart(2, '0')} ${ap} · sun ${sp.alt > 0 ? Math.round(sp.alt / D2R) + '° up' : 'down'}`; }
 
 /* ================= plan SVG ================= */
-const PV = { x0: 96, x1: 188, y0: 118, y1: 178 };
+let PLAN_SUM = '', ELEV_SUM = '';
+let PV = { x0: 96, x1: 188, y0: 118, y1: 178 };
 function renderPlan(G, F, sun) {
+  const ex = G.stair && G.stair.side === 'east' ? G.stair.run + 10 : 9, ny = G.stair && G.stair.side === 'north' ? G.stair.run + 6 : 6;
+  PV = { x0: 100, x1: X0 + 32 + (S.stairs === 'east' ? 24 : 8), y0: 126, y1: Y0 + 22 + (S.stairs === 'north' ? 21 : 5) };   // fixed extent, so dragging never rescales the view
   const sx = x => (x - PV.x0).toFixed(2), sy = y => (PV.y1 - y).toFixed(2), L = s => (X0 + s), V = s => (Y0 + s);
   const P = pts => pts.map(p => sx(p[0]) + ',' + sy(p[1])).join(' ');
   const o = [];
@@ -414,8 +447,8 @@ function renderPlan(G, F, sun) {
     else if (e.t === 'st') { const r = stRect(e); o.push(`<rect x="${sx(r.x0)}" y="${sy(r.y1)}" width="${(r.x1 - r.x0).toFixed(2)}" height="${(r.y1 - r.y0).toFixed(2)}" fill="var(--plan)" fill-opacity=".14" stroke="var(--plan)" stroke-width=".12"/>`); }
     else if (e.t === 'plant') o.push(`<circle cx="${sx(e.x)}" cy="${sy(e.y)}" r="${e.r}" fill="var(--plan)" fill-opacity=".18" stroke="var(--plan)" stroke-width=".1"/><text x="${sx(e.x)}" y="${+sy(e.y) + 0.4}" text-anchor="middle" font-size="1" fill="var(--ink2)">hazel</text>`);
   }
-  const lab = (x, y, t, a) => o.push(`<text x="${sx(x)}" y="${sy(y)}" font-size="1.15" fill="var(--ink2)" text-anchor="${a || 'start'}">${esc(t)}</text>`);
-  lab(165.5, 141.6, 'split-rail fence'); lab(158, 148.2, 'flagstone path'); lab(150.5, 130.5, 'pergola + potting bench', 'start'); lab(132, 165.2, 'paver patio (your plan)', 'middle'); lab(155, 117.8 + 3, 'garden court');
+  const lab = (x, y, t, a) => o.push(`<text x="${sx(x)}" y="${sy(y)}" font-size="0.95" fill="var(--ink2)" text-anchor="${a || 'start'}">${esc(t)}</text>`);
+  lab(171.8, 136, 'split-rail fence'); lab(158, 148.2, 'flagstone path'); lab(150.5, 130.5, 'pergola + potting bench', 'start'); lab(132, 165.2, 'paver patio (your plan)', 'middle'); lab(155, 117.8 + 3, 'garden court');
   // house
   o.push(`<polygon points="${P([[94.7, 118], [144.54, 118], [144.54, 134.73], [122.54, 134.73], [122.54, 142.73], [102.87, 142.73], [102.87, 134.73], [94.7, 134.73]])}" fill="var(--house)" stroke="var(--ink)" stroke-width=".22"/>`);
   lab(133.5, 127, 'GREAT ROOM', 'middle'); lab(112.7, 138.2, 'NOOK', 'middle'); lab(108, 127, 'KITCHEN', 'middle');
@@ -423,7 +456,7 @@ function renderPlan(G, F, sun) {
   o.push(`<line x1="${sx(X0)}" y1="${sy(Y0 + NOOK_SLIDER.v0)}" x2="${sx(X0)}" y2="${sy(Y0 + NOOK_SLIDER.v1)}" stroke="var(--accent)" stroke-width=".6"/>`); lab(X0 - 0.6, Y0 + 4.4, 'slider', 'end');
   for (const b of BSMT) o.push(`<line x1="${sx(b.x0)}" y1="${+sy(Y0) - 0.6}" x2="${sx(b.x1)}" y2="${+sy(Y0) - 0.6}" stroke="var(--ink2)" stroke-width=".25" stroke-dasharray=".6 .3"/>`);
   o.push(`<circle cx="${sx(WELL.x)}" cy="${sy(WELL.y)}" r="10" fill="none" stroke="var(--bad)" stroke-width=".12" stroke-dasharray=".8 .4"/><circle cx="${sx(WELL.x)}" cy="${sy(WELL.y)}" r=".5" fill="var(--bad)"/>`); lab(WELL.x, WELL.y - 1.8, 'well · 10′ setback', 'middle');
-  o.push(`<rect x="${sx(122.54)}" y="${sy(150.73)}" width="22" height="16" fill="none" stroke="var(--ink2)" stroke-width=".12" stroke-dasharray=".5 .4"/>`); lab(123, 151.4, 'walkout patio below (yours to build)');
+  o.push(`<rect x="${sx(122.54)}" y="${sy(150.73)}" width="22" height="16.0" fill="none" stroke="var(--ink2)" stroke-width=".12" stroke-dasharray=".5 .4"/>`); if (G.Dmax < 14.5) lab(X0 + 0.6, 150.73 - 1.3, 'walkout patio below (yours to build)');
   // sun map
   if (S.heat) {
     const mx = Math.max(1, sun.day);
@@ -445,21 +478,26 @@ function renderPlan(G, F, sun) {
     o.push(`<text x="${sx(cx)}" y="${+sy(cy) + 0.4}" text-anchor="middle" font-size="1.1" font-weight="600" fill="var(--ink)">DN ${st.n}R · option</text>`);
   }
   // furniture
-  for (const it of F.items) {
+  for (const it of (S.showFurn ? F.items : [])) {
     const col = it.ok ? 'var(--accent)' : 'var(--bad)';
     if (it.kind === 'table') { o.push(`<circle cx="${sx(L(it.u))}" cy="${sy(V(it.v))}" r="${it.R}" fill="none" stroke="${col}" stroke-width=".12" stroke-dasharray=".4 .25"/><circle cx="${sx(L(it.u))}" cy="${sy(V(it.v))}" r="${it.top}" fill="${col}" fill-opacity=".2" stroke="${col}" stroke-width=".1"/>`); lab(L(it.u), V(it.v) - 0.4, it.R > 4 ? 'table + umbrella' : 'bistro', 'middle'); }
     else { o.push(`<rect x="${sx(L(it.u0))}" y="${sy(V(it.v1))}" width="${(it.u1 - it.u0).toFixed(2)}" height="${(it.v1 - it.v0).toFixed(2)}" fill="${col}" fill-opacity=".15" stroke="${col}" stroke-width=".12"/>`); if (it.kind === 'grill' || it === F.lounge[0]) lab(L((it.u0 + it.u1) / 2) - (it.kind === 'grill' ? 0 : 1.2), V((it.v0 + it.v1) / 2), it.kind === 'grill' ? 'grill' : 'loungers', 'middle'); }
   }
   // dimensions
-  const dimH = (xa, xb, y, t) => { o.push(`<line x1="${sx(xa)}" y1="${sy(y)}" x2="${sx(xb)}" y2="${sy(y)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xa)}" y1="${+sy(y) - .6}" x2="${sx(xa)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xb)}" y1="${+sy(y) - .6}" x2="${sx(xb)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><text x="${sx((xa + xb) / 2)}" y="${+sy(y) - .35}" text-anchor="middle" font-size="1.25" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${t}</text>`); };
+  const dimH = (xa, xb, y, t) => { o.push(`<line x1="${sx(xa)}" y1="${sy(y)}" x2="${sx(xb)}" y2="${sy(y)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xa)}" y1="${+sy(y) - .6}" x2="${sx(xa)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xb)}" y1="${+sy(y) - .6}" x2="${sx(xb)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><text x="${sx((xa + xb) / 2)}" y="${+sy(y) - .35}" text-anchor="middle" font-size="1.1" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${t}</text>`); };
   const dimV = (ya, yb, x, t) => { o.push(`<line x1="${sx(x)}" y1="${sy(ya)}" x2="${sx(x)}" y2="${sy(yb)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${+sx(x) - .6}" y1="${sy(ya)}" x2="${+sx(x) + .6}" y2="${sy(ya)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${+sx(x) - .6}" y1="${sy(yb)}" x2="${+sx(x) + .6}" y2="${sy(yb)}" stroke="var(--ink)" stroke-width=".08"/><text x="${+sx(x) + .5}" y="${+sy((ya + yb) / 2) + .4}" font-size="1.25" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${t}</text>`); };
   dimH(X0, X0 + G.W, Y0 + G.Dmax + (G.stair && G.stair.side === 'north' ? G.stair.run + 1.5 : 1.8), ftin(G.W));
   dimV(Y0, Y0 + G.D, X0 + G.W + (G.stair && G.stair.side === 'east' ? G.stair.run + 5.5 : 1.4), ftin(G.D));
   // north arrow
   const ax = PV.x1 - PV.x0 - 4, ay = 6;
   o.push(`<g transform="translate(${ax},${ay})"><line x1="0" y1="2.5" x2="0" y2="-2.5" stroke="var(--ink)" stroke-width=".18"/><polygon points="0,-3.4 -0.9,-1.6 0.9,-1.6" fill="var(--ink)"/><text x="0" y="4.4" text-anchor="middle" font-size="1.2" font-weight="700" fill="var(--ink)">N</text><line x1="0" y1="0" x2="${(3 * Math.sin(5.1 * D2R)).toFixed(2)}" y2="${(-3 * Math.cos(5.1 * D2R)).toFixed(2)}" stroke="var(--sun)" stroke-width=".14"/><text x="1.2" y="-2.8" font-size=".9" fill="var(--ink2)">true</text></g>`);
+  // resize handles: east edge, north edge, corner
+  const hx = L(G.W), hy = V(G.D);
+  o.push(`<circle class="hdl" data-h="w" cx="${sx(hx)}" cy="${sy(V(G.D / 2))}" r="1.05"><title>Drag to change the width</title></circle>`);
+  o.push(`<circle class="hdl" data-h="d" cx="${sx(L(Math.min(G.W, CORNER) / 2 + (G.bump ? 7 : 0)))}" cy="${sy(hy)}" r="1.05"><title>Drag to change the depth</title></circle>`);
+  o.push(`<rect class="hdl" data-h="wd" x="${+sx(hx) - 1.05}" y="${+sy(hy) - 1.05}" width="2.1" height="2.1"><title>Drag to change width and depth</title></rect>`);
   const svg = $('plan'); svg.setAttribute('viewBox', `0 0 ${PV.x1 - PV.x0} ${PV.y1 - PV.y0}`); svg.innerHTML = o.join('');
-  $('plan-sum').textContent = `${ftin(G.W)} × ${ftin(G.D)}${G.bump ? ' + 10′ × 4′ bay' : G.c ? ' with a ' + ftin(G.c) + ' clipped corner' : ''} = ${Math.round(G.area)} sf. ${G.posts.length} posts on ${G.beams.length} beams, ${Math.round(G.railLf)} lf of guard${G.stair ? ', stairs drawn as an option' : ''}. Sun map: ${(DATES.find(d => d.id === S.date) || DATES[2]).name}, ${sun.avg.toFixed(1)} h average on the deck.`;
+  PLAN_SUM = `${ftin(G.W)} × ${ftin(G.D)}${G.bump ? ' + 10′ × 4′ bay' : G.c ? ' with a ' + ftin(G.c) + ' clipped corner' : ''} = ${Math.round(G.area)} sf. ${G.posts.length} posts on ${G.beams.length} beams, ${Math.round(G.railLf)} lf of guard${G.stair ? ', stairs drawn as an option' : ''}. Sun map: ${(DATES.find(d => d.id === S.date) || DATES[2]).name}, ${sun.avg.toFixed(1)} h average on the deck.`;
 }
 
 /* ================= elevation SVG (looking south: east is on the left) ================= */
@@ -479,7 +517,7 @@ function renderElev(G) {
   o.push(`<polygon points="${sx(101.7)},${sy(898.8)} ${sx(123.7)},${sy(898.8)} ${sx(123.7 - 3)},${sy(901.8)} ${sx(101.7 + 3)},${sy(901.8)}" fill="var(--ink2)" fill-opacity=".7"/>`);
   R(GR_WIN.x0, GR_WIN.x1, GR_WIN.e0, GR_WIN.e1, 'var(--accent)', 'fill-opacity=".35" stroke="var(--ink)" stroke-width=".08"');
   for (const b of BSMT) R(b.x0, b.x1, b.e0, b.e1, 'var(--accent)', 'fill-opacity=".25" stroke="var(--ink)" stroke-width=".08"');
-  o.push(`<text x="${sx((GR_WIN.x0 + GR_WIN.x1) / 2)}" y="${sy(GR_WIN.e1 + 0.5)}" text-anchor="middle" font-size="1" fill="var(--ink)">great room window</text><text x="${sx(132.7)}" y="${sy(887)}" text-anchor="middle" font-size=".95" fill="var(--ink)">walkout slider</text><text x="${sx(112.7)}" y="${sy(893)}" text-anchor="middle" font-size="1" fill="var(--ink)">nook</text>`);
+  o.push(`<text x="${sx((GR_WIN.x0 + GR_WIN.x1) / 2)}" y="${sy(GR_WIN.e1 + 0.5)}" text-anchor="middle" font-size="1" fill="var(--ink)">great room window</text><text x="${sx(132.7)}" y="${sy(882.6)}" text-anchor="middle" font-size=".9" fill="var(--ink)">walkout slider</text><text x="${sx(112.7)}" y="${sy(893)}" text-anchor="middle" font-size="1" fill="var(--ink)">nook</text>`);
   // grade along the outer edge, and the patio
   const pts = []; for (let x = xl; x <= xr + 0.01; x += 1) pts.push([x, pyH(x, Y0 + G.D)]);
   o.push(`<polygon points="${pts.map(p => sx(p[0]) + ',' + sy(p[1])).join(' ')} ${sx(xr)},${sy(EV.e0)} ${sx(xl)},${sy(EV.e0)}" fill="var(--plan)" fill-opacity=".25" stroke="var(--plan)" stroke-width=".15"/>`);
@@ -516,7 +554,7 @@ function renderElev(G) {
   dv(X0 + 3.5, PATIO, BEAM_BOT, 'clear ' + ftin(BEAM_BOT - PATIO), false);
   dv(xb + 0.8, TOP, gt, S.guard + '″ guard', false);
   const svg = $('elev'); svg.setAttribute('viewBox', `0 0 ${Wd.toFixed(2)} ${Hd}`); svg.innerHTML = o.join('');
-  $('elev-sum').textContent = `Deck surface ${TOP} (2″ below the nook floor at ${FF}). ${ftin(TOP - PATIO)} above the patio, ${ftin(BEAM_BOT - PATIO)} clear under the beams. Footings shown dashed 42″ deep.`;
+  ELEV_SUM = `Deck surface ${TOP} (2″ below the nook floor at ${FF}). ${ftin(TOP - PATIO)} above the patio, ${ftin(BEAM_BOT - PATIO)} clear under the beams. Footings shown dashed 42″ deep.`;
 }
 
 /* ================= cost table, matrix, notes ================= */
@@ -733,11 +771,12 @@ function build3D(G, F) {
   }
   // furniture
   const fab = m3('fab', 0x3c4247), white = m3('white', 0xeeeae2), um = m3('umb', 0xd9d2c3, { side: THREE.DoubleSide }), blk = m3('blk', 0x1e2022);
-  for (const it of F.items) {
+  for (const it of (S.showFurn ? F.items : [])) {
     if (it.kind === 'table') { const c = W3(L(it.u), V(it.v), TOP); const top = new THREE.Mesh(new THREE.CylinderGeometry(it.top, it.top, 0.1, 28), white); top.position.copy(c).add(new THREE.Vector3(0, 2.45, 0)); top.castShadow = true; add(top); add(box3(L(it.u) - 0.1, L(it.u) + 0.1, V(it.v) - 0.1, V(it.v) + 0.1, TOP, TOP + 7.4, blk));
       if (it.R > 4) { const cone = new THREE.Mesh(new THREE.ConeGeometry(4.6, 1.6, 8, 1, true), um); cone.position.copy(c).add(new THREE.Vector3(0, 7.6, 0)); cone.castShadow = true; add(cone); }
       const n = it.R > 5.5 ? 6 : it.R > 4 ? 4 : 2; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, r = it.top + 0.9, x = L(it.u) + Math.cos(a) * r, y = V(it.v) + Math.sin(a) * r; add(box3(x - 0.75, x + 0.75, y - 0.75, y + 0.75, TOP, TOP + 1.5, fab)); } }
     else if (it.kind === 'grill') { add(box3(L(it.u0), L(it.u1), V(it.v0), V(it.v1), TOP, TOP + 3.0, blk)); add(box3(L(it.u0) + 0.2, L(it.u1) - 0.2, V(it.v0) + 1.2, V(it.v1) - 1.2, TOP + 3.0, TOP + 3.9, blk)); }
+    else if (it.u1 - it.u0 > it.v1 - it.v0) { const vm = V((it.v0 + it.v1) / 2); add(box3(L(it.u0), L(it.u1) - 1.8, V(it.v0), V(it.v1), TOP + 0.9, TOP + 1.3, fab)); add(rod(W3(L(it.u1) - 1.9, vm, TOP + 1.1), W3(L(it.u1) - 0.3, vm, TOP + 2.9), it.v1 - it.v0, 0.35, fab)); }
     else { add(box3(L(it.u0), L(it.u1), V(it.v0), V(it.v1) - 1.8, TOP + 0.9, TOP + 1.3, fab)); add(rod(W3((L(it.u0) + L(it.u1)) / 2, V(it.v1) - 1.9, TOP + 1.1), W3((L(it.u0) + L(it.u1)) / 2, V(it.v1) - 0.3, TOP + 2.9), it.u1 - it.u0, 0.35, fab)); }
   }
   V3.dirty = true;
@@ -760,39 +799,102 @@ document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click',
 /* ================= update ================= */
 let LAST = null;
 function update(opts) {
-  S.W = Math.max(14, Math.min(32, S.W)); S.D = Math.max(8, Math.min(18, S.D));
-  const G = geom(S), F = furniture(S, G), E = estimate(S, G);
+  S.W = Math.max(14, Math.min(32, Math.round(S.W))); S.D = Math.max(8, Math.min(18, Math.round(S.D)));
+  const G = geom(S), F = furniture(eff(S), G), E = estimate(S, G);
   const sN = Object.assign({}, S, { stairs: 'none' }), sE = Object.assign({}, S, { stairs: S.stairs === 'none' ? 'east' : S.stairs });
   E.noS = estimate(sN, geom(sN)).by; E.withS = estimate(sE, geom(sE)).by;
   const dt = DATES.find(d => d.id === S.date) || DATES[2], sun = sunMap(G, dt), sunJun = sunMap(G, DATES[1]);
-  renderPanel(G, E);
-  $('sm-size').textContent = `${ftin(G.W)} × ${ftin(G.D)}${G.bump ? ' + bay' : ''}`;
+  renderPanel(G, E); renderFurn(F);
+  $('sm-size').textContent = `${S.W}′ × ${S.D}′${G.bump ? ' + bay' : ''}`;
   $('sm-desc').textContent = `${Math.round(G.area)} sf · ${MATS[S.mat].short} · ${RAILS[S.rail].name}${G.stair ? ' · stairs' : ''}`;
   $('sm-diy').textContent = rng2(E.diy); $('sm-split').textContent = rng2(E.split); $('sm-hired').textContent = rng2(E.hired);
-  $('sm-psf').textContent = `${k(E.hired[0] / G.area)}–${k(E.hired[1] / G.area)} per sf hired`;
+  $('sm-psf').textContent = `${k(E.hired[0] / G.area)}–${k(E.hired[1] / G.area)} per sf`;
   ['diy', 'split', 'hired'].forEach(m => $('sm-' + m + '-box').classList.toggle('on', S.labor === m));
+  $('pn-lbl').textContent = 'Your deck · ' + LABOR[S.labor].toLowerCase(); $('pn-cost').textContent = rng2(E.by[S.labor]);
+  $('pn-desc').textContent = `${S.W}×${S.D}${G.bump ? ' + bay' : ''} · ${Math.round(G.area)} sf · ${MATS[S.mat].short} · ${RAILS[S.rail].name} ${S.guard}″${G.stair ? ' · stairs' : ''} · ${sun.avg.toFixed(1)} h sun ${dt.name}`;
   $('tb-h').textContent = `${TOP} · ${ftin(TOP - PATIO)} above patio`;
-  const C = checks(S, G, F, E, sun, sunJun);
+  const C = checks(eff(S), G, F, E, sun, sunJun);
   $('checks').innerHTML = C.map(c => `<li class="${c.s}"><span class="st">${{ ok: 'OK', warn: 'Check', bad: 'Fix', info: 'Note' }[c.s]}</span><div><b>${esc(c.t)}</b><span>${esc(c.d)}</span></div></li>`).join('');
-  $('chk-sum').textContent = `${C.filter(c => c.s === 'ok').length} ok · ${C.filter(c => c.s === 'warn').length} to check · ${C.filter(c => c.s === 'bad').length} to fix`;
-  renderPlan(G, F, sun); renderElev(G); renderCost(G, E); renderHire(G, E);
+  const nW = C.filter(c => c.s === 'warn').length, nB = C.filter(c => c.s === 'bad').length;
+  $('chk-sum').textContent = `${C.filter(c => c.s === 'ok').length} ok · ${nW} to check · ${nB} to fix`;
+  $('chk-n').textContent = nW + nB; $('chk-t').textContent = nB ? 'to fix / check' : 'to check'; $('chk-link').classList.toggle('allok', !(nW + nB));
+  renderPlan(G, F, sun); renderElev(G); renderCost(G, E); renderHire(G, E); renderCmp();
+  $('vsum').textContent = S.view === 'elev' ? ELEV_SUM : PLAN_SUM;
   if (!opts || !opts.noBuild) build3D(G, F);
   setSun(); persist(); LAST = { G, E, F, sun };
 }
-$('r-w').addEventListener('input', e => { S.W = +e.target.value; update(); });
-$('r-d').addEventListener('input', e => { S.D = +e.target.value; update(); });
+/* views */
+function setView(v) {
+  S.view = v;
+  for (const [id, key] of [['v3d', '3d'], ['vplan', 'plan'], ['velev', 'elev']]) $(id).hidden = key !== v;
+  for (const b of document.querySelectorAll('.vtabs .tab')) b.setAttribute('aria-selected', String(b.dataset.view === v));
+  $('bar-3d').hidden = v !== '3d'; $('bar-plan').hidden = v !== 'plan';
+  $('vsum').textContent = v === 'elev' ? ELEV_SUM : PLAN_SUM; persist();
+  if (v === '3d' && V3.ok) { V3.dirty = true; window.dispatchEvent(new Event('resize')); }
+  if (v === 'plan') centerPlan();
+}
+function centerPlan() { const el = $('vplan'); if (!el || el.hidden || el.scrollWidth <= el.clientWidth) return; const f = (X0 + S.W / 2 - PV.x0) / (PV.x1 - PV.x0); el.scrollLeft = Math.max(0, f * el.scrollWidth - el.clientWidth / 2); }
+document.querySelectorAll('.vtabs .tab').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+document.querySelector('.vtabs').addEventListener('keydown', e => { if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return; const order = ['3d', 'plan', 'elev'], i = order.indexOf(S.view), n = order[(i + (e.key === 'ArrowRight' ? 1 : 2)) % 3]; setView(n); $('tab-' + n).focus(); });
+function setPin(on) { S.pinned = on; $('viewer').classList.toggle('unpinned', !on); $('b-pin').setAttribute('aria-pressed', String(on)); $('b-pin').textContent = on ? 'Pinned' : 'Pin view'; persist(); }
+$('b-pin').addEventListener('click', () => setPin(!S.pinned));
+/* drag-to-resize in the plan: the view is frozen at its largest extent while dragging so the handle stays under the pointer */
+{
+  const svg = $('plan'); let drag = null;
+  const toLot = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return [q.x + PV.x0, PV.y1 - q.y]; };
+  svg.addEventListener('pointerdown', e => { const h = e.target.closest('.hdl'); if (!h) return; e.preventDefault();
+    drag = { h: h.dataset.h };
+    svg.setPointerCapture(e.pointerId); svg.classList.add('dragging'); });
+  svg.addEventListener('pointermove', e => { if (!drag) return; const [x, y] = toLot(e); let ch = false;
+    if (drag.h.includes('w')) { const w = Math.max(14, Math.min(32, Math.round(x - X0))); if (w !== S.W) { S.W = w; ch = true; } }
+    if (drag.h.includes('d')) { const d = Math.max(8, Math.min(18, Math.round(y - Y0 - (S.shape === 'bump' ? 0 : 0)))); if (d !== S.D) { S.D = d; ch = true; } }
+    if (ch) update({ noBuild: true }); });
+  const end = () => { if (!drag) return; drag = null; svg.classList.remove('dragging'); update(); };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  svg.addEventListener('keydown', e => { const m = { ArrowRight: ['W', 1], ArrowLeft: ['W', -1], ArrowUp: ['D', 1], ArrowDown: ['D', -1] }[e.key]; if (!m) return; e.preventDefault(); S[m[0]] += m[1]; update(); });
+  svg.setAttribute('tabindex', '0');
+}
+$('r-w').addEventListener('input', e => { S.W = +e.target.value; update({ noBuild: true }); });
+$('r-d').addEventListener('input', e => { S.D = +e.target.value; update({ noBuild: true }); });
+['r-w', 'r-d'].forEach(id => $(id).addEventListener('change', () => update()));
 $('r-hour').addEventListener('input', e => { S.hour = +e.target.value; $('o-hour').textContent = hourLabel(S.hour); setSun(); persist(); });
 $('c-drain').addEventListener('change', e => { S.drain = e.target.checked; update(); });
 $('c-brick').addEventListener('change', e => { S.brick = e.target.checked; update(); });
-$('c-grill').addEventListener('change', e => { S.grill = e.target.checked; update(); });
 $('c-heat').addEventListener('change', e => { S.heat = e.target.checked; update({ noBuild: true }); });
+const toggleFurn = () => { S.showFurn = !S.showFurn; update(); };
+$('c-furn').addEventListener('change', e => { S.showFurn = e.target.checked; update(); });
+$('b-furn2').addEventListener('click', toggleFurn); $('b-furn3').addEventListener('click', toggleFurn);
 $('b-frame').addEventListener('click', () => { S.frame = !S.frame; update(); });
-$('b-reset').addEventListener('click', () => { S = Object.assign({}, DEF); update(); camPreset('yard'); });
+$('b-reset').addEventListener('click', () => { const v = S.view, p = S.pinned; S = Object.assign({}, DEF, { view: v, pinned: p }); update(); camPreset('yard'); });
+document.querySelectorAll('.summary [data-labor]').forEach(b => b.addEventListener('click', () => { S.labor = b.dataset.labor; update({ noBuild: true }); }));
 let PLAY = null;
 $('b-play').addEventListener('click', e => {
-  if (PLAY) { clearInterval(PLAY); PLAY = null; e.target.setAttribute('aria-pressed', 'false'); return; }
-  e.target.setAttribute('aria-pressed', 'true'); if (S.hour >= 20.9) S.hour = 6;
-  PLAY = setInterval(() => { S.hour = Math.round((S.hour + 0.25) * 4) / 4; if (S.hour > 21) { clearInterval(PLAY); PLAY = null; $('b-play').setAttribute('aria-pressed', 'false'); S.hour = 21; } $('r-hour').value = S.hour; $('o-hour').textContent = hourLabel(S.hour); setSun(); }, 220);
+  const btn = $('b-play');
+  if (PLAY) { clearInterval(PLAY); PLAY = null; btn.setAttribute('aria-pressed', 'false'); return; }
+  btn.setAttribute('aria-pressed', 'true'); if (S.hour >= 20.9) S.hour = 6;
+  PLAY = setInterval(() => { S.hour = Math.round((S.hour + 0.25) * 4) / 4; if (S.hour > 21) { clearInterval(PLAY); PLAY = null; btn.setAttribute('aria-pressed', 'false'); S.hour = 21; } $('r-hour').value = S.hour; $('o-hour').textContent = hourLabel(S.hour); setSun(); }, 220);
+});
+
+/* ================= compare (this browser) ================= */
+const CMP_KEYS = ['W', 'D', 'shape', 'mat', 'tone', 'rail', 'guard', 'stairs', 'drain', 'brick'];
+let CMP = []; try { CMP = JSON.parse(localStorage.getItem('dk01-cmp') || '[]') || []; } catch (e) { CMP = []; }
+const cmpKey = c => CMP_KEYS.map(kk => c[kk]).join('|');
+function renderCmp() {
+  const el = $('cmp');
+  if (!CMP.length) { el.innerHTML = '<div class="empty">Nothing to compare yet. Set up a layout and press “Add to compare” in the options. Add up to four.</div>'; return; }
+  const dt = DATES.find(d => d.id === 'aug1');
+  const rows = CMP.map((c, i) => { const s2 = Object.assign({}, S, c), G = geom(s2), E = estimate(s2, G), sun = sunMap(G, dt), on = cmpKey(c) === cmpKey(S);
+    return `<tr class="${on ? 'cur' : ''}"><td><b>${c.W}×${c.D}</b>${c.shape !== 'rect' ? ' ' + c.shape : ''}<small>${Math.round(G.area)} sf</small></td><td>${esc(MATS[c.mat].short)}<small>${c.tone}</small></td><td>${esc(RAILS[c.rail].name)} ${c.guard}″<small>${c.stairs === 'none' ? 'no stairs' : c.stairs + ' stairs'}${c.drain ? ' · drainage' : ''}${c.brick ? ' · brick posts' : ''}</small></td><td class="n">${sun.avg.toFixed(1)} h</td><td class="n">${rng2(E.diy)}</td><td class="n">${rng2(E.split)}</td><td class="n">${rng2(E.hired)}</td><td class="n"><button class="btn sm" type="button" data-load="${i}">Load</button> <button class="btn sm" type="button" data-del="${i}" aria-label="Remove from compare">✕</button></td></tr>`; });
+  el.innerHTML = `<table class="cmp"><tr><th>Size</th><th>Decking</th><th>Railing</th><th class="n">Sun, Aug 1</th><th class="n">All DIY</th><th class="n">Hire the frame</th><th class="n">Fully hired</th><th></th></tr>${rows.join('')}</table>`;
+}
+$('cmp').addEventListener('click', e => { const l = e.target.closest('[data-load]'), d = e.target.closest('[data-del]');
+  if (l) { Object.assign(S, CMP[+l.dataset.load]); update(); $('viewer').scrollIntoView({ block: 'start' }); }
+  if (d) { CMP.splice(+d.dataset.del, 1); try { localStorage.setItem('dk01-cmp', JSON.stringify(CMP)); } catch (er) { } renderCmp(); } });
+$('b-cmp').addEventListener('click', () => {
+  const c = {}; CMP_KEYS.forEach(kk => c[kk] = S[kk]);
+  if (!CMP.some(x => cmpKey(x) === cmpKey(c))) { CMP.push(c); if (CMP.length > 4) CMP.shift(); }
+  try { localStorage.setItem('dk01-cmp', JSON.stringify(CMP)); } catch (e) { }
+  renderCmp(); $('b-cmp').textContent = `In compare (${CMP.length})`; setTimeout(() => $('b-cmp').textContent = 'Add to compare', 1600);
 });
 
 /* ================= our pick (shared) ================= */
@@ -800,18 +902,21 @@ $('b-save').addEventListener('click', async () => {
   if (!LAST) return;
   const { G, E } = LAST;
   const pick = { W: S.W, D: S.D, shape: S.shape, area: Math.round(G.area), mat: S.mat, matName: MATS[S.mat].name, tone: S.tone, rail: S.rail, guard: S.guard, stairs: S.stairs, drain: S.drain, brick: S.brick, labor: S.labor,
+    table: S.tableOn ? S.table : 'none', loungers: S.loungeOn ? S.loungers : 0, grill: S.grill,
     diy: E.diy.map(Math.round), split: E.split.map(Math.round), hired: E.hired.map(Math.round), posts: G.posts.length, railLf: Math.round(G.railLf), savedAt: new Date().toISOString() };
   try { localStorage.setItem('dk01-pick', JSON.stringify(pick)); } catch (e) { }
-  if (DB) { try { await DB.collection('picks').doc('current').set(pick); $('pick-sync').textContent = 'saved for everyone'; } catch (e) { $('pick-sync').textContent = 'saved in this browser only'; } }
-  else $('pick-sync').textContent = 'saved in this browser only';
+  if (DB) { try { await DB.collection('picks').doc('current').set(pick); $('pick-sync').textContent = 'saved for everyone'; } catch (e) { $('pick-sync').textContent = 'saved in this browser'; } }
+  else $('pick-sync').textContent = 'saved in this browser';
   showPick(pick);
 });
-function showPick(p) { if (!p) return; $('pick-info').textContent = `Saved ${new Date(p.savedAt).toLocaleDateString()}: ${p.W}×${p.D} ${p.shape === 'rect' ? '' : p.shape + ' '}· ${p.matName} · ${RAILS[p.rail] ? RAILS[p.rail].name : p.rail} ${p.guard}″ · ${p.stairs === 'none' ? 'no stairs' : p.stairs + ' stairs'} · ${LABOR[p.labor]} ${rng2(p[p.labor])}.`; }
+function showPick(p) { if (!p) return; $('pick-info').textContent = `Our pick (${new Date(p.savedAt).toLocaleDateString()}): ${p.W}×${p.D}${p.shape === 'rect' ? '' : ' ' + p.shape} · ${p.matName} · ${RAILS[p.rail] ? RAILS[p.rail].name : p.rail} ${p.guard}″ · ${p.stairs === 'none' ? 'no stairs' : p.stairs + ' stairs'} · ${LABOR[p.labor]} ${rng2(p[p.labor])}.`; }
 try { showPick(JSON.parse(localStorage.getItem('dk01-pick') || 'null')); } catch (e) { }
 
 /* ================= start ================= */
 renderFacts(); dbMode = 'wait'; renderTodo();
+setPin(S.pinned !== false);
 update({ noBuild: true });
+setView(S.view || '3d');
 init3D(); if (LAST) build3D(LAST.G, LAST.F); setSun();
 (async () => {
   let db = null;
@@ -826,4 +931,4 @@ init3D(); if (LAST) build3D(LAST.G, LAST.F); setSun();
   DB.doc('picks/current').onSnapshot(s => { if (s.exists) { showPick(s.data()); $('pick-sync').textContent = 'shared'; } }, () => { });
 })();
 /* test hook (tests/test_deck.py) */
-window.__dk = { get S() { return S; }, set S(v) { S = v; }, geom, estimate, furniture, sunMap, sunPos, update, camPreset, V3, get LAST() { return LAST; }, DATES, PRESETS, MATS };
+window.__dk = { get S() { return S; }, set S(v) { S = v; }, geom, estimate, furniture, setView, eff, sunMap, sunPos, update, camPreset, V3, get LAST() { return LAST; }, DATES, PRESETS, MATS };
