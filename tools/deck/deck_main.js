@@ -44,7 +44,6 @@ const RAILS = {
   alum: { name: 'Aluminum pickets', long: 'Black aluminum pickets', mat: [45, 75], lab: [30, 55], sp: 6, col: '#1d2023' },
   wood: { name: 'Wood', long: 'Wood posts and 2×2 balusters', mat: [12, 20], lab: [25, 40], sp: 6, col: null },
 };
-const TABLES = { none: { name: 'No table', R: 0 }, bistro: { name: 'Bistro for 2', R: 3.5, top: 1.25 }, r48: { name: '48″ round, 4', R: 5, top: 2 }, r60: { name: '60″ round, 6', R: 6, top: 2.5 } };
 const DATES = [{ id: 'may15', name: 'May 15', m: 5, d: 15 }, { id: 'jun21', name: 'Jun 21', m: 6, d: 21 }, { id: 'aug1', name: 'Aug 1', m: 8, d: 1 }, { id: 'sep21', name: 'Sep 21', m: 9, d: 21 }];
 const LABOR = { diy: 'All DIY', split: 'Hire the frame', hired: 'Fully hired' };
 const LABOR_NOTE = {
@@ -74,13 +73,16 @@ const PLAN_COL = { permpav: '#9a958c', pavers: '#a39484', needle: '#9a6b3c', riv
 /* footprint of a Yard Builder structure: w along x and h along y before rotation; 90/270 swap them */
 function stRect(e) { const sw = (e.rot % 180) ? e.h : e.w, sh = (e.rot % 180) ? e.w : e.h; return { x0: e.x - sw / 2, x1: e.x + sw / 2, y0: e.y - sh / 2, y1: e.y + sh / 2 }; }
 
+/*@@FURN@@*/
 /* ---------------- state ---------------- */
-const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, posts: 'plain', brickAll: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, yard: false, view: '3d', pinned: true };
+const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', rfin: 'black', guard: 36, stairs: 'none', drain: false, posts: 'plain', postSize: '10x10', pfin: 'natural', brickAll: false, items: null, sel: null, fab: 'sand', ffr: 'black', showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, yard: false, view: '3d', pinned: true };
 let S = Object.assign({}, DEF);
 try { const s = JSON.parse(localStorage.getItem('dk01') || 'null'); if (s) S = Object.assign(S, s); } catch (e) { }
 if (S.brick) S.posts = 'brick'; delete S.brick; if (!MATS[S.mat]) S.mat = 'compE'; if (!S.posts) S.posts = 'plain';
-if (S.table === 'none') { S.table = 'r60'; S.tableOn = false; } if (!S.loungers) { S.loungers = 2; S.loungeOn = false; }
-const eff = s => Object.assign({}, s, { table: s.tableOn ? s.table : 'none', loungers: s.loungeOn ? s.loungers : 0 });
+if (!Array.isArray(S.items)) S.items = DEF_ITEMS(); S.items = S.items.filter(it => FURN[it.t]);
+if (S.tone === 'warm') S.tone = 'cedar'; if (!TONE[S.tone]) S.tone = 'grey'; if (!POSTS[S.postSize]) S.postSize = '10x10';
+for (const kk of ['table', 'tableOn', 'loungers', 'loungeOn', 'grill']) delete S[kk];
+const eff = s => s;
 const persist = () => { try { localStorage.setItem('dk01', JSON.stringify(S)); } catch (e) { } };
 
 /* ---------------- polygon helpers ---------------- */
@@ -192,62 +194,6 @@ function geom(s) {
   return { W, D, Dmax, c, bump, poly, area, segs, railSegs, railLf, openLf, vb0, vb1, c1, js, maxSpan, innerGap: inner.gap, outerGap, posts, beams, beamLf, jCount, joistLf, stair, uEndOuter };
 }
 
-/* ---------------- furniture layout ----------------
-   Tries a few sensible spots for each piece (grill on the east rail or against the house, loungers along the north
-   edge or the east end, upright or end to end) and keeps the first arrangement where everything fits. */
-function furniture(s, G) {
-  const P = G.poly, W = G.W, D = G.D, st = G.stair;
-  const landing = { u0: 0, u1: 3.5, v0: NOOK_SLIDER.v0 - 0.2, v1: NOOK_SLIDER.v1 + 0.2, name: 'slider landing' };
-  const keep = [landing];
-  if (st) keep.push(st.side === 'east' ? { u0: W - 4, u1: W, v0: st.a[1], v1: st.b[1], name: 'stair top' } : { u0: st.a[0], u1: st.b[0], v0: D - 4, v1: D, name: 'stair top' });
-  const eastAt = v => G.c ? W - Math.max(0, v - (D - G.c)) : W;           // east edge at height v (clipped corner)
-  const T = TABLES[s.table];
-  const tables = !T.R ? [null] : (G.bump && T.R <= 6.2 ? [{ u: (G.bump.u0 + G.bump.u1) / 2, v: D + G.bump.d - T.R - 0.3 }] : []).concat([
-    { u: 3.5 + T.R + 0.2, v: Math.max(T.R + 0.2, D - T.R - 0.3) }, { u: 3.5 + T.R + 0.2, v: Math.max(T.R + 0.2, (D) / 2) }]).map(p => ({ kind: 'table', name: T.name + ' with umbrella', u: p.u, v: p.v, R: T.R, top: T.top }));
-  const ue = Math.min(W, CORNER);
-  const grills = !s.grill ? [null] : [
-    { kind: 'grill', name: 'Grill', where: 'east rail', u0: W - 2.6, u1: W - 0.4, v0: 0.4, v1: 5.4, clear: { u0: W - 4.6, u1: W - 2.6, v0: 0.4, v1: 5.4 } },
-    { kind: 'grill', name: 'Grill', where: 'house wall', u0: ue - 5.6, u1: ue - 0.6, v0: 0.4, v1: 2.6, clear: { u0: ue - 5.6, u1: ue - 0.6, v0: 2.6, v1: 4.6 } }];
-  const L = 6.7, w = 2.3, n = s.loungers;
-  const lounges = [];
-  if (!n) lounges.push([]);
-  else {
-    const mk = (u0, u1, v0, v1, i) => ({ kind: 'lounger', name: 'Lounge chair ' + (i + 1), u0, u1, v0, v1 });
-    let v1 = D - 0.3, v0 = v1 - L, e = eastAt(v1) - 0.4; if (st && st.side === 'east' && st.b[1] > v0) e = Math.min(e, W - 4.3); if (st && st.side === 'north') e = Math.min(e, st.a[0] - 0.3);
-    lounges.push([...Array(n)].map((_, i) => mk(e - i * (w + 1.2) - w, e - i * (w + 1.2), v0, v1, i)));                  // upright, NE corner
-    lounges.push([...Array(n)].map((_, i) => { const b = D - 0.3 - i * (w + 0.9), ee = Math.min(eastAt(b), st && st.side === 'north' ? st.a[0] - 0.3 : 99) - 0.4; return mk(ee - L, ee, b - w, b, i); }));   // end to end along the north edge
-    lounges.push([...Array(n)].map((_, i) => mk(W - 0.4 - i * (w + 1.2) - w, W - 0.4 - i * (w + 1.2), 0.4, 0.4 + L, i)));   // upright, SE corner (grill moves to the wall)
-  }
-  const evalSet = items => {
-    let bad = 0;
-    for (const it of items) {
-      let ok = true, why = '';
-      if (it.kind === 'table') {
-        if (!circIn(it, P)) { ok = false; why = 'the chair circle runs off the deck'; }
-        for (const o of [...keep, ...items.filter(x => x !== it && x.kind !== 'table')]) { if (circRect(it, o)) { ok = false; why = 'crowds the ' + o.name.toLowerCase(); } if (o.kind === 'grill' && circRect(it, o.clear)) { ok = false; why = 'sits in the grill’s working space'; } }
-      } else {
-        if (!rectIn(it, P)) { ok = false; why = 'runs off the deck'; }
-        for (const o of [...keep, ...items.filter(x => x !== it && x.kind !== 'table')]) if (rectHit(it, o)) { ok = false; why = 'overlaps the ' + o.name.toLowerCase(); }
-        if (it.kind === 'grill') for (const o of [...keep, ...items.filter(x => x.kind === 'lounger')]) if (rectHit(it.clear, o)) { ok = false; why = 'no 2′ working space in front'; }
-        for (const g of items.filter(x => x.kind === 'grill' && x !== it)) if (rectHit(it, g.clear)) { ok = false; why = 'blocks the grill'; }
-      }
-      it.ok = ok; it.why = why; if (!ok) bad++;
-    }
-    return bad;
-  };
-  let best = null;
-  for (const t of tables) for (const g of grills) for (const lg of lounges) {
-    const items = [g, t, ...lg].filter(Boolean).map(x => Object.assign({}, x));
-    const bad = evalSet(items);
-    if (!best || bad < best.bad) best = { bad, items };
-    if (!bad) break;
-  }
-  const out = best.items, table = out.find(i => i.kind === 'table') || null, grill = out.find(i => i.kind === 'grill') || null, lounge = out.filter(i => i.kind === 'lounger');
-  const walk = table ? (G.bump && table.v > D ? D : Math.max(0, table.v - table.R)) : null;
-  if (table) table.walk = walk;
-  return { items: out, keep, table, grill, lounge, walk };
-}
-
 /* ---------------- sun ---------------- */
 function doy(m, d) { return [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334][m - 1] + d; }
 function sunPos(m, d, hr) {
@@ -302,9 +248,11 @@ function estimate(s, G) {
   const M = MATS[s.mat], R = RAILS[s.rail], gF = s.guard === 42 ? 1.12 : 1, L = [];
   const line = (grp, name, qty, mat, lab, note) => L.push({ grp, name, qty, mat, lab, note });
   const nP = G.posts.length;
-  line('frame', 'Footings, 12″ tube to 42″ frost depth', nP + ' ea', mul2([110, 170], nP), mul2([220, 380], nP), 'concrete, tube, gravel, rebar, post base');
+  const PS = POSTS[s.postSize || '10x10'];
+  line('frame', 'Footings, ' + PS.tube + '″ tube to 42″ frost depth', nP + ' ea', mul2(PS.foot, nP), mul2([220, 380], nP), 'concrete, tube, gravel, rebar, post base');
   const long = G.posts.some(p => p.h > 8.5);
-  line('frame', '6×6 PT posts (' + (long ? '12′' : '10′') + ' stock)', nP + ' ea', mul2(long ? [70, 110] : [55, 85], nP), [0, 0], 'avg ' + ftin(G.posts.reduce((a, p) => a + p.h, 0) / nP) + ' tall');
+  line('frame', PS.name + ' PT posts (' + (long ? '12′' : '10′') + ' stock)', nP + ' ea', mul2(long ? PS.p12 : PS.p10, nP), mul2(PS.lab, nP), 'avg ' + ftin(G.posts.reduce((a, p) => a + p.h, 0) / nP) + ' tall' + (PS.hw[1] ? '; heavier bases and post caps included' : ''));
+  if (PS.hw[1]) line('frame', PS.name + ' post bases and beam seats', nP + ' ea', mul2(PS.hw, nP), [0, 0], 'standard 6×6 hardware doesn’t fit');
   line('frame', 'Beams, 3-ply 2×12 PT', Math.round(G.beamLf) + ' lf', mul2([3.2 * 3, 4.6 * 3], G.beamLf), [0, 0]);
   line('frame', 'Joists + rim, 2×10 PT @ 16″', Math.round(G.joistLf) + ' lf', mul2([2.2, 3.1], G.joistLf), [0, 0], G.jCount + ' joists');
   line('frame', 'Knee braces, both directions', 2 * nP + ' ea', mul2([25, 40], 2 * nP), [0, 0], 'a freestanding deck needs them');
@@ -312,8 +260,9 @@ function estimate(s, G) {
   line('frame', 'Connectors, bolts, hangers' + (s.mat === 'pt' || s.mat === 'cedar' ? '' : ', joist tape'), Math.round(G.area) + ' sf', add2(mul2(hwSf, G.area), mul2([45, 70], nP)), [0, 0]);
   line('frame', 'Frame labor at ~10′ (crew + scaffold)', Math.round(G.area) + ' sf', [0, 0], mul2([9, 15], G.area));
   const wrapped = G.posts.filter(p => s.brickAll || p.beam !== 'inner').length;
-  if (s.posts === 'brick') { line('finish', 'Brick columns, 16″ thin-brick wrap' + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2([690, 1180], wrapped), mul2([900, 1500], wrapped), 'cement-board box, thin brick, precast cap and base; wider footing'); line('frame', 'Hidden bracing for wrapped posts', wrapped + ' ea', mul2([40, 80], wrapped), mul2([60, 120], wrapped), 'knee braces would show, so bracing moves inside or to engineered bases'); }
-  if (s.posts === 'sleeve') line('finish', 'Post sleeves, white composite' + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2([60, 120], wrapped), mul2([40, 70], wrapped), 'slips over the 6×6, with base and cap trim');
+  const cf = colIn(s) / 16;
+  if (s.posts === 'brick') { line('finish', 'Brick columns, ' + colIn(s) + '″ thin-brick wrap' + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2([690 * cf, 1180 * cf], wrapped), mul2([900 * cf, 1500 * cf], wrapped), 'cement-board box, thin brick, precast cap and base; wider footing'); line('frame', 'Hidden bracing for wrapped posts', wrapped + ' ea', mul2([40, 80], wrapped), mul2([60, 120], wrapped), 'knee braces would show, so bracing moves inside or to engineered bases'); }
+  if (s.posts === 'sleeve') line('finish', (s.postSize === '6x6' ? 'Post sleeves, white composite' : 'Post wraps, white PVC trim') + (s.brickAll ? ' (all posts)' : ' (outer posts)'), wrapped + ' ea', mul2(s.postSize === '6x6' ? [60, 120] : s.postSize === '8x8' ? [110, 190] : [140, 240], wrapped), mul2(s.postSize === '6x6' ? [40, 70] : [70, 120], wrapped), s.postSize === '6x6' ? 'slips over the 6×6, with base and cap trim' : 'sleeves stop at 6×6, so larger posts get site-built PVC trim');
   const deckMat = M.mat;
   line('finish', 'Decking: ' + M.name, Math.round(G.area) + ' sf +10%', mul2(deckMat, G.area * 1.1), mul2(M.lab, G.area));
   line('finish', 'Fascia on the open edges', Math.round(G.openLf) + ' lf', mul2(M.fascia, G.openLf), mul2([4, 7], G.openLf));
@@ -349,7 +298,8 @@ function checks(s, G, F, E, sun, sunJun) {
   const jMax = 14.0;
   out.push({ s: G.js <= jMax ? 'ok' : 'bad', t: 'Joist span ' + ftin(G.js) + ' between beams', d: '2×10 southern pine at 16″ spans about 14′ for a 40 psf deck (IRC R507.6). Joists cantilever ' + ftin(G.c1) + ' past the outer beam and ' + ftin(G.vb0) + ' back toward the house.' });
   const hMax = Math.max(...G.posts.map(p => p.h));
-  out.push({ s: hMax <= 14 ? 'ok' : 'bad', t: 'Posts ' + ftin(Math.min(...G.posts.map(p => p.h))) + ' to ' + ftin(hMax) + ' tall', d: '6×6 posts are allowed to 14′ (IRC R507.4). ' + G.posts.length + ' posts, ' + G.posts.length + ' footings 42″ deep for Michigan frost.' });
+  out.push({ s: hMax <= 14 ? 'ok' : 'bad', t: 'Posts ' + (ftin(Math.min(...G.posts.map(p => p.h))) === ftin(hMax) ? ftin(hMax) : ftin(Math.min(...G.posts.map(p => p.h))) + ' to ' + ftin(hMax)) + ' tall', d: POSTS[s.postSize].name + ' posts. A 6×6 is allowed to 14′ (IRC R507.4), so anything bigger is for looks. ' + G.posts.length + ' posts, ' + G.posts.length + ' footings 42″ deep for Michigan frost.' });
+  if (s.postSize !== '6x6') out.push({ s: 'warn', t: POSTS[s.postSize].name + ' posts: heavy, and the beam needs a seat', d: 'A 12′ ' + POSTS[s.postSize].name + ' weighs about ' + POSTS[s.postSize].lb + ' lb green and is often a special order. The 3-ply 2×12 beam is 4½″ wide, so it sits in a notch or a post cap centered on the post, and the footing grows to a ' + POSTS[s.postSize].tube + '″ tube. Another option is a 6×6 wrapped in trim to look like a ' + POSTS[s.postSize].name + ' (cheaper and lighter). One more reason to hire the frame.' });
   out.push({ s: 'warn', t: 'House-side footings sit near the house footing', d: 'Their centers are ' + inch(G.vb0) + ' from the brick. The walkout wall’s footing usually sticks out 6–10″ past the brick at about the same depth. Locate it before digging and bear on undisturbed soil at the same depth, or move this beam out to 2′.' });
   out.push({ s: 'ok', t: 'Guard ' + s.guard + '″ on ' + Math.round(G.railLf) + ' lf', d: (s.guard === 36 ? 'Michigan requires 36″ for a house deck more than 30″ up; 42″ feels safer this high and costs about 12% more. ' : '42″ is above the 36″ minimum and feels better 10′ up. ') + (s.rail === 'cable' ? 'Cable must stop a 4″ ball: use the kit’s cable spacing (about 3″) and post spacing, and keep it tight.' : 'Pickets and balusters must stop a 4″ ball.') });
   if (s.rail !== 'cable') out.push({ s: 'info', t: 'View from the great room', d: 'The great room sill is 30″ above the floor, so the guard crosses the lower view out of the window. Cable keeps that view more open than pickets.' });
@@ -357,15 +307,18 @@ function checks(s, G, F, E, sun, sunJun) {
   out.push({ s: 'ok', t: 'Well, septic and easements clear', d: 'The deck’s west edge is ' + ftin(X0 - WELL.x) + ' east of the well (10′ needed) and clear of the well-rig path west of it. Rear yard, no easement under it.' });
   // furniture
   const bad = F.items.filter(i => !i.ok);
-  if (F.items.length) out.push({ s: bad.length ? 'warn' : 'ok', t: bad.length ? bad.length + ' of ' + F.items.length + ' furniture pieces don’t fit' : 'Furniture fits: ' + F.items.map(i => i.kind === 'lounger' ? null : i.name.split(' with')[0]).filter(Boolean).concat(F.lounge.length ? [F.lounge.length + ' loungers'] : []).join(', '), d: bad.length ? bad.map(i => i.name + ' ' + i.why).join('; ') + '. Make the deck deeper or wider, or pick a smaller table.' : 'Layout keeps the slider landing clear.' + (F.table ? ' Walkway between the table and the house: ' + ftin(F.walk) + (F.walk < 3 ? ' (tight; 3′ is comfortable).' : '.') : '') });
-  if (F.table && F.walk < 3 && !G.bump) out.push({ s: 'warn', t: 'Tight path past the table', d: 'Only ' + ftin(Math.max(0, F.walk)) + ' between the chairs and the house wall to reach the east end. 3′ is comfortable.' });
+  if (F.items.length) out.push({ s: bad.length ? 'warn' : 'ok', t: bad.length ? bad.length + ' of ' + F.items.length + ' furniture pieces don’t fit' : 'All ' + F.items.length + ' furniture pieces fit', d: bad.length ? bad.map(i => i.name + ': ' + i.why).join('; ') + '. Drag them, rotate them, or try Auto-arrange.' : 'Nothing hangs off the deck or overlaps, and the slider landing stays clear.' });
+  if (F.grill) { const g = F.grill, segD = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy))); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); }, wd = Math.min(...g.parts[0].map(p => Math.min(segD(p, [0, 0], [CORNER, 0]), segD(p, [0, 0], [0, NOOK_V]))));
+    out.push({ s: wd < 1 ? 'warn' : 'info', t: 'Propane grill ' + (wd < 1 ? 'tight to the house' : ftin(Math.max(0, wd)) + ' from the house'), d: 'Propane tank, so no gas line. Keep the lid’s heat away from the great room window and vinyl above, follow the manual’s clearances (often 24″ to combustibles), use a grill mat on composite, and store the spare tank outside, never under the deck or in the garage.' }); }
+  const fire = F.items.filter(i => i.T.fire), shade = F.items.filter(i => (i.T.umb && i.umb) || i.T.canopy);
+  for (const f of fire) { const near = shade.find(u => Math.hypot(u.u - f.u, u.v - f.v) < 6); out.push({ s: near ? 'warn' : 'info', t: f.name + (near ? ' under an umbrella' : ' on the deck'), d: (near ? 'Move it out from under the ' + near.T.short + '. ' : '') + 'Propane fire tables and heaters are generally allowed on decks; keep the manual’s clearances (often 3′ around and nothing overhead) and use a heat mat on composite. Check Almont Twp’s rules on open flame.' }); }
+  for (const t of F.items.filter(i => i.T.tub)) out.push({ s: 'bad', t: 'Hot tub on the deck', d: 'A filled 7×7 tub with people loads roughly 100–120 lb per sq ft. This frame is designed for the standard 40 psf. It needs its own engineered posts and beams, or put it on a slab on the patio below.' });
   // sun
   const dt = DATES.find(d => d.id === s.date) || DATES[2];
-  const lz = F.lounge.length ? zoneSun(sun, { u0: Math.min(...F.lounge.map(l => l.u0)), u1: Math.max(...F.lounge.map(l => l.u1)), v0: F.lounge[0].v0, v1: F.lounge[0].v1 }) : null;
+  const lz = F.lounge.length ? zoneSun(sun, { u0: Math.min(...F.lounge.map(l => l.bb.u0)), u1: Math.max(...F.lounge.map(l => l.bb.u1)), v0: Math.min(...F.lounge.map(l => l.bb.v0)), v1: Math.max(...F.lounge.map(l => l.bb.v1)) }) : null;
   out.push({ s: sun.avg >= 5 ? 'ok' : sun.avg >= 3 ? 'warn' : 'bad', t: 'Sun on ' + dt.name + ': ' + sun.avg.toFixed(1) + ' h average', d: 'The house is south of the deck and shades it for part of the day. ' + Math.round(sun.pct6 * 100) + '% of the deck gets 6+ hours. Best spot gets ' + sun.max.toFixed(1) + ' h, worst ' + sun.min.toFixed(1) + ' h.' + (lz != null ? ' The lounge chairs get about ' + lz.toFixed(1) + ' h.' : '') + ' (Jun 21: ' + sunJun.avg.toFixed(1) + ' h average.)' });
-  if (MATS[s.mat] && (s.mat === 'compE' || s.mat === 'compP') && s.tone === 'charcoal') out.push({ s: 'warn', t: 'Charcoal composite in the sun', d: 'Dark composite can get too hot for bare feet on summer afternoons. Grey or warm brown runs noticeably cooler; check the maker’s heat-rated lines.' });
-  if (s.posts === 'brick') out.push({ s: 'warn', t: 'Brick columns hide the knee braces', d: 'A freestanding deck still needs lateral bracing. With 16″ brick wraps it moves inside the wrap, between posts under the joists, or to engineered post bases; show it on the permit drawing. Brick needs a footing about 24″ wide so the veneer sits on concrete, not wood. Thin brick matching Chimney Mountain isn’t confirmed; compare samples against the house.' });
-  if (s.grill && F.grill) out.push({ s: 'info', t: 'Grill against the ' + F.grill.where, d: 'Away from the slider. Propane tank grill, so no gas line; a GFCI outlet on the rear wall near the house corner covers lights and a rotisserie. Use a grill mat on composite and store the spare tank outside, not under the deck or in the garage.' });
+  if (MATS[s.mat] && (s.mat === 'compE' || s.mat === 'compP') && DARK_TONES.has(s.tone)) out.push({ s: 'warn', t: TONE[s.tone][1] + ' composite in the sun', d: 'Dark composite can get too hot for bare feet on summer afternoons. Lighter colors like sand, driftwood or ash run noticeably cooler; check the maker’s heat-rated lines.' });
+  if (s.posts === 'brick') out.push({ s: 'warn', t: 'Brick columns hide the knee braces', d: 'A freestanding deck still needs lateral bracing. With ' + colIn(s) + '″ brick wraps it moves inside the wrap, between posts under the joists, or to engineered post bases; show it on the permit drawing. Brick needs a footing about 24″ wide so the veneer sits on concrete, not wood. Thin brick matching Chimney Mountain isn’t confirmed; compare samples against the house.' });
   // stairs
   if (st) {
     const okR = st.rise <= 7.75 + 1e-6, okRise = st.R * 12 <= 151;
@@ -405,24 +358,30 @@ function renderPanel(G, E) {
   $('r-w').value = S.W; $('o-w').textContent = ftin(S.W); $('r-d').value = S.D; $('o-d').textContent = ftin(S.D);
   seg('seg-shape', [['rect', 'Rectangle'], ['clip', 'Clipped corner'], ['bump', 'Table bay']], S.shape, v => { S.shape = v; update(); });
   $('sv-size').textContent = `${S.W}×${S.D} · ${Math.round(G.area)} sf`;
-  $('mats').innerHTML = Object.entries(MATS).map(([kk, m]) => { const s2 = Object.assign({}, S, { mat: kk }), c = estimate(s2, geom(s2)).by[S.labor]; return `<button class="card" type="button" data-m="${kk}" aria-pressed="${S.mat === kk}"><span class="sw" style="background:repeating-linear-gradient(0deg,${m.tones[S.tone]} 0 5px,rgba(0,0,0,.28) 5px 6px)"></span><span><b>${esc(m.short)}</b><small>$${m.mat[0]}–${m.mat[1]}/sf · ${esc(m.life)}</small></span><span class="tot">${rng2(c)}</span></button>`; }).join('');
+  $('mats').innerHTML = Object.entries(MATS).map(([kk, m]) => { const s2 = Object.assign({}, S, { mat: kk }), c = estimate(s2, geom(s2)).by[S.labor]; return `<button class="card" type="button" data-m="${kk}" aria-pressed="${S.mat === kk}"><span class="sw" style="background:repeating-linear-gradient(0deg,${TONE[S.tone][2]} 0 5px,rgba(0,0,0,.28) 5px 6px)"></span><span><b>${esc(m.short)}</b><small>$${m.mat[0]}–${m.mat[1]}/sf · ${esc(m.life)}</small></span><span class="tot">${rng2(c)}</span></button>`; }).join('');
   $('mats').onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return; S.mat = b.dataset.m; update(); };
-  seg('seg-tone', [['warm', 'Warm brown'], ['grey', 'Mid grey'], ['charcoal', 'Charcoal']], S.tone, v => { S.tone = v; update(); });
-  $('sv-mat').textContent = MATS[S.mat].short + ' · ' + S.tone;
-  seg('seg-rail', Object.entries(RAILS).map(([kk, r]) => [kk, r.name]), S.rail, v => { S.rail = v; update(); });
+  swatches('sw-tone', TONES, S.tone, v => { S.tone = v; update(); }, 'tone-name');
+  $('sv-mat').textContent = MATS[S.mat].short + ' · ' + TONE[S.tone][1];
+  seg('seg-rail', Object.entries(RAILS).map(([kk, r]) => [kk, r.name]), S.rail, v => { S.rail = v; if (v === 'wood' && !RFIN_WOOD.find(x => x[0] === S.rfin)) S.rfin = 'match'; if (v !== 'wood' && !RFIN_METAL.find(x => x[0] === S.rfin)) S.rfin = 'black'; update(); });
+  swatches('sw-rfin', S.rail === 'wood' ? RFIN_WOOD : RFIN_METAL, S.rfin, v => { S.rfin = v; update(); }, 'rfin-name');
   seg('seg-guard', [[36, '36″ guard (code minimum)'], [42, '42″ guard']], S.guard, v => { S.guard = +v; update(); });
-  $('sv-rail').textContent = `${RAILS[S.rail].name} ${S.guard}″ · ${Math.round(G.railLf)} lf`;
+  $('sv-rail').textContent = `${RAILS[S.rail].name} · ${pick(S.rail === 'wood' ? RFIN_WOOD : RFIN_METAL, S.rfin)[1].toLowerCase()} · ${S.guard}″`;
   seg('seg-stairs', [['none', 'No stairs'], ['east', 'East, to the garden path'], ['north', 'North, to the patio']], S.stairs, v => { S.stairs = v; update(); });
   const dS = [E.withS[S.labor][0] - E.noS[S.labor][0], E.withS[S.labor][1] - E.noS[S.labor][1]];
   $('stair-note').textContent = G.stair ? `Shown as an option: ${G.stair.n} risers, ${ftin(G.stair.run)} run, ${ftin(G.stair.R)} drop. Adds ${rng2(dS)} in this labor mode.` : `Your plan is no stairs: the yard is reached through the walkout slider. The east stair would add ${rng2(dS)} here.`;
   $('sv-stairs').textContent = S.stairs === 'none' ? 'none (plan)' : S.stairs + ' · +' + k(dS[0]);
   $('c-drain').checked = S.drain; $('c-brickall').checked = S.brickAll; $('c-heat').checked = S.heat; $('c-furn').checked = S.showFurn;
+  { const p6 = estimate(Object.assign({}, S, { postSize: '6x6' }), G).by[S.labor], pc = E.by[S.labor]; $('psize-note') && ($('psize-note').textContent = S.postSize === '6x6' ? '' : `${POSTS[S.postSize].name} posts add ${rng2([pc[0] - p6[0], pc[1] - p6[1]])} over 6×6 in this labor mode.`); }
   $('sv-add').textContent = S.drain ? 'drainage' : 'none';
-  seg('seg-posts', [['plain', '6×6 wood'], ['sleeve', 'White sleeves'], ['brick', 'Brick columns']], S.posts, v => { S.posts = v; update(); });
+  const PN = POSTS[S.postSize].name;
+  seg('seg-psize', Object.entries(POSTS).map(([kk, p]) => [kk, p.name]), S.postSize, v => { S.postSize = v; update(); });
+  seg('seg-posts', [['plain', 'Bare wood'], ['sleeve', 'White wrap'], ['brick', 'Brick columns']], S.posts, v => { S.posts = v; update(); });
+  swatches('sw-pfin', PFIN, S.pfin, v => { S.pfin = v; update(); }, 'pfin-name');
+  $('posts-tag').textContent = `Brick columns: ${colIn(S)}″ square thin-brick wrap on a precast base with a cap under the beam, matched to the house brick. White wrap: ${S.postSize === '6x6' ? 'composite sleeve' : 'PVC trim'} over the ${PN}. Stain colors the posts, beams, braces and joists.`;
   const nw = G.posts.filter(p => S.brickAll || p.beam !== 'inner').length;
-  $('sv-posts').textContent = { plain: '6×6 wood', sleeve: 'white sleeves', brick: 'brick columns' }[S.posts] + (S.posts !== 'plain' ? ' · ' + nw : '');
+  $('sv-posts').textContent = PN + ' · ' + { plain: pick(PFIN, S.pfin)[1].toLowerCase(), sleeve: 'white wrap', brick: 'brick columns' }[S.posts] + (S.posts !== 'plain' ? ' · ' + nw : '');
   const pd = (mode) => { const a = estimate(Object.assign({}, S, { posts: mode }), G).by[S.labor], b = estimate(Object.assign({}, S, { posts: 'plain' }), G).by[S.labor]; return [a[0] - b[0], a[1] - b[1]]; };
-  $('posts-note').textContent = S.posts === 'plain' ? `Brick columns would add ${rng2(pd('brick'))}; white sleeves ${rng2(pd('sleeve'))}.` : `Adds ${rng2(pd(S.posts))} over plain 6×6 posts in this labor mode.`;
+  $('posts-note').textContent = S.posts === 'plain' ? `Brick columns would add ${rng2(pd('brick'))}; white sleeves ${rng2(pd('sleeve'))}.` : `Adds ${rng2(pd(S.posts))} over bare ${PN} posts in this labor mode.`;
   $('c-brickall').closest('label').hidden = S.posts === 'plain';
   seg('seg-labor', Object.entries(LABOR), S.labor, v => { S.labor = v; update(); });
   $('labor-note').textContent = LABOR_NOTE[S.labor]; $('sv-labor').textContent = LABOR[S.labor];
@@ -432,18 +391,6 @@ function renderPanel(G, E) {
   ['b-furn2', 'b-furn3'].forEach(id => $(id).setAttribute('aria-pressed', String(!!S.showFurn)));
   ['b-yard2', 'b-yard3'].forEach(id => $(id).setAttribute('aria-pressed', String(!!S.yard)));
   $('lg-yard').hidden = !S.yard;
-}
-function renderFurn(F) {
-  const fit = kind => { const it = F.items.filter(i => i.kind === kind); if (!it.length) return ''; const bad = it.filter(i => !i.ok); return bad.length ? `<span class="fit no" title="${esc(bad.map(i => i.why).join('; '))}">doesn’t fit</span>` : '<span class="fit ok">fits</span>'; };
-  const row = (id, on, label, fitHtml, segHtml) => `<div class="frow"><label class="tgl"><input type="checkbox" id="${id}" ${on ? 'checked' : ''}> ${label}</label>${fitHtml || ''}${segHtml ? `<div class="seg" role="group" aria-label="${label} options" id="${id}-seg"></div>` : ''}</div>`;
-  $('furn').innerHTML = row('f-table', S.tableOn, 'Table with umbrella', fit('table'), true) + row('f-lounge', S.loungeOn, 'Lounge chairs', fit('lounger'), true) + row('f-grill', S.grill, 'Propane grill', fit('grill'), false);
-  if (S.tableOn) seg('f-table-seg', [['bistro', 'Bistro, 2'], ['r48', '48″ round, 4'], ['r60', '60″ round, 6']], S.table, v => { S.table = v; update(); }); else $('f-table-seg').hidden = true;
-  if (S.loungeOn) seg('f-lounge-seg', [[1, 'One'], [2, 'Two']], S.loungers, v => { S.loungers = +v; update(); }); else $('f-lounge-seg').hidden = true;
-  $('f-table').onchange = e => { S.tableOn = e.target.checked; update(); };
-  $('f-lounge').onchange = e => { S.loungeOn = e.target.checked; update(); };
-  $('f-grill').onchange = e => { S.grill = e.target.checked; update(); };
-  const n = F.items.length, bad = F.items.filter(i => !i.ok).length;
-  $('sv-furn').textContent = n ? (bad ? bad + ' won’t fit' : 'all fit') + (S.showFurn ? '' : ' · hidden') : 'none';
 }
 function hourLabel(h) { const hh = Math.floor(h), mm = Math.round((h - hh) * 60), ap = hh >= 12 ? 'pm' : 'am', h12 = ((hh + 11) % 12) + 1; const dt = DATES.find(d => d.id === S.date) || DATES[2], sp = sunPos(dt.m, dt.d, h); return `${h12}:${String(mm).padStart(2, '0')} ${ap} · sun ${sp.alt > 0 ? Math.round(sp.alt / D2R) + '° up' : 'down'}`; }
 
@@ -489,7 +436,7 @@ function renderPlan(G, F, sun) {
   for (let v = 0.47; v < G.Dmax; v += 0.47 * 3) for (const [a, b] of scan(G.poly, v)) o.push(`<line x1="${sx(L(a))}" y1="${sy(V(v))}" x2="${sx(L(b))}" y2="${sy(V(v))}" stroke="var(--ink)" stroke-opacity=".12" stroke-width=".05"/>`);
   for (const sg of G.railSegs) o.push(`<line x1="${sx(L(sg.a[0]))}" y1="${sy(V(sg.a[1]))}" x2="${sx(L(sg.b[0]))}" y2="${sy(V(sg.b[1]))}" stroke="var(--ink)" stroke-width=".5"/>`);
   for (const b of G.beams) o.push(`<line x1="${sx(L(b.u0))}" y1="${sy(V(b.v))}" x2="${sx(L(b.u1))}" y2="${sy(V(b.v))}" stroke="var(--ink2)" stroke-width=".22" stroke-dasharray=".7 .35"/>`);
-  for (const p of G.posts) { const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner'), hs = wr ? (S.posts === 'brick' ? .67 : .33) : .23; o.push(`<circle cx="${sx(L(p.u))}" cy="${sy(V(p.v))}" r="${wr && S.posts === 'brick' ? 1 : .67}" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".25 .15"/><rect x="${+sx(L(p.u)) - hs}" y="${+sy(V(p.v)) - hs}" width="${2 * hs}" height="${2 * hs}" fill="${wr ? (S.posts === 'brick' ? 'var(--brick)' : 'var(--sheet)') : 'var(--ink)'}" stroke="var(--ink)" stroke-width=".08"/>`); }
+  for (const p of G.posts) { const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner'), hs = wr ? (S.posts === 'brick' ? colIn(S) / 24 : sleeveIn(S) / 24) : postFt(S) / 2; o.push(`<circle cx="${sx(L(p.u))}" cy="${sy(V(p.v))}" r="${wr && S.posts === 'brick' ? 1 : POSTS[S.postSize].tube / 24}" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".25 .15"/><rect x="${+sx(L(p.u)) - hs}" y="${+sy(V(p.v)) - hs}" width="${2 * hs}" height="${2 * hs}" fill="${wr ? (S.posts === 'brick' ? 'var(--brick)' : 'var(--sheet)') : pick(PFIN, S.pfin)[2]}" stroke="var(--ink)" stroke-width=".08"/>`); }
   // stairs
   if (G.stair) {
     const st = G.stair, r = st.rect;
@@ -498,12 +445,8 @@ function renderPlan(G, F, sun) {
     const cx = L((r.u0 + r.u1) / 2), cy = V((r.v0 + r.v1) / 2);
     o.push(`<text x="${sx(cx)}" y="${+sy(cy) + 0.4}" text-anchor="middle" font-size="1.1" font-weight="600" fill="var(--ink)">DN ${st.n}R · option</text>`);
   }
-  // furniture
-  for (const it of (S.showFurn ? F.items : [])) {
-    const col = it.ok ? 'var(--accent)' : 'var(--bad)';
-    if (it.kind === 'table') { o.push(`<circle cx="${sx(L(it.u))}" cy="${sy(V(it.v))}" r="${it.R}" fill="none" stroke="${col}" stroke-width=".12" stroke-dasharray=".4 .25"/><circle cx="${sx(L(it.u))}" cy="${sy(V(it.v))}" r="${it.top}" fill="${col}" fill-opacity=".2" stroke="${col}" stroke-width=".1"/>`); lab(L(it.u), V(it.v) - 0.4, it.R > 4 ? 'table + umbrella' : 'bistro', 'middle'); }
-    else { o.push(`<rect x="${sx(L(it.u0))}" y="${sy(V(it.v1))}" width="${(it.u1 - it.u0).toFixed(2)}" height="${(it.v1 - it.v0).toFixed(2)}" fill="${col}" fill-opacity=".15" stroke="${col}" stroke-width=".12"/>`); if (it.kind === 'grill' || it === F.lounge[0]) lab(L((it.u0 + it.u1) / 2) - (it.kind === 'grill' ? 0 : 1.2), V((it.v0 + it.v1) / 2), it.kind === 'grill' ? 'grill' : 'loungers', 'middle'); }
-  }
+  // furniture (on top, so it can be picked)
+  const FURN_SVG = S.showFurn ? planFurn(F, sx, sy) : '';
   // dimensions
   const dimH = (xa, xb, y, t) => { o.push(`<line x1="${sx(xa)}" y1="${sy(y)}" x2="${sx(xb)}" y2="${sy(y)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xa)}" y1="${+sy(y) - .6}" x2="${sx(xa)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><line x1="${sx(xb)}" y1="${+sy(y) - .6}" x2="${sx(xb)}" y2="${+sy(y) + .6}" stroke="var(--ink)" stroke-width=".08"/><text x="${sx((xa + xb) / 2)}" y="${+sy(y) - .35}" text-anchor="middle" font-size="1.1" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${t}</text>`); };
   const dimV = (ya, yb, x, t) => { o.push(`<line x1="${sx(x)}" y1="${sy(ya)}" x2="${sx(x)}" y2="${sy(yb)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${+sx(x) - .6}" y1="${sy(ya)}" x2="${+sx(x) + .6}" y2="${sy(ya)}" stroke="var(--ink)" stroke-width=".08"/><line x1="${+sx(x) - .6}" y1="${sy(yb)}" x2="${+sx(x) + .6}" y2="${sy(yb)}" stroke="var(--ink)" stroke-width=".08"/><text x="${+sx(x) + .5}" y="${+sy((ya + yb) / 2) + .4}" font-size="1.25" font-weight="600" fill="var(--ink)" font-family="IBM Plex Mono,monospace">${t}</text>`); };
@@ -517,7 +460,7 @@ function renderPlan(G, F, sun) {
   o.push(`<circle class="hdl" data-h="w" cx="${sx(hx)}" cy="${sy(V(G.D / 2))}" r="1.05"><title>Drag to change the width</title></circle>`);
   o.push(`<circle class="hdl" data-h="d" cx="${sx(L(Math.min(G.W, CORNER) / 2 + (G.bump ? 7 : 0)))}" cy="${sy(hy)}" r="1.05"><title>Drag to change the depth</title></circle>`);
   o.push(`<rect class="hdl" data-h="wd" x="${+sx(hx) - 1.05}" y="${+sy(hy) - 1.05}" width="2.1" height="2.1"><title>Drag to change width and depth</title></rect>`);
-  const svg = $('plan'); svg.setAttribute('viewBox', `0 0 ${PV.x1 - PV.x0} ${PV.y1 - PV.y0}`); svg.innerHTML = o.join('');
+  const svg = $('plan'); svg.setAttribute('viewBox', `0 0 ${PV.x1 - PV.x0} ${PV.y1 - PV.y0}`); svg.innerHTML = o.join('') + FURN_SVG;
   PLAN_SUM = `${ftin(G.W)} × ${ftin(G.D)}${G.bump ? ' + 10′ × 4′ bay' : G.c ? ' with a ' + ftin(G.c) + ' clipped corner' : ''} = ${Math.round(G.area)} sf. ${G.posts.length} posts on ${G.beams.length} beams, ${Math.round(G.railLf)} lf of guard${G.stair ? ', stairs drawn as an option' : ''}. Sun map: ${(DATES.find(d => d.id === S.date) || DATES[2]).name}, ${sun.avg.toFixed(1)} h average on the deck.`;
 }
 
@@ -549,14 +492,15 @@ function renderElev(G) {
   R(xa + 0.25, X0 + G.uEndOuter - 0.25, BEAM_BOT, JOIST_BOT, 'var(--ink2)', 'fill-opacity=".8"');
   for (const p of G.posts.filter(p => p.beam !== 'inner')) {
     const x = X0 + p.u, g = pyH(x, Y0 + p.v);
-    if (S.posts === 'brick') { R(x - 0.83, x + 0.83, g, g + 0.33, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); R(x - 0.67, x + 0.67, g + 0.33, BEAM_BOT - 0.25, 'var(--brick)', 'stroke="var(--ink)" stroke-width=".08"'); for (let e = g + 0.55; e < BEAM_BOT - 0.3; e += 0.45) o.push(`<line x1="${sx(x + 0.67)}" y1="${sy(e)}" x2="${sx(x - 0.67)}" y2="${sy(e)}" stroke="var(--ink)" stroke-opacity=".25" stroke-width=".03"/>`); R(x - 0.83, x + 0.83, BEAM_BOT - 0.25, BEAM_BOT, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); }
-    else if (S.posts === 'sleeve') R(x - 0.33, x + 0.33, g + 0.17, BEAM_BOT, 'var(--sheet)', 'stroke="var(--ink)" stroke-width=".08"');
-    else R(x - 0.23, x + 0.23, g + 0.17, BEAM_BOT, 'var(--ink2)');
+    const cb = colIn(S) / 24, ps = postFt(S) / 2, ss = sleeveIn(S) / 24;
+    if (S.posts === 'brick') { R(x - cb - 0.17, x + cb + 0.17, g, g + 0.33, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); R(x - cb, x + cb, g + 0.33, BEAM_BOT - 0.25, 'var(--brick)', 'stroke="var(--ink)" stroke-width=".08"'); for (let e = g + 0.55; e < BEAM_BOT - 0.3; e += 0.45) o.push(`<line x1="${sx(x + cb)}" y1="${sy(e)}" x2="${sx(x - cb)}" y2="${sy(e)}" stroke="var(--ink)" stroke-opacity=".25" stroke-width=".03"/>`); R(x - cb - 0.17, x + cb + 0.17, BEAM_BOT - 0.25, BEAM_BOT, 'var(--house)', 'stroke="var(--ink)" stroke-width=".06"'); }
+    else if (S.posts === 'sleeve') R(x - ss, x + ss, g + 0.17, BEAM_BOT, 'var(--sheet)', 'stroke="var(--ink)" stroke-width=".08"');
+    else R(x - ps, x + ps, g + 0.17, BEAM_BOT, pick(PFIN, S.pfin)[2]);
     o.push(`<rect x="${(+sx(x + 0.67))}" y="${sy(g)}" width="1.33" height="3.5" fill="none" stroke="var(--ink2)" stroke-width=".08" stroke-dasharray=".3 .2"/>`);
     if (S.posts === 'plain') for (const s2 of [-1, 1]) { const xe = x + s2 * 2; if (xe > xa && xe < xb) o.push(`<line x1="${sx(x)}" y1="${sy(BEAM_BOT - 2)}" x2="${sx(xe)}" y2="${sy(BEAM_BOT)}" stroke="var(--ink2)" stroke-width=".22"/>`); }
   }
   // guard
-  const gt = TOP + S.guard / 12, rcol = RAILS[S.rail].col || 'var(--deck)';
+  const gt = TOP + S.guard / 12, rcol = railRGB(S);
   R(xa, xb, gt - 0.12, gt, rcol);
   if (S.rail === 'cable') for (let e = TOP + 0.3; e < gt - 0.15; e += 0.25) o.push(`<line x1="${sx(xa)}" y1="${sy(e)}" x2="${sx(xb)}" y2="${sy(e)}" stroke="${rcol}" stroke-width=".03"/>`);
   else for (let x = xa + 0.2; x < xb; x += 0.38) o.push(`<line x1="${sx(x)}" y1="${sy(TOP + 0.25)}" x2="${sx(x)}" y2="${sy(gt - 0.1)}" stroke="${rcol}" stroke-width=".06"/>`);
@@ -713,7 +657,9 @@ function init3D() {
     new ResizeObserver(rs).observe(host); rs();
     ctl.addEventListener('change', () => V3.dirty = true);
     camPreset('yard');
-    const loop = () => { requestAnimationFrame(loop); if (ctl.update() || V3.dirty) { R.render(sc, cam); V3.dirty = false; } };
+    let last = performance.now();
+    const loop = (now) => { requestAnimationFrame(loop); const dt = Math.min(0.2, ((now || performance.now()) - last) / 1000); last = now || performance.now(); const moved = FLY.on ? flyStep(dt) || V3.dirty : (ctl.update() || V3.dirty); if (moved || FLY.on && V3.dirty) { R.render(sc, cam); V3.dirty = false; } };
+    furnPointer3D(); flyInit();
     loop();
     theme3D(); matchMedia('(prefers-color-scheme: dark)').addEventListener('change', theme3D);
     new MutationObserver(theme3D).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -777,15 +723,15 @@ function build3D(G, F) {
   if (!V3.ok) return;
   const grp = V3.deck; while (grp.children.length) { const c = grp.children.pop(); c.geometry && c.geometry.dispose(); }
   const add = m => grp.add(m), L = u => X0 + u, V = v => Y0 + v;
-  const pt = lam(0x8a7458), M = MATS[S.mat], tone = new THREE.Color(M.tones[S.tone]);
+  const pt = lam(pick(PFIN, S.pfin)[2]), M = MATS[S.mat], tone = new THREE.Color(TONE[S.tone][2]);
   const boards = [0, 1, 2].map(i => lam(tone.clone().offsetHSL(0, 0, (i - 1) * 0.025)));
-  const rcol = RAILS[S.rail].col ? new THREE.Color(RAILS[S.rail].col) : tone.clone().offsetHSL(0, 0, 0.05);
+  const rcol = new THREE.Color(railRGB(S)), cb = colIn(S) / 24, ps = postFt(S) / 2, ss = sleeveIn(S) / 24;
   const rail = lam(rcol), steel = lam(0xc9cdd1);
   // framing
-  for (const p of G.posts) { const x = L(p.u), y = V(p.v), g = p.grade; add(box3(x - 0.75, x + 0.75, y - 0.75, y + 0.75, g - 0.05, g + 0.17, lam(0xb8b4ab))); const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner');
-    if (wr && S.posts === 'brick') { add(box3(x - 0.83, x + 0.83, y - 0.83, y + 0.83, g, g + 0.33, m3('cap', 0xd8d3c7))); const col = box3(x - 0.67, x + 0.67, y - 0.67, y + 0.67, g + 0.33, BEAM_BOT - 0.25, brickMat()); add(col); add(box3(x - 0.83, x + 0.83, y - 0.83, y + 0.83, BEAM_BOT - 0.25, BEAM_BOT, m3('cap', 0xd8d3c7))); }
-    else if (wr) { add(box3(x - 0.33, x + 0.33, y - 0.33, y + 0.33, g + 0.17, BEAM_BOT, m3('sleeve', 0xf3f1ec))); add(box3(x - 0.4, x + 0.4, y - 0.4, y + 0.4, g + 0.17, g + 0.5, m3('sleeve', 0xf3f1ec))); }
-    else add(box3(x - 0.23, x + 0.23, y - 0.23, y + 0.23, g + 0.17, BEAM_BOT, pt));
+  for (const p of G.posts) { const x = L(p.u), y = V(p.v), g = p.grade; { const fr = Math.max(0.75, POSTS[S.postSize].tube / 24 + 0.1); add(box3(x - fr, x + fr, y - fr, y + fr, g - 0.05, g + 0.17, m3('footing', 0xb8b4ab))); } const wr = S.posts !== 'plain' && (S.brickAll || p.beam !== 'inner');
+    if (wr && S.posts === 'brick') { add(box3(x - cb - 0.17, x + cb + 0.17, y - cb - 0.17, y + cb + 0.17, g, g + 0.33, m3('cap', 0xd8d3c7))); const col = box3(x - cb, x + cb, y - cb, y + cb, g + 0.33, BEAM_BOT - 0.25, brickMat()); add(col); add(box3(x - cb - 0.17, x + cb + 0.17, y - cb - 0.17, y + cb + 0.17, BEAM_BOT - 0.25, BEAM_BOT, m3('cap', 0xd8d3c7))); }
+    else if (wr) { add(box3(x - ss, x + ss, y - ss, y + ss, g + 0.17, BEAM_BOT, m3('sleeve', 0xf3f1ec))); add(box3(x - ss - 0.07, x + ss + 0.07, y - ss - 0.07, y + ss + 0.07, g + 0.17, g + 0.5, m3('sleeve', 0xf3f1ec))); }
+    else add(box3(x - ps, x + ps, y - ps, y + ps, g + 0.17, BEAM_BOT, pt));
     if (!wr) for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) { const ux = p.u + dx, vy = p.v + dy; if (ux < 0.2 || ux > G.W - 0.2 || vy < 0.2 || vy > G.Dmax - 0.2) continue; if (dy && Math.abs(p.v - G.vb0) < 0.01 && dy < 0) continue; add(rod(W3(x, y, BEAM_BOT - 2), W3(x + dx, y + dy, BEAM_BOT - 0.02), 0.29, 0.29, pt)); } }
   for (const b of G.beams) add(box3(L(b.u0), L(b.u1), V(b.v) - 0.19, V(b.v) + 0.19, BEAM_BOT, JOIST_BOT, pt));
   for (let u = 0.06; u < G.W; u += 16 / 12) for (const [a, b] of scan(G.poly.map(q => [q[1], q[0]]), u)) add(box3(L(u) - 0.0625, L(u) + 0.0625, V(a) + 0.03, V(b) - 0.03, JOIST_BOT, TOP - DECK_T, pt));
@@ -814,16 +760,7 @@ function build3D(G, F) {
     for (const side of [top0, top1]) { const A = W3(side[0], side[1], TOP + 3), B = W3(side[0] + d[0] * st.run, side[1] + d[1] * st.run, st.foot.g + 3); add(rod(A, B, 0.2, 0.12, rail)); add(box3(side[0] + d[0] * st.run - 0.15, side[0] + d[0] * st.run + 0.15, side[1] + d[1] * st.run - 0.15, side[1] + d[1] * st.run + 0.15, st.foot.g, st.foot.g + 3.1, rail)); if (S.rail === 'cable') for (let k2 = 0.6; k2 < 2.9; k2 += 0.3) add(rod(W3(side[0], side[1], TOP + k2), W3(side[0] + d[0] * st.run, side[1] + d[1] * st.run, st.foot.g + k2), 0.02, 0.02, steel)); }
     const fx = top0[0] + d[0] * st.run, fy = top0[1] + d[1] * st.run; add(box3(Math.min(fx, top1[0] + d[0] * st.run) - (d[1] ? 0 : 0), Math.max(fx, top1[0] + d[0] * st.run) + d[0] * 4, Math.min(fy, top1[1] + d[1] * st.run), Math.max(fy, top1[1] + d[1] * st.run) + d[1] * 4, st.foot.g - 0.1, st.foot.g + 0.08, lam(0xa9a497)));
   }
-  // furniture
-  const fab = m3('fab', 0x3c4247), white = m3('white', 0xeeeae2), um = m3('umb', 0xd9d2c3, { side: THREE.DoubleSide }), blk = m3('blk', 0x1e2022);
-  for (const it of (S.showFurn ? F.items : [])) {
-    if (it.kind === 'table') { const c = W3(L(it.u), V(it.v), TOP); const top = new THREE.Mesh(new THREE.CylinderGeometry(it.top, it.top, 0.1, 28), white); top.position.copy(c).add(new THREE.Vector3(0, 2.45, 0)); top.castShadow = true; add(top); add(box3(L(it.u) - 0.1, L(it.u) + 0.1, V(it.v) - 0.1, V(it.v) + 0.1, TOP, TOP + 7.4, blk));
-      if (it.R > 4) { const cone = new THREE.Mesh(new THREE.ConeGeometry(4.6, 1.6, 8, 1, true), um); cone.position.copy(c).add(new THREE.Vector3(0, 7.6, 0)); cone.castShadow = true; add(cone); }
-      const n = it.R > 5.5 ? 6 : it.R > 4 ? 4 : 2; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, r = it.top + 0.9, x = L(it.u) + Math.cos(a) * r, y = V(it.v) + Math.sin(a) * r; add(box3(x - 0.75, x + 0.75, y - 0.75, y + 0.75, TOP, TOP + 1.5, fab)); } }
-    else if (it.kind === 'grill') { add(box3(L(it.u0), L(it.u1), V(it.v0), V(it.v1), TOP, TOP + 3.0, blk)); add(box3(L(it.u0) + 0.2, L(it.u1) - 0.2, V(it.v0) + 1.2, V(it.v1) - 1.2, TOP + 3.0, TOP + 3.9, blk)); }
-    else if (it.u1 - it.u0 > it.v1 - it.v0) { const vm = V((it.v0 + it.v1) / 2); add(box3(L(it.u0), L(it.u1) - 1.8, V(it.v0), V(it.v1), TOP + 0.9, TOP + 1.3, fab)); add(rod(W3(L(it.u1) - 1.9, vm, TOP + 1.1), W3(L(it.u1) - 0.3, vm, TOP + 2.9), it.v1 - it.v0, 0.35, fab)); }
-    else { add(box3(L(it.u0), L(it.u1), V(it.v0), V(it.v1) - 1.8, TOP + 0.9, TOP + 1.3, fab)); add(rod(W3((L(it.u0) + L(it.u1)) / 2, V(it.v1) - 1.9, TOP + 1.1), W3((L(it.u0) + L(it.u1)) / 2, V(it.v1) - 0.3, TOP + 2.9), it.u1 - it.u0, 0.35, fab)); }
-  }
+  buildFurn3D(F);
   V3.dirty = true;
 }
 function setSun() {
@@ -832,24 +769,31 @@ function setSun() {
   const t = W3(133, 142, 885); V3.sun.target.position.copy(t);
   V3.sun.position.set(t.x + d[0] * 150, t.y + Math.max(0.02, d[2]) * 150, t.z - d[1] * 150);
   V3.sun.intensity = s.alt > 0 ? 0.35 + 0.6 * Math.min(1, s.alt / (25 * D2R)) : 0.05; V3.dirty = true;
-  $('vtag').textContent = `${S.W}×${S.D} · ${MATS[S.mat].short} · ${RAILS[S.rail].name} · ${dt.name} ${hourLabel(S.hour).split(' · ')[0]}`;
+  $('vtag').textContent = `${S.W}×${S.D} · ${MATS[S.mat].short} ${TONE[S.tone][1].toLowerCase()} · ${RAILS[S.rail].name} · ${POSTS[S.postSize].name} posts · ${dt.name} ${hourLabel(S.hour).split(' · ')[0]}`;
 }
 const CAMS = {
   yard: [[150, 206, 898], [134, 142, 886]], slider: [[123.6, 138.7, FF + 5.3], [150, 152, TOP + 2.2]], great: [[134.6, 131.2, FF + 5.2], [134.6, 165, FF + 2]],
   under: [[127, 160, PATIO + 5.4], [137, 138, PATIO + 3.5]], top: [[134, 146, 962], [134, 145.9, 889]],
 };
-function camPreset(kk) { if (!V3.ok) return; if (kk === 'cols') { const G = LAST ? LAST.G : geom(S); CAMS.cols = [[X0 - 3, Y0 + G.Dmax + 13, PATIO + 4.8], [X0 + G.W * 0.55, Y0 + G.vb1, (PATIO + BEAM_BOT) / 2 + 0.8]]; } const [p, t] = CAMS[kk]; V3.cam.position.copy(W3(...p)); V3.ctl.target.copy(W3(...t)); V3.ctl.update(); V3.dirty = true; document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === kk))); }
+function camPreset(kk) { if (!V3.ok) return; if (kk === 'cols') { const G = LAST ? LAST.G : geom(S); CAMS.cols = [[X0 - 3, Y0 + G.Dmax + 13, PATIO + 4.8], [X0 + G.W * 0.55, Y0 + G.vb1, (PATIO + BEAM_BOT) / 2 + 0.8]]; } const [p, t] = CAMS[kk]; V3.cam.position.copy(W3(...p)); V3.ctl.target.copy(W3(...t)); if (FLY.on) { V3.cam.lookAt(V3.ctl.target); flyAngles(); } else V3.ctl.update(); V3.dirty = true; document.querySelectorAll('[data-cam]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cam === kk))); }
 document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => camPreset(b.dataset.cam)));
 
 /* ================= update ================= */
 let LAST = null;
 function update(opts) {
+  opts = opts || {};
+  if (opts.furnOnly && LAST) {
+    const F = furniture(S, LAST.G); LAST.F = F;
+    renderPlan(LAST.G, F, LAST.sun); if (opts.planOnly) return;
+    if (!opts.keepPanel) renderFurnPanel(F);
+    renderChecks(F); buildFurn3D(F); persist(); return;
+  }
   S.W = Math.max(14, Math.min(32, Math.round(S.W))); S.D = Math.max(8, Math.min(18, Math.round(S.D)));
-  const G = geom(S), F = furniture(eff(S), G), E = estimate(S, G);
+  const G = geom(S), F = furniture(S, G), E = estimate(S, G);
   const sN = Object.assign({}, S, { stairs: 'none' }), sE = Object.assign({}, S, { stairs: S.stairs === 'none' ? 'east' : S.stairs });
   E.noS = estimate(sN, geom(sN)).by; E.withS = estimate(sE, geom(sE)).by;
   const dt = DATES.find(d => d.id === S.date) || DATES[2], sun = sunMap(G, dt), sunJun = sunMap(G, DATES[1]);
-  renderPanel(G, E); renderFurn(F);
+  renderPanel(G, E); renderFurnPanel(F);
   $('sm-size').textContent = `${S.W}′ × ${S.D}′${G.bump ? ' + bay' : ''}`;
   $('sm-desc').textContent = `${Math.round(G.area)} sf · ${MATS[S.mat].short} · ${RAILS[S.rail].name}${G.stair ? ' · stairs' : ''}`;
   $('sm-diy').textContent = rng2(E.diy); $('sm-split').textContent = rng2(E.split); $('sm-hired').textContent = rng2(E.hired);
@@ -858,15 +802,20 @@ function update(opts) {
   $('pn-lbl').textContent = 'Your deck · ' + LABOR[S.labor].toLowerCase(); $('pn-cost').textContent = rng2(E.by[S.labor]);
   $('pn-desc').textContent = `${S.W}×${S.D}${G.bump ? ' + bay' : ''} · ${Math.round(G.area)} sf · ${MATS[S.mat].short} · ${RAILS[S.rail].name} ${S.guard}″${G.stair ? ' · stairs' : ''} · ${sun.avg.toFixed(1)} h sun ${dt.name}`;
   $('tb-h').textContent = `${TOP} · ${ftin(TOP - PATIO)} above patio`;
-  const C = checks(eff(S), G, F, E, sun, sunJun);
+  LAST = { G, E, F, sun, sunJun };
+  renderChecks(F);
+  renderPlan(G, F, sun); renderElev(G); renderCost(G, E); renderHire(G, E); renderCmp();
+  $('vsum').textContent = S.view === 'elev' ? ELEV_SUM : PLAN_SUM;
+  if (!opts.noBuild) build3D(G, F); else buildFurn3D(F);
+  setSun(); persist();
+}
+function renderChecks(F) {
+  const { G, E, sun, sunJun } = LAST;
+  const C = checks(S, G, F, E, sun, sunJun);
   $('checks').innerHTML = C.map(c => `<li class="${c.s}"><span class="st">${{ ok: 'OK', warn: 'Check', bad: 'Fix', info: 'Note' }[c.s]}</span><div><b>${esc(c.t)}</b><span>${esc(c.d)}</span></div></li>`).join('');
   const nW = C.filter(c => c.s === 'warn').length, nB = C.filter(c => c.s === 'bad').length;
   $('chk-sum').textContent = `${C.filter(c => c.s === 'ok').length} ok · ${nW} to check · ${nB} to fix`;
   $('chk-n').textContent = nW + nB; $('chk-t').textContent = nB ? 'to fix / check' : 'to check'; $('chk-link').classList.toggle('allok', !(nW + nB));
-  renderPlan(G, F, sun); renderElev(G); renderCost(G, E); renderHire(G, E); renderCmp();
-  $('vsum').textContent = S.view === 'elev' ? ELEV_SUM : PLAN_SUM;
-  if (!opts || !opts.noBuild) build3D(G, F);
-  setSun(); persist(); LAST = { G, E, F, sun };
 }
 /* views */
 function setView(v) {
@@ -913,7 +862,7 @@ const toggleFurn = () => { S.showFurn = !S.showFurn; update(); };
 $('c-furn').addEventListener('change', e => { S.showFurn = e.target.checked; update(); });
 $('b-furn2').addEventListener('click', toggleFurn); $('b-furn3').addEventListener('click', toggleFurn);
 $('b-frame').addEventListener('click', () => { S.frame = !S.frame; update(); });
-$('b-reset').addEventListener('click', () => { const v = S.view, p = S.pinned; S = Object.assign({}, DEF, { view: v, pinned: p }); update(); camPreset('yard'); });
+$('b-reset').addEventListener('click', () => { const v = S.view, p = S.pinned; S = Object.assign({}, DEF, { view: v, pinned: p, items: DEF_ITEMS() }); update(); camPreset('yard'); });
 document.querySelectorAll('.summary [data-labor]').forEach(b => b.addEventListener('click', () => { S.labor = b.dataset.labor; update({ noBuild: true }); }));
 let PLAY = null;
 $('b-play').addEventListener('click', e => {
@@ -924,7 +873,7 @@ $('b-play').addEventListener('click', e => {
 });
 
 /* ================= compare (this browser) ================= */
-const CMP_KEYS = ['W', 'D', 'shape', 'mat', 'tone', 'rail', 'guard', 'stairs', 'drain', 'posts', 'brickAll'];
+const CMP_KEYS = ['W', 'D', 'shape', 'mat', 'tone', 'rail', 'rfin', 'guard', 'stairs', 'drain', 'posts', 'postSize', 'pfin', 'brickAll'];
 let CMP = []; try { CMP = JSON.parse(localStorage.getItem('dk01-cmp') || '[]') || []; } catch (e) { CMP = []; }
 const cmpKey = c => CMP_KEYS.map(kk => c[kk]).join('|');
 function renderCmp() {
@@ -932,7 +881,7 @@ function renderCmp() {
   if (!CMP.length) { el.innerHTML = '<div class="empty">Nothing to compare yet. Set up a layout and press “Add to compare” in the options. Add up to four.</div>'; return; }
   const dt = DATES.find(d => d.id === 'aug1');
   const rows = CMP.map((c, i) => { const s2 = Object.assign({}, S, c), G = geom(s2), E = estimate(s2, G), sun = sunMap(G, dt), on = cmpKey(c) === cmpKey(S);
-    return `<tr class="${on ? 'cur' : ''}"><td><b>${c.W}×${c.D}</b>${c.shape !== 'rect' ? ' ' + c.shape : ''}<small>${Math.round(G.area)} sf</small></td><td>${esc(MATS[c.mat].short)}<small>${c.tone}</small></td><td>${esc(RAILS[c.rail].name)} ${c.guard}″<small>${c.stairs === 'none' ? 'no stairs' : c.stairs + ' stairs'}${c.drain ? ' · drainage' : ''}${c.posts === 'brick' ? ' · brick columns' : c.posts === 'sleeve' ? ' · post sleeves' : ''}</small></td><td class="n">${sun.avg.toFixed(1)} h</td><td class="n">${rng2(E.diy)}</td><td class="n">${rng2(E.split)}</td><td class="n">${rng2(E.hired)}</td><td class="n"><button class="btn sm" type="button" data-load="${i}">Load</button> <button class="btn sm" type="button" data-del="${i}" aria-label="Remove from compare">✕</button></td></tr>`; });
+    return `<tr class="${on ? 'cur' : ''}"><td><b>${c.W}×${c.D}</b>${c.shape !== 'rect' ? ' ' + c.shape : ''}<small>${Math.round(G.area)} sf</small></td><td>${esc(MATS[c.mat].short)}<small>${TONE[c.tone] ? TONE[c.tone][1] : c.tone} · ${POSTS[c.postSize || '10x10'].name} posts</small></td><td>${esc(RAILS[c.rail].name)} ${c.guard}″<small>${c.stairs === 'none' ? 'no stairs' : c.stairs + ' stairs'}${c.drain ? ' · drainage' : ''}${c.posts === 'brick' ? ' · brick columns' : c.posts === 'sleeve' ? ' · post sleeves' : ''}</small></td><td class="n">${sun.avg.toFixed(1)} h</td><td class="n">${rng2(E.diy)}</td><td class="n">${rng2(E.split)}</td><td class="n">${rng2(E.hired)}</td><td class="n"><button class="btn sm" type="button" data-load="${i}">Load</button> <button class="btn sm" type="button" data-del="${i}" aria-label="Remove from compare">✕</button></td></tr>`; });
   el.innerHTML = `<table class="cmp"><tr><th>Size</th><th>Decking</th><th>Railing</th><th class="n">Sun, Aug 1</th><th class="n">All DIY</th><th class="n">Hire the frame</th><th class="n">Fully hired</th><th></th></tr>${rows.join('')}</table>`;
 }
 $('cmp').addEventListener('click', e => { const l = e.target.closest('[data-load]'), d = e.target.closest('[data-del]');
@@ -950,8 +899,8 @@ $('b-save').addEventListener('click', async () => {
   if (!LAST) return;
   const { G, E } = LAST;
   const pick = { W: S.W, D: S.D, shape: S.shape, area: Math.round(G.area), mat: S.mat, matName: MATS[S.mat].name, tone: S.tone, rail: S.rail, guard: S.guard, stairs: S.stairs, drain: S.drain, posts: S.posts, brickAll: S.brickAll, labor: S.labor,
-    table: S.tableOn ? S.table : 'none', loungers: S.loungeOn ? S.loungers : 0, grill: S.grill,
-    diy: E.diy.map(Math.round), split: E.split.map(Math.round), hired: E.hired.map(Math.round), posts: G.posts.length, railLf: Math.round(G.railLf), savedAt: new Date().toISOString() };
+    postSize: S.postSize, rfin: S.rfin, pfin: S.pfin, items: (S.items || []).map(i => ({ t: i.t, u: i.u, v: i.v, r: i.r, umb: !!i.umb })), fab: S.fab, ffr: S.ffr,
+    diy: E.diy.map(Math.round), split: E.split.map(Math.round), hired: E.hired.map(Math.round), postCount: G.posts.length, railLf: Math.round(G.railLf), savedAt: new Date().toISOString() };
   try { localStorage.setItem('dk01-pick', JSON.stringify(pick)); } catch (e) { }
   if (DB) { try { await DB.collection('picks').doc('current').set(pick); $('pick-sync').textContent = 'saved for everyone'; } catch (e) { $('pick-sync').textContent = 'saved in this browser'; } }
   else $('pick-sync').textContent = 'saved in this browser';
@@ -979,4 +928,4 @@ init3D(); if (LAST) build3D(LAST.G, LAST.F); setSun();
   DB.doc('picks/current').onSnapshot(s => { if (s.exists) { showPick(s.data()); $('pick-sync').textContent = 'shared'; } }, () => { });
 })();
 /* test hook (tests/test_deck.py) */
-window.__dk = { get S() { return S; }, set S(v) { S = v; }, geom, estimate, furniture, setView, eff, sunMap, sunPos, update, camPreset, V3, get LAST() { return LAST; }, DATES, PRESETS, MATS };
+window.__dk = { get S() { return S; }, set S(v) { S = v; }, geom, estimate, furniture, setView, eff, FLY, setFly, addItem, FURN, POSTS, sunMap, sunPos, update, camPreset, V3, get LAST() { return LAST; }, DATES, PRESETS, MATS };

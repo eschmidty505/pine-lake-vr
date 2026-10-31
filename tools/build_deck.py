@@ -26,7 +26,7 @@ d1 = next(i for i, l in enumerate(house) if 'rail(D.u0, D.u1, D.v1, D.v1)' in l)
 house = house[:d0] + ['  /* rear deck removed: DK-01 draws its own parametric deck */'] + house[d1 + 1:]
 
 src = (R / 'tools/deck/deck_src.html').read_text()
-main = (R / 'tools/deck/deck_main.js').read_text()
+main = (R / 'tools/deck/deck_main.js').read_text().replace('/*@@FURN@@*/', (R / 'tools/deck/deck_furn.js').read_text())
 out = src.replace('/*@@TERRAIN@@*/', '\n'.join(terrain)).replace('/*@@HOUSE@@*/', '\n'.join(house)).replace('/*@@MAIN@@*/', main)
 SKEL = ('<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">'
         '<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}'

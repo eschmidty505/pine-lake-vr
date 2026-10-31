@@ -167,10 +167,35 @@ details.pg>summary .v{color:var(--ink2);text-transform:none;letter-spacing:0;fon
 .tagline{font-family:var(--f-mono);font-size:.66rem;color:var(--ink2);line-height:1.4}
 .tgl{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer}
 .tgl input{accent-color:var(--accent);width:16px;height:16px;flex:none}
-.furn{display:grid;grid-template-columns:1fr;gap:6px}
-.frow{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
-.frow .seg{grid-column:2}
-.frow .fit{font-family:var(--f-mono);font-size:.64rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.sws{display:flex;flex-wrap:wrap;gap:5px}
+.swb{width:30px;height:30px;border:1px solid var(--rule2);cursor:pointer;padding:0;position:relative}
+.swb[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.swname{font-family:var(--f-mono);font-size:.7rem;color:var(--ink2)}
+.fpal{display:flex;flex-direction:column;gap:6px}
+.fpal .cat{font-family:var(--f-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.fpal .row{display:flex;flex-wrap:wrap;gap:4px}
+.fpal .btn{font-size:.7rem;padding:4px 7px}
+.fpal .btn::before{content:"+ ";color:var(--accent);font-weight:600}
+.flist{display:flex;flex-direction:column;gap:3px;max-height:220px;overflow:auto}
+.fli{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;text-align:left;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);padding:4px 8px;cursor:pointer;font-size:.92rem}
+.fli[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.fli .fit{font-family:var(--f-mono);font-size:.62rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.fit.ok{color:var(--ok)} .fit.no{color:var(--bad)}
+.fsel{border:1.5px solid var(--accent);background:var(--accent-soft);padding:8px 10px;display:flex;flex-direction:column;gap:7px}
+.fsel h4{margin:0;font-size:1rem}
+.fsel .why{font-size:.86rem;color:var(--bad)}
+.fsel .row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.fsel input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.fbud{font-family:var(--f-mono);font-size:.74rem;color:var(--ink2)}
+#fi-layer .fi{cursor:grab}
+#fi-layer .fi.sel>.ol{stroke:var(--accent);stroke-width:.22}
+#fi-layer .rh{cursor:alias;fill:var(--sheet);stroke:var(--accent);stroke-width:.2}
+.flypad{position:absolute;right:10px;bottom:10px;display:none;grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:4px;z-index:3;touch-action:none;user-select:none}
+.flypad button{font-family:var(--f-mono);font-size:.8rem;background:rgba(20,24,27,.62);color:#eef1f3;border:1px solid rgba(255,255,255,.25);border-radius:4px;touch-action:none}
+.flypad button:active{background:rgba(31,95,139,.85)}
+.flyhelp{position:absolute;left:10px;bottom:10px;font-family:var(--f-mono);font-size:.7rem;background:rgba(20,24,27,.72);color:#eef1f3;padding:5px 8px;z-index:3;pointer-events:none;max-width:calc(100% - 170px)}
+#v3d.fly canvas{cursor:crosshair}
+@media (pointer:coarse){.flypad:not([hidden]){display:grid}.flyhelp{display:none}}
 .fit.ok{color:var(--ok)} .fit.no{color:var(--bad)}
 .prow{display:flex;gap:6px;flex-wrap:wrap}
 
@@ -230,7 +255,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
     <div><h1>Deck Studio</h1><span class="sub">Rear deck off the nook's east slider · freestanding over the walkout patio · sized, priced and sun-checked on the house model</span></div>
     <div><span class="lbl">Project</span><span class="val">7305 Pine Lake Blvd</span><span class="val">Berkeley · Elev C</span></div>
     <div><span class="lbl">Deck surface</span><span class="val" id="tb-h">889.18</span><span class="val">units: feet, lot grid</span></div>
-    <div><span class="lbl">Rev</span><span class="val">C · 2026-10-27</span><span class="val">PROJ · Deck</span></div>
+    <div><span class="lbl">Rev</span><span class="val">D · 2026-10-31</span><span class="val">PROJ · Deck</span></div>
   </header>
 
   <section class="box summary" aria-label="Current layout and price by who builds it">
@@ -251,11 +276,17 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <a class="chk" href="#checks-sec" id="chk-link"><b id="chk-n">0</b><span id="chk-t">to check</span></a>
       </div>
       <div class="stage">
-        <div id="v3d" role="tabpanel" aria-labelledby="tab-3d"><div class="v-tag" id="vtag">Loading the house model…</div></div>
+        <div id="v3d" role="tabpanel" aria-labelledby="tab-3d"><div class="v-tag" id="vtag">Loading the house model…</div>
+          <div class="flyhelp" id="flyhelp" hidden>Fly: W A S D move · Q / E down, up · drag to look · Shift faster · scroll changes speed · Esc stops</div>
+          <div class="flypad" id="flypad" hidden aria-label="Fly controls">
+            <button type="button" data-k="KeyE" aria-label="Up">▲up</button><button type="button" data-k="KeyW" aria-label="Forward">W</button><button type="button" data-k="KeyQ" aria-label="Down">▼dn</button>
+            <button type="button" data-k="KeyA" aria-label="Left">A</button><button type="button" data-k="KeyS" aria-label="Back">S</button><button type="button" data-k="KeyD" aria-label="Right">D</button>
+          </div></div>
         <div id="vplan" role="tabpanel" aria-labelledby="tab-plan" hidden><svg id="plan" viewBox="0 0 10 10" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Plan view of the deck, house and nearby yard features. Drag the blue handles to resize."></svg></div>
         <div id="velev" role="tabpanel" aria-labelledby="tab-elev" hidden><svg id="elev" viewBox="0 0 10 10" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Elevation of the rear wall with the deck, posts and guard"></svg></div>
       </div>
       <div class="vbar" id="bar-3d">
+        <button class="btn" type="button" id="b-fly" aria-pressed="false" title="Fly with W A S D, Q / E for down and up, drag to look, Shift for speed, Esc to stop">Fly (WASD)</button>
         <button class="btn" type="button" data-cam="yard">Yard</button>
         <button class="btn" type="button" data-cam="slider">Nook slider</button>
         <button class="btn" type="button" data-cam="great">Great room</button>
@@ -265,7 +296,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <button class="btn" type="button" id="b-frame" aria-pressed="false">Framing</button>
         <button class="btn" type="button" id="b-furn3" aria-pressed="true">Furniture</button>
         <button class="btn" type="button" id="b-yard3" aria-pressed="false">Yard plan</button>
-        <span class="hint">drag to orbit · scroll or pinch to zoom</span>
+        <span class="hint" id="hint3">drag to orbit · drag furniture to move it · R to rotate</span>
       </div>
       <div class="vbar" id="bar-plan" hidden>
         <span class="legend">
@@ -276,7 +307,7 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <label class="tgl"><input type="checkbox" id="c-heat"> sun map</label>
         <button class="btn" type="button" id="b-furn2" aria-pressed="true">Furniture</button>
         <button class="btn" type="button" id="b-yard2" aria-pressed="false">Yard plan</button>
-        <span class="hint">drag the blue handles to resize</span>
+        <span class="hint">drag furniture to move it · drag its round handle to rotate · blue handles resize the deck</span>
       </div>
       <div class="sunbar">
         <span class="seg" role="group" aria-label="Date for sun and shadows" id="seg-date"></span>
@@ -304,8 +335,8 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
       <details class="pg" open id="pg-mat"><summary><span class="t">Decking</span><span class="v" id="sv-mat"></span></summary>
         <div class="pgb">
           <div class="cards" id="mats"></div>
-          <span class="fl">Board tone</span>
-          <div class="seg" role="group" aria-label="Board tone" id="seg-tone"></div>
+          <span class="fl">Board color · <span class="swname" id="tone-name"></span></span>
+          <div class="sws" role="group" aria-label="Board color" id="sw-tone"></div>
         </div>
       </details>
 
@@ -313,24 +344,42 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <div class="pgb">
           <div class="seg" role="group" aria-label="Railing" id="seg-rail"></div>
           <div class="seg" role="group" aria-label="Guard height" id="seg-guard"></div>
+          <span class="fl">Railing finish · <span class="swname" id="rfin-name"></span></span>
+          <div class="sws" role="group" aria-label="Railing finish" id="sw-rfin"></div>
         </div>
       </details>
 
       <details class="pg" open id="pg-posts"><summary><span class="t">Posts &amp; columns</span><span class="v" id="sv-posts"></span></summary>
         <div class="pgb">
+          <span class="fl">Post size</span>
+          <div class="seg" role="group" aria-label="Post size" id="seg-psize"></div>
+          <span class="tagline" id="psize-note"></span>
+          <span class="fl">Post look</span>
           <div class="seg" role="group" aria-label="Posts" id="seg-posts"></div>
+          <span class="fl">Post &amp; beam stain · <span class="swname" id="pfin-name"></span></span>
+          <div class="sws" role="group" aria-label="Post and beam stain" id="sw-pfin"></div>
           <label class="tgl"><input type="checkbox" id="c-brickall"> Wrap the house-side posts too</label>
           <span class="tagline" id="posts-note"></span>
           <button class="btn" type="button" id="b-cols">Show the columns in 3D</button>
-          <span class="tagline">Brick columns: 16″ square thin-brick wrap on a precast base with a cap under the beam, matched to the house brick. Sleeves: white composite over the 6×6.</span>
+          <span class="tagline" id="posts-tag"></span>
         </div>
       </details>
 
       <details class="pg" open id="pg-furn"><summary><span class="t">Furniture</span><span class="v" id="sv-furn"></span></summary>
         <div class="pgb">
           <label class="tgl"><input type="checkbox" id="c-furn"> Show furniture in the 3D and plan views</label>
-          <div class="furn" id="furn"></div>
-          <span class="tagline">Turning a piece off removes it from the views and the fit check.</span>
+          <div id="fsel"></div>
+          <span class="fl">On the deck</span>
+          <div class="flist" id="flist"></div>
+          <div class="prow"><button class="btn" type="button" id="b-arrange">Auto-arrange</button><button class="btn" type="button" id="b-fclear">Clear all</button></div>
+          <span class="fl">Add to the deck</span>
+          <div class="fpal" id="fpal"></div>
+          <span class="fl">Cushions · <span class="swname" id="fab-name"></span></span>
+          <div class="sws" role="group" aria-label="Cushion color" id="sw-fab"></div>
+          <span class="fl">Furniture frames · <span class="swname" id="ffr-name"></span></span>
+          <div class="sws" role="group" aria-label="Furniture frame color" id="sw-ffr"></div>
+          <span class="fbud" id="fbud"></span>
+          <span class="tagline">Drag pieces in the 3D or plan view. Select one, then R / Shift+R rotates 15°, arrow keys nudge, Delete removes.</span>
         </div>
       </details>
 
