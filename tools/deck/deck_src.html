@@ -264,16 +264,18 @@ ol.todo textarea{width:100%;margin-top:6px;font:inherit;font-size:.9rem;padding:
         <button class="btn" type="button" data-cam="cols">Columns</button>
         <button class="btn" type="button" id="b-frame" aria-pressed="false">Framing</button>
         <button class="btn" type="button" id="b-furn3" aria-pressed="true">Furniture</button>
+        <button class="btn" type="button" id="b-yard3" aria-pressed="false">Yard plan</button>
         <span class="hint">drag to orbit · scroll or pinch to zoom</span>
       </div>
       <div class="vbar" id="bar-plan" hidden>
         <span class="legend">
           <span><i style="background:var(--deck)"></i>deck</span>
-          <span><i style="background:var(--plan);opacity:.4"></i>your yard plan</span>
+          <span id="lg-yard"><i style="background:var(--plan);opacity:.4"></i>your yard plan</span>
           <span><i style="background:linear-gradient(90deg,var(--shade),var(--sun))"></i>sun hours</span>
         </span>
         <label class="tgl"><input type="checkbox" id="c-heat"> sun map</label>
         <button class="btn" type="button" id="b-furn2" aria-pressed="true">Furniture</button>
+        <button class="btn" type="button" id="b-yard2" aria-pressed="false">Yard plan</button>
         <span class="hint">drag the blue handles to resize</span>
       </div>
       <div class="sunbar">

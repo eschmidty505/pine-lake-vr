@@ -75,7 +75,7 @@ const PLAN_COL = { permpav: '#9a958c', pavers: '#a39484', needle: '#9a6b3c', riv
 function stRect(e) { const sw = (e.rot % 180) ? e.h : e.w, sh = (e.rot % 180) ? e.w : e.h; return { x0: e.x - sw / 2, x1: e.x + sw / 2, y0: e.y - sh / 2, y1: e.y + sh / 2 }; }
 
 /* ---------------- state ---------------- */
-const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, posts: 'plain', brickAll: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, view: '3d', pinned: true };
+const DEF = { preset: 'D2', W: 22, D: 12, shape: 'rect', mat: 'compE', tone: 'grey', rail: 'cable', guard: 36, stairs: 'none', drain: false, posts: 'plain', brickAll: false, tableOn: true, table: 'r48', loungeOn: true, loungers: 2, grill: true, showFurn: true, labor: 'split', date: 'aug1', hour: 15, heat: true, frame: false, yard: false, view: '3d', pinned: true };
 let S = Object.assign({}, DEF);
 try { const s = JSON.parse(localStorage.getItem('dk01') || 'null'); if (s) S = Object.assign(S, s); } catch (e) { }
 if (S.brick) S.posts = 'brick'; delete S.brick; if (!MATS[S.mat]) S.mat = 'compE'; if (!S.posts) S.posts = 'plain';
@@ -371,6 +371,7 @@ function checks(s, G, F, E, sun, sunJun) {
     const okR = st.rise <= 7.75 + 1e-6, okRise = st.R * 12 <= 151;
     out.push({ s: okR && okRise ? 'ok' : 'bad', t: 'Stairs: ' + st.n + ' risers at ' + inch(st.rise / 12) + ', ' + st.treads + ' treads at 10½″', d: 'Rise ' + ftin(st.R) + ', run ' + ftin(st.run) + ', 4′ wide. Max riser 7¾″, min tread 10″; no mid landing needed under 12′-7″ of rise. Lands at ' + st.foot.g.toFixed(1) + ' grade.' });
     const hits = [];
+    if (S.yard) {
     const r = { x0: X0 + st.rect.u0, x1: X0 + st.rect.u1, y0: Y0 + st.rect.v0, y1: Y0 + st.rect.v1 };
     const land = st.side === 'east' ? { x0: r.x1, x1: r.x1 + 4, y0: r.y0, y1: r.y1 } : { x0: r.x0, x1: r.x1, y0: r.y1, y1: r.y1 + 4 };
     for (const e of PLAN) {
@@ -379,9 +380,11 @@ function checks(s, G, F, E, sun, sunJun) {
     }
     let onPath = false; const w1 = PLAN.find(e => e.id === 'W1');
     for (let i = 0; i + 1 < w1.pts.length; i++) if (segHitsRect(w1.pts[i], w1.pts[i + 1], { x0: land.x0 - 2, x1: land.x1 + 2, y0: land.y0 - 2, y1: land.y1 + 2 })) onPath = true;
-    out.push({ s: hits.length ? 'warn' : 'ok', t: hits.length ? 'Stairs cross ' + [...new Set(hits)].join(' and ') : 'Stairs clear your yard plan', d: (hits.length ? 'Move that leg of the fence south a few feet, or make the stair foot the garden gate. ' : '') + (onPath ? 'The foot lands on the flagstone path to the garden.' : st.side === 'north' ? 'The foot lands on the paver patio north of the deck.' : 'Extend the flagstone path to the stair foot.') });
+    }
+    if (!S.yard) out.push({ s: 'ok', t: 'Stairs land on the yard at ' + st.foot.g.toFixed(1), d: 'Foot of the stairs sits ' + ftin(TOP - st.foot.g) + ' below the deck. Turn on “Yard plan” to check it against the fence, path and garden.' });
+    else out.push({ s: hits.length ? 'warn' : 'ok', t: hits.length ? 'Stairs cross ' + [...new Set(hits)].join(' and ') : 'Stairs clear your yard plan', d: (hits.length ? 'Move that leg of the fence south a few feet, or make the stair foot the garden gate. ' : '') + (onPath ? 'The foot lands on the flagstone path to the garden.' : st.side === 'north' ? 'The foot lands on the paver patio north of the deck.' : 'Extend the flagstone path to the stair foot.') });
   }
-  if (G.D > 16) out.push({ s: 'info', t: 'Deck reaches past the walkout patio', d: 'The patio under the deck is 16′ deep in your plans. Past that, the deck covers part of the paver patio you drew north of it.' });
+  if (G.D > 16) out.push({ s: 'info', t: 'Deck reaches past the walkout patio', d: 'The patio under the deck is 16′ deep in your plans. Past that, the deck runs over open yard' + (S.yard ? ' and part of the paver patio you drew north of it.' : '.') });
   if (G.W > CORNER) out.push({ s: 'info', t: 'Runs ' + ftin(G.W - CORNER) + ' past the house corner', d: 'That part needs railing on its south side too and sits over the side yard, which drops toward the garden court.' });
   return out;
 }
@@ -427,6 +430,8 @@ function renderPanel(G, E) {
   $('r-hour').value = S.hour; $('o-hour').textContent = hourLabel(S.hour);
   $('b-frame').setAttribute('aria-pressed', String(!!S.frame));
   ['b-furn2', 'b-furn3'].forEach(id => $(id).setAttribute('aria-pressed', String(!!S.showFurn)));
+  ['b-yard2', 'b-yard3'].forEach(id => $(id).setAttribute('aria-pressed', String(!!S.yard)));
+  $('lg-yard').hidden = !S.yard;
 }
 function renderFurn(F) {
   const fit = kind => { const it = F.items.filter(i => i.kind === kind); if (!it.length) return ''; const bad = it.filter(i => !i.ok); return bad.length ? `<span class="fit no" title="${esc(bad.map(i => i.why).join('; '))}">doesn’t fit</span>` : '<span class="fit ok">fits</span>'; };
@@ -456,15 +461,15 @@ function renderPlan(G, F, sun) {
   for (let y = Math.ceil(PV.y0); y <= PV.y1; y++) o.push(`<line x1="0" y1="${sy(y)}" x2="${PV.x1 - PV.x0}" y2="${sy(y)}" stroke="var(--rule)" stroke-width="${y % 10 ? 0.03 : 0.08}"/>`);
   for (let x = 100; x <= PV.x1; x += 10) o.push(`<text x="${sx(x) - 0 + 0.3}" y="1.4" font-size="1.1" fill="var(--ink2)" font-family="IBM Plex Mono,monospace">x ${x}</text>`);
   for (let y = 120; y <= PV.y1; y += 10) o.push(`<text x="0.4" y="${+sy(y) - 0.3}" font-size="1.1" fill="var(--ink2)" font-family="IBM Plex Mono,monospace">y ${y}</text>`);
-  // yard plan
-  for (const e of PLAN) {
+  // yard plan (hidden by default so the deck stands alone)
+  for (const e of (S.yard ? PLAN : [])) {
     if (e.t === 'bed') o.push(`<polygon points="${P(e.pts)}" fill="${PLAN_COL[e.mat] || '#888'}" fill-opacity=".22" stroke="var(--plan)" stroke-width=".12"/>`);
     else if (e.t === 'path') o.push(`<polyline points="${P(e.pts)}" fill="none" stroke="${PLAN_COL[e.mat]}" stroke-opacity="${e.mat === 'splitrail' ? .9 : .45}" stroke-width="${e.w}" stroke-linejoin="round" ${e.mat === 'splitrail' ? 'stroke-dasharray="1.2 .5"' : ''}/>`);
     else if (e.t === 'st') { const r = stRect(e); o.push(`<rect x="${sx(r.x0)}" y="${sy(r.y1)}" width="${(r.x1 - r.x0).toFixed(2)}" height="${(r.y1 - r.y0).toFixed(2)}" fill="var(--plan)" fill-opacity=".14" stroke="var(--plan)" stroke-width=".12"/>`); }
     else if (e.t === 'plant') o.push(`<circle cx="${sx(e.x)}" cy="${sy(e.y)}" r="${e.r}" fill="var(--plan)" fill-opacity=".18" stroke="var(--plan)" stroke-width=".1"/><text x="${sx(e.x)}" y="${+sy(e.y) + 0.4}" text-anchor="middle" font-size="1" fill="var(--ink2)">hazel</text>`);
   }
   const lab = (x, y, t, a) => o.push(`<text x="${sx(x)}" y="${sy(y)}" font-size="0.95" fill="var(--ink2)" text-anchor="${a || 'start'}">${esc(t)}</text>`);
-  lab(171.8, 136, 'split-rail fence'); lab(158, 148.2, 'flagstone path'); lab(150.5, 130.5, 'pergola + potting bench', 'start'); lab(132, 165.2, 'paver patio (your plan)', 'middle'); lab(155, 117.8 + 3, 'garden court');
+  if (S.yard) lab(171.8, 136, 'split-rail fence'); if (S.yard) { lab(158, 148.2, 'flagstone path'); lab(150.5, 130.5, 'pergola + potting bench', 'start'); lab(132, 165.2, 'paver patio (your plan)', 'middle'); } if (S.yard) lab(155, 117.8 + 3, 'garden court');
   // house
   o.push(`<polygon points="${P([[94.7, 118], [144.54, 118], [144.54, 134.73], [122.54, 134.73], [122.54, 142.73], [102.87, 142.73], [102.87, 134.73], [94.7, 134.73]])}" fill="var(--house)" stroke="var(--ink)" stroke-width=".22"/>`);
   lab(133.5, 127, 'GREAT ROOM', 'middle'); lab(112.7, 138.2, 'NOOK', 'middle'); lab(108, 127, 'KITCHEN', 'middle');
@@ -472,7 +477,7 @@ function renderPlan(G, F, sun) {
   o.push(`<line x1="${sx(X0)}" y1="${sy(Y0 + NOOK_SLIDER.v0)}" x2="${sx(X0)}" y2="${sy(Y0 + NOOK_SLIDER.v1)}" stroke="var(--accent)" stroke-width=".6"/>`); lab(X0 - 0.6, Y0 + 4.4, 'slider', 'end');
   for (const b of BSMT) o.push(`<line x1="${sx(b.x0)}" y1="${+sy(Y0) - 0.6}" x2="${sx(b.x1)}" y2="${+sy(Y0) - 0.6}" stroke="var(--ink2)" stroke-width=".25" stroke-dasharray=".6 .3"/>`);
   o.push(`<circle cx="${sx(WELL.x)}" cy="${sy(WELL.y)}" r="10" fill="none" stroke="var(--bad)" stroke-width=".12" stroke-dasharray=".8 .4"/><circle cx="${sx(WELL.x)}" cy="${sy(WELL.y)}" r=".5" fill="var(--bad)"/>`); lab(WELL.x, WELL.y - 1.8, 'well · 10′ setback', 'middle');
-  o.push(`<rect x="${sx(122.54)}" y="${sy(150.73)}" width="22" height="16.0" fill="none" stroke="var(--ink2)" stroke-width=".12" stroke-dasharray=".5 .4"/>`); if (G.Dmax < 14.5) lab(X0 + 0.6, 150.73 - 1.3, 'walkout patio below (yours to build)');
+  o.push(`<rect x="${sx(122.54)}" y="${sy(150.73)}" width="22" height="16.0" fill="none" stroke="var(--ink2)" stroke-width=".12" stroke-dasharray=".5 .4"/>`); lab(X0 + 0.3, 150.73 + 0.7, 'walkout patio below (yours to build)');
   // sun map
   if (S.heat) {
     const mx = Math.max(1, sun.day);
@@ -742,7 +747,7 @@ function box3(x0, x1, y0, y1, e0, e1, mat) { const m = new THREE.Mesh(new THREE.
 function rod(a, b, w, h, mat) { const len = a.distanceTo(b), m = new THREE.Mesh(new THREE.BoxGeometry(w, h, len), mat); m.position.copy(a).add(b).multiplyScalar(0.5); m.lookAt(b); m.castShadow = true; m.receiveShadow = true; return m; }
 function flat(pts, e, mat) { const shp = new THREE.Shape(pts.map(p => new THREE.Vector2(p[0], p[1]))); const g = new THREE.ShapeGeometry(shp); g.rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, mat); m.scale.z = -1; m.position.y = e - Z0; m.receiveShadow = true; return m; }
 function buildContext() {
-  const G = new THREE.Group(), wood = lam(0x7b5a3a), pav = lam(0xa8a397), stone = lam(0x8f8b80), grn = lam(0x557a3c);
+  const G = (V3.yardG = new THREE.Group()), wood = lam(0x7b5a3a), pav = lam(0xa8a397), stone = lam(0x8f8b80), grn = lam(0x557a3c);
   for (const e of PLAN) {
     if (e.t === 'bed' && (e.mat === 'permpav' || e.mat === 'pavers')) { const pts = e.pts, eg = Math.min(...pts.map(p => groundH(p[0], p[1]))); const m = flat(pts.map(p => [p[0], p[1]]), eg + 0.08, pav); m.material.side = THREE.DoubleSide; G.add(m); }
     if (e.t === 'path' && e.mat === 'flagstone') for (let i = 0; i + 1 < e.pts.length; i++) { const [a, b] = [e.pts[i], e.pts[i + 1]]; const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2); for (let j = 0; j < n; j++) { const t0 = j / n, t1 = (j + 1) / n, p = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0], q = [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1]; const A = W3(p[0], p[1], groundH(p[0], p[1]) + 0.08), B = W3(q[0], q[1], groundH(q[0], q[1]) + 0.08); G.add(rod(A, B, e.w, 0.12, stone)); } }
@@ -754,7 +759,7 @@ function buildContext() {
     if (e.t === 'plant') { const s = new THREE.Mesh(new THREE.SphereGeometry(3.2, 12, 8), grn); s.position.copy(W3(e.x, e.y, groundH(e.x, e.y) + 3.5)); s.castShadow = true; G.add(s); }
   }
   G.traverse(m => { if (m.isMesh) m.receiveShadow = true; });
-  V3.sc.add(G);
+  G.visible = !!S.yard; V3.sc.add(G);
 }
 const MAT3 = {};
 let BRICK3 = null;
@@ -902,6 +907,8 @@ $('c-drain').addEventListener('change', e => { S.drain = e.target.checked; updat
 $('c-brickall').addEventListener('change', e => { S.brickAll = e.target.checked; update(); });
 $('b-cols').addEventListener('click', () => { if (S.posts === 'plain') S.posts = 'brick'; update(); setView('3d'); camPreset('cols'); });
 $('c-heat').addEventListener('change', e => { S.heat = e.target.checked; update({ noBuild: true }); });
+const toggleYard = () => { S.yard = !S.yard; if (V3.yardG) V3.yardG.visible = S.yard; V3.dirty = true; update({ noBuild: true }); };
+$('b-yard3').addEventListener('click', toggleYard); $('b-yard2').addEventListener('click', toggleYard);
 const toggleFurn = () => { S.showFurn = !S.showFurn; update(); };
 $('c-furn').addEventListener('change', e => { S.showFurn = e.target.checked; update(); });
 $('b-furn2').addEventListener('click', toggleFurn); $('b-furn3').addEventListener('click', toggleFurn);
